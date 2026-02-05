@@ -1,0 +1,29 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+
+# macOS
+.DS_Store
+._*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*~
+
+# Coverage
+*.profdata
+*.profraw
+lcov.info
+
+# Claude Code (not part of the repo)
+.claude/
+CLAUDE.md
