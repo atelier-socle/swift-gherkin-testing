@@ -44,9 +44,6 @@ let package = Package(
             resources: [
                 .copy("I18n/Resources/gherkin-languages.json"),
             ],
-            swiftSettings: [
-                .strictConcurrency(.complete),
-            ]
         ),
 
         // MARK: - Library Tests
@@ -56,9 +53,6 @@ let package = Package(
             path: "Tests/GherkinTestingTests",
             resources: [
                 .copy("Fixtures"),
-            ],
-            swiftSettings: [
-                .strictConcurrency(.complete),
             ]
         ),
 
@@ -69,10 +63,7 @@ let package = Package(
                 "GherkinTestingMacros",
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
             ],
-            path: "Tests/GherkinTestingMacroTests",
-            swiftSettings: [
-                .strictConcurrency(.complete),
-            ]
+            path: "Tests/GherkinTestingMacroTests"
         ),
     ]
 )
