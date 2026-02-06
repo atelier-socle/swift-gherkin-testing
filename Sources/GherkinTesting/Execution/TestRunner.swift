@@ -90,8 +90,16 @@ public struct TestRunner<F: GherkinFeature>: Sendable {
         for pickle in pickles {
             let pickleTags = pickle.tags.map(\.name)
 
-            // Tag filter: skip non-matching pickles
+            // Tag filter: non-matching pickles are recorded as skipped
             if let filter = configuration.tagFilter, !filter.matches(tags: pickleTags) {
+                let skippedStepResults = pickle.steps.map { step in
+                    StepResult(step: step, status: .skipped, duration: .zero, location: nil)
+                }
+                scenarioResults.append(ScenarioResult(
+                    name: pickle.name,
+                    stepResults: skippedStepResults,
+                    tags: pickleTags
+                ))
                 continue
             }
 
@@ -123,6 +131,12 @@ public struct TestRunner<F: GherkinFeature>: Sendable {
     }
 
     /// Executes a single scenario (pickle) and returns its result.
+    ///
+    /// In dry-run mode, all steps are matched but not executed. Undefined steps
+    /// receive suggestions. Dry-run does not skip remaining steps after an undefined.
+    ///
+    /// In normal mode, a failed/pending/undefined step causes remaining steps
+    /// to be skipped.
     private func runScenario(
         pickle: Pickle,
         pickleTags: [String],
@@ -142,10 +156,11 @@ public struct TestRunner<F: GherkinFeature>: Sendable {
         for step in pickle.steps {
             let stepResult: StepResult
 
-            if scenarioFailed {
-                stepResult = StepResult(step: step, status: .skipped, duration: .zero, location: nil)
-            } else if configuration.dryRun {
+            if configuration.dryRun {
+                // Dry-run: match ALL steps (never skip), generate suggestions
                 stepResult = dryRunStep(step, executor: executor)
+            } else if scenarioFailed {
+                stepResult = StepResult(step: step, status: .skipped, duration: .zero, location: nil)
             } else {
                 stepResult = await executeStep(
                     step,
@@ -173,6 +188,9 @@ public struct TestRunner<F: GherkinFeature>: Sendable {
     }
 
     /// Executes a single step with hooks and timing.
+    ///
+    /// Detects ``PendingStepError`` and maps it to ``StepStatus/pending``.
+    /// Generates ``StepSuggestion`` for undefined steps.
     private func executeStep(
         _ step: PickleStep,
         pickleTags: [String],
@@ -187,14 +205,20 @@ public struct TestRunner<F: GherkinFeature>: Sendable {
 
         let status: StepStatus
         var location: Location?
+        var suggestion: StepSuggestion?
 
         do {
             let stepMatch = try executor.match(step)
             location = stepMatch.matchLocation
             try await stepMatch.stepDefinition.handler(&feature, stepMatch.arguments)
             status = .passed
+        } catch is PendingStepError {
+            status = .pending
         } catch let error as StepMatchError {
             status = stepMatchErrorToStatus(error)
+            if case .undefined = error {
+                suggestion = StepSuggestion.suggest(stepText: step.text)
+            }
         } catch {
             status = .failed(StepFailure(error: error))
         }
@@ -203,10 +227,18 @@ public struct TestRunner<F: GherkinFeature>: Sendable {
         try? await hooks.executeAfter(scope: .step, tags: pickleTags)
 
         let duration = clock.now - stepStart
-        return StepResult(step: step, status: status, duration: duration, location: location)
+        return StepResult(
+            step: step,
+            status: status,
+            duration: duration,
+            location: location,
+            suggestion: suggestion
+        )
     }
 
     /// Matches a step without executing it (dry-run mode).
+    ///
+    /// Generates a ``StepSuggestion`` for undefined steps.
     private func dryRunStep(_ step: PickleStep, executor: StepExecutor<F>) -> StepResult {
         do {
             let stepMatch = try executor.match(step)
@@ -217,11 +249,16 @@ public struct TestRunner<F: GherkinFeature>: Sendable {
                 location: stepMatch.matchLocation
             )
         } catch let error as StepMatchError {
+            var suggestion: StepSuggestion?
+            if case .undefined = error {
+                suggestion = StepSuggestion.suggest(stepText: step.text)
+            }
             return StepResult(
                 step: step,
                 status: stepMatchErrorToStatus(error),
                 duration: .zero,
-                location: nil
+                location: nil,
+                suggestion: suggestion
             )
         } catch {
             return StepResult(

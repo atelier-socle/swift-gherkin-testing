@@ -22,11 +22,13 @@ public enum HookScope: String, Sendable, Equatable, Hashable {
 /// A lifecycle hook that executes at a specified scope during test execution.
 ///
 /// Hooks can optionally be filtered by tag expression, executing only when
-/// the current scope's tags satisfy the filter.
+/// the current scope's tags satisfy the filter. The ``order`` property controls
+/// execution priority: lower values run first for before hooks, last for after hooks.
 ///
 /// ```swift
 /// let hook = Hook(
 ///     scope: .scenario,
+///     order: 10,
 ///     tagFilter: try TagFilter("@smoke"),
 ///     handler: { print("Before smoke scenario") }
 /// )
@@ -34,6 +36,13 @@ public enum HookScope: String, Sendable, Equatable, Hashable {
 public struct Hook: Sendable {
     /// The scope at which this hook executes.
     public let scope: HookScope
+
+    /// The execution order priority.
+    ///
+    /// Before hooks execute in ascending order (lower values first).
+    /// After hooks execute in descending order (higher values first).
+    /// Hooks with the same order preserve registration order (FIFO for before, LIFO for after).
+    public let order: Int
 
     /// An optional tag filter. The hook only executes when the current
     /// scope's tags satisfy this filter.
@@ -46,14 +55,17 @@ public struct Hook: Sendable {
     ///
     /// - Parameters:
     ///   - scope: The scope at which this hook executes.
+    ///   - order: The execution order priority. Defaults to `0`.
     ///   - tagFilter: An optional tag filter for conditional execution.
     ///   - handler: The closure to execute.
     public init(
         scope: HookScope,
+        order: Int = 0,
         tagFilter: TagFilter? = nil,
         handler: @escaping @Sendable () async throws -> Void
     ) {
         self.scope = scope
+        self.order = order
         self.tagFilter = tagFilter
         self.handler = handler
     }
@@ -107,15 +119,19 @@ public struct HookRegistry: Sendable {
 
     /// Executes all before hooks matching the given scope and tags.
     ///
-    /// Hooks execute in registration order (FIFO). A hook with a tag filter
-    /// is skipped if the tags don't satisfy the filter.
+    /// Hooks are sorted by ``Hook/order`` ascending (stable sort preserves
+    /// FIFO registration order among hooks with equal order). A hook with
+    /// a tag filter is skipped if the tags don't satisfy the filter.
     ///
     /// - Parameters:
     ///   - scope: The scope to execute hooks for.
     ///   - tags: The current tags to evaluate hook filters against.
     /// - Throws: Any error thrown by a hook handler.
     public func executeBefore(scope: HookScope, tags: [String]) async throws {
-        for hook in beforeHooks where hook.scope == scope {
+        let sorted = beforeHooks
+            .filter { $0.scope == scope }
+            .sorted { $0.order < $1.order }
+        for hook in sorted {
             if let filter = hook.tagFilter, !filter.matches(tags: tags) {
                 continue
             }
@@ -125,9 +141,10 @@ public struct HookRegistry: Sendable {
 
     /// Executes all after hooks matching the given scope and tags.
     ///
-    /// Hooks execute in reverse registration order (LIFO) to ensure
-    /// proper cleanup. A hook with a tag filter is skipped if the tags
-    /// don't satisfy the filter. All hooks execute even if earlier ones throw.
+    /// Hooks are first reversed (LIFO) then sorted by ``Hook/order``
+    /// descending (stable sort preserves LIFO registration order among
+    /// hooks with equal order). A hook with a tag filter is skipped if the
+    /// tags don't satisfy the filter. All hooks execute even if earlier ones throw.
     ///
     /// - Parameters:
     ///   - scope: The scope to execute hooks for.
@@ -135,7 +152,9 @@ public struct HookRegistry: Sendable {
     /// - Throws: The first error thrown by any hook handler.
     public func executeAfter(scope: HookScope, tags: [String]) async throws {
         var firstError: (any Error)?
-        for hook in afterHooks.reversed() where hook.scope == scope {
+        let sorted = Array(afterHooks.filter { $0.scope == scope }.reversed())
+            .sorted { $0.order > $1.order }
+        for hook in sorted {
             if let filter = hook.tagFilter, !filter.matches(tags: tags) {
                 continue
             }

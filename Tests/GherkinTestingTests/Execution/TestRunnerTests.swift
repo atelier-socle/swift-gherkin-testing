@@ -264,7 +264,7 @@ struct TestRunnerTests {
 
     // MARK: - Tag Filtering
 
-    @Test("tag filter skips non-matching pickles")
+    @Test("tag filter marks non-matching pickles as skipped")
     func tagFilterSkips() async throws {
         let definitions = [noopDefinition("step")]
         let smokePickle = makePickle(
@@ -289,8 +289,11 @@ struct TestRunnerTests {
             feature: RunnerTestFeature()
         )
 
-        #expect(result.featureResults[0].scenarioResults.count == 1)
+        #expect(result.featureResults[0].scenarioResults.count == 2)
         #expect(result.featureResults[0].scenarioResults[0].name == "Smoke")
+        #expect(result.featureResults[0].scenarioResults[0].status == .passed)
+        #expect(result.featureResults[0].scenarioResults[1].name == "WIP")
+        #expect(result.featureResults[0].scenarioResults[1].status == .skipped)
     }
 
     @Test("tag filter with not expression")
@@ -318,8 +321,11 @@ struct TestRunnerTests {
             feature: RunnerTestFeature()
         )
 
-        #expect(result.featureResults[0].scenarioResults.count == 1)
+        #expect(result.featureResults[0].scenarioResults.count == 2)
         #expect(result.featureResults[0].scenarioResults[0].name == "Normal")
+        #expect(result.featureResults[0].scenarioResults[0].status == .passed)
+        #expect(result.featureResults[0].scenarioResults[1].name == "WIP")
+        #expect(result.featureResults[0].scenarioResults[1].status == .skipped)
     }
 
     // MARK: - Hooks Lifecycle

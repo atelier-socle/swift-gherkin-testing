@@ -99,7 +99,10 @@ public struct RegexStepMatcher<F: GherkinFeature>: Sendable {
                 )
             }
 
-            let descriptions = bestMatches.map(\.definition.patternDescription)
+            let descriptions = bestMatches.map { match in
+                let loc = match.definition.sourceLocation
+                return "\(match.definition.patternDescription) (line \(loc.line))"
+            }
             throw StepMatchError.ambiguous(stepText: step.text, matchDescriptions: descriptions)
         }
     }

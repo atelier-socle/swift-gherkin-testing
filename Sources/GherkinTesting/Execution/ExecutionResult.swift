@@ -85,6 +85,13 @@ public struct StepResult: Sendable, Equatable {
     /// The source location of the matched step definition, if any.
     public let location: Location?
 
+    /// A code suggestion for undefined steps.
+    ///
+    /// When a step's status is ``StepStatus/undefined``, this contains a
+    /// suggested Cucumber expression and code skeleton that the user can
+    /// copy-paste to define the missing step.
+    public let suggestion: StepSuggestion?
+
     /// Creates a new step result.
     ///
     /// - Parameters:
@@ -92,11 +99,19 @@ public struct StepResult: Sendable, Equatable {
     ///   - status: The execution status.
     ///   - duration: The wall-clock execution duration.
     ///   - location: The source location of the matched definition.
-    public init(step: PickleStep, status: StepStatus, duration: Duration, location: Location?) {
+    ///   - suggestion: A code suggestion for undefined steps. Defaults to `nil`.
+    public init(
+        step: PickleStep,
+        status: StepStatus,
+        duration: Duration,
+        location: Location?,
+        suggestion: StepSuggestion? = nil
+    ) {
         self.step = step
         self.status = status
         self.duration = duration
         self.location = location
+        self.suggestion = suggestion
     }
 }
 
@@ -227,5 +242,16 @@ public struct TestRunResult: Sendable, Equatable {
     /// The total number of scenarios executed (including skipped).
     public var totalCount: Int {
         featureResults.flatMap(\.scenarioResults).count
+    }
+
+    /// All step suggestions collected from undefined steps across the entire run.
+    ///
+    /// Particularly useful in dry-run mode where all steps are matched
+    /// and suggestions are generated for every undefined step.
+    public var allSuggestions: [StepSuggestion] {
+        featureResults
+            .flatMap(\.scenarioResults)
+            .flatMap(\.stepResults)
+            .compactMap(\.suggestion)
     }
 }
