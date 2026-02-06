@@ -21,6 +21,9 @@ public struct GherkinLexer: Sendable {
     /// The language used for keyword matching.
     private let language: GherkinLanguage
 
+    /// Pre-sorted step keywords (longest first), computed once at init.
+    private let sortedStepKeywords: [(keyword: String, type: StepKeywordType)]
+
     /// Creates a new lexer for the given source text.
     ///
     /// The language is auto-detected from the `# language:` header if present,
@@ -29,7 +32,9 @@ public struct GherkinLexer: Sendable {
     /// - Parameter source: The Gherkin source text to tokenize.
     public init(source: String) {
         self.source = source
-        self.language = LanguageDetector.detectLanguage(from: source)
+        let lang = LanguageDetector.detectLanguage(from: source)
+        self.language = lang
+        self.sortedStepKeywords = Self.buildSortedStepKeywords(language: lang)
     }
 
     /// Creates a new lexer for the given source text with an explicit language.
@@ -40,6 +45,20 @@ public struct GherkinLexer: Sendable {
     public init(source: String, language: GherkinLanguage) {
         self.source = source
         self.language = language
+        self.sortedStepKeywords = Self.buildSortedStepKeywords(language: language)
+    }
+
+    /// Builds the sorted step keywords array for the given language.
+    private static func buildSortedStepKeywords(
+        language: GherkinLanguage
+    ) -> [(keyword: String, type: StepKeywordType)] {
+        let allKeywords: [(keyword: String, type: StepKeywordType)] =
+            language.given.map { ($0, .context) } +
+            language.when.map { ($0, .action) } +
+            language.then.map { ($0, .outcome) } +
+            language.and.map { ($0, .conjunction) } +
+            language.but.map { ($0, .conjunction) }
+        return allKeywords.sorted { $0.keyword.count > $1.keyword.count }
     }
 
     /// Tokenizes the entire source text into an array of tokens.
@@ -53,6 +72,7 @@ public struct GherkinLexer: Sendable {
         var inDocString = false
         var docStringDelimiter = ""
         var docStringIndent = 0
+        let lineCount = lines.count
 
         for (index, line) in lines.enumerated() {
             let lineNumber = index + 1
@@ -191,7 +211,7 @@ public struct GherkinLexer: Sendable {
         // EOF
         tokens.append(Token(
             type: .eof,
-            location: Location(line: source.split(separator: "\n", omittingEmptySubsequences: false).count + 1),
+            location: Location(line: lineCount + 1),
             text: ""
         ))
 
@@ -291,19 +311,8 @@ public struct GherkinLexer: Sendable {
 
     /// Matches a step keyword (Given, When, Then, And, But, *) at the start of the line.
     private func matchStepKeyword(trimmed: String, line: String, lineNumber: Int) -> Token? {
-        // Step keywords in gherkin-languages.json include trailing space (e.g. "Given ")
-        // except for "* " which also includes trailing space
-        let allKeywords: [(keyword: String, type: StepKeywordType)] =
-            language.given.map { ($0, .context) } +
-            language.when.map { ($0, .action) } +
-            language.then.map { ($0, .outcome) } +
-            language.and.map { ($0, .conjunction) } +
-            language.but.map { ($0, .conjunction) }
-
-        // Sort by length descending to match longest keyword first
-        let sorted = allKeywords.sorted { $0.keyword.count > $1.keyword.count }
-
-        for (keyword, _) in sorted {
+        // Uses pre-sorted keywords (longest first) from init
+        for (keyword, _) in sortedStepKeywords {
             if trimmed.hasPrefix(keyword) {
                 let col = columnOf(firstNonWhitespace: line)
                 let rest = String(trimmed.dropFirst(keyword.count))

@@ -46,9 +46,18 @@ private struct ParserContext {
     var position: Int = 0
     var comments: [Comment] = []
 
-    /// The detected language from the source.
-    var language: String {
-        LanguageDetector.detectLanguageCode(from: source) ?? "en"
+    /// The detected language code, computed once at init.
+    let language: String
+
+    /// The resolved language object, computed once at init.
+    let resolvedLanguage: GherkinLanguage
+
+    init(tokens: [Token], source: String) {
+        self.tokens = tokens
+        self.source = source
+        let code = LanguageDetector.detectLanguageCode(from: source) ?? "en"
+        self.language = code
+        self.resolvedLanguage = LanguageRegistry.language(for: code) ?? LanguageRegistry.defaultLanguage
     }
 
     // MARK: - Token Navigation
@@ -410,8 +419,7 @@ private struct ParserContext {
             let keyword = stepToken.keyword ?? ""
 
             // Determine keyword type
-            let lang = LanguageRegistry.language(for: language) ?? LanguageRegistry.defaultLanguage
-            let rawType = resolveStepKeywordType(keyword: keyword, language: lang)
+            let rawType = resolveStepKeywordType(keyword: keyword, language: resolvedLanguage)
             let keywordType: StepKeywordType
             if rawType == .conjunction {
                 keywordType = lastKeywordType == .unknown ? .unknown : lastKeywordType

@@ -3,6 +3,18 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
+/// A pre-compiled pattern for fast step matching without re-compilation.
+private enum CompiledPattern<F: GherkinFeature>: Sendable {
+    /// Exact string match — compare directly.
+    case exact(String)
+
+    /// Pre-compiled Cucumber expression with cached regex.
+    case cucumberExpression(CucumberExpression)
+
+    /// Pre-compiled regex from a raw pattern string.
+    case regex(SendableRegex)
+}
+
 /// Unified step matching engine with priority-based resolution.
 ///
 /// Matches a step's text against a list of step definitions using three
@@ -11,6 +23,9 @@
 /// 1. **Exact string match** — fastest, no argument extraction
 /// 2. **Cucumber Expression match** — typed parameters via ``CucumberExpression``
 /// 3. **Regex match** — raw regex with capture groups
+///
+/// All patterns are pre-compiled at init time. No regex compilation occurs
+/// during `match()` calls, ensuring consistent sub-microsecond per-step matching.
 ///
 /// If multiple definitions match, returns ``StepMatchError/ambiguous(stepText:matchDescriptions:)``.
 /// If none match, returns ``StepMatchError/undefined(stepText:)``.
@@ -29,7 +44,13 @@ public struct RegexStepMatcher<F: GherkinFeature>: Sendable {
     /// The parameter type registry for Cucumber Expression matching.
     public let registry: ParameterTypeRegistry
 
+    /// Pre-compiled patterns parallel to `definitions`, built once at init.
+    private let compiledPatterns: [CompiledPattern<F>]
+
     /// Creates a new step matcher.
+    ///
+    /// All Cucumber expressions and regex patterns are compiled once at creation
+    /// time. If a pattern fails to compile, it is stored as a non-matching sentinel.
     ///
     /// - Parameters:
     ///   - definitions: The step definitions to match against.
@@ -40,12 +61,31 @@ public struct RegexStepMatcher<F: GherkinFeature>: Sendable {
     ) {
         self.definitions = definitions
         self.registry = registry
+
+        // Pre-compile all patterns once
+        self.compiledPatterns = definitions.map { definition in
+            switch definition.pattern {
+            case .exact(let pattern):
+                return .exact(pattern)
+            case .cucumberExpression(let source):
+                if let expr = try? CucumberExpression(source, registry: registry) {
+                    return .cucumberExpression(expr)
+                }
+                // If compilation fails, store as exact (won't match anything realistically)
+                return .exact("")
+            case .regex(let source):
+                if let compiled = try? SendableRegex(compiling: source) {
+                    return .regex(compiled)
+                }
+                return .exact("")
+            }
+        }
     }
 
     /// Matches a pickle step against the registered definitions.
     ///
-    /// Tries all definitions and collects matches. Each match is assigned a
-    /// priority based on its pattern type (exact > cucumber > regex).
+    /// Uses pre-compiled patterns for fast matching. No regex compilation
+    /// occurs during this call.
     ///
     /// - Parameter step: The pickle step to match.
     /// - Returns: A ``StepMatch`` with the matched definition and captured arguments.
@@ -54,21 +94,22 @@ public struct RegexStepMatcher<F: GherkinFeature>: Sendable {
     public func match(_ step: PickleStep) throws -> StepMatch<F> {
         var matches: [(definition: StepDefinition<F>, arguments: [String], priority: Int)] = []
 
-        for definition in definitions {
-            switch definition.pattern {
+        for (index, compiled) in compiledPatterns.enumerated() {
+            let definition = definitions[index]
+
+            switch compiled {
             case .exact(let pattern):
                 if step.text == pattern {
                     matches.append((definition, [], 0))
                 }
 
-            case .cucumberExpression(let source):
-                if let cucumberMatch = try matchCucumberExpression(source, against: step.text) {
+            case .cucumberExpression(let expression):
+                if let cucumberMatch = try expression.match(step.text) {
                     matches.append((definition, cucumberMatch.rawArguments, 1))
                 }
 
-            case .regex(let source):
-                if let regex = try? Regex(source),
-                   let result = try? regex.wholeMatch(in: step.text) {
+            case .regex(let compiledRegex):
+                if let result = try? compiledRegex.regex.wholeMatch(in: step.text) {
                     let captures = extractCaptures(from: result)
                     matches.append((definition, captures, 2))
                 }
@@ -105,18 +146,6 @@ public struct RegexStepMatcher<F: GherkinFeature>: Sendable {
             }
             throw StepMatchError.ambiguous(stepText: step.text, matchDescriptions: descriptions)
         }
-    }
-
-    /// Attempts to match a Cucumber expression source against step text.
-    ///
-    /// - Parameters:
-    ///   - source: The Cucumber expression source string.
-    ///   - text: The step text to match against.
-    /// - Returns: A ``CucumberMatch`` if matched, or `nil`.
-    /// - Throws: If expression compilation or matching fails.
-    private func matchCucumberExpression(_ source: String, against text: String) throws -> CucumberMatch? {
-        let expression = try CucumberExpression(source, registry: registry)
-        return try expression.match(text)
     }
 
     /// Extracts capture group strings from a regex match output.

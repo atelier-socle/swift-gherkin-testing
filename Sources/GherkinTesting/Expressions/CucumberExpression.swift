@@ -62,6 +62,27 @@ extension CucumberMatch: Equatable {
     }
 }
 
+/// A Sendable wrapper for `Regex<AnyRegexOutput>`.
+///
+/// `Regex` is immutable after creation and safe to share across threads, but
+/// `Regex<Output>` does not yet conform to `Sendable` in the standard library.
+/// This wrapper bridges the gap for use in `Sendable` types.
+///
+/// - Note: Remove this wrapper when `Regex` gains `Sendable` conformance
+///   in a future Swift release (tracked by Swift evolution).
+package struct SendableRegex: @unchecked Sendable {
+    /// The wrapped regex value.
+    package let regex: Regex<AnyRegexOutput>
+
+    /// Creates a wrapper by compiling a pattern string.
+    ///
+    /// - Parameter pattern: The regex pattern to compile.
+    /// - Throws: If the pattern is invalid.
+    package init(compiling pattern: String) throws {
+        self.regex = try Regex(pattern)
+    }
+}
+
 /// A compiled Cucumber expression that can match step text and extract typed arguments.
 ///
 /// Parses a Cucumber expression string (e.g. `"I have {int} cucumber(s)"`) into
@@ -93,9 +114,12 @@ public struct CucumberExpression: Sendable {
     /// The parameter type registry used for argument transformation.
     public let registry: ParameterTypeRegistry
 
+    /// The pre-compiled regex for matching, avoiding re-compilation on every match.
+    private let compiledRegex: SendableRegex
+
     /// Creates and compiles a Cucumber expression.
     ///
-    /// Validates the expression at creation time by compiling the regex pattern.
+    /// The regex is compiled once at creation time and cached for all subsequent matches.
     ///
     /// - Parameters:
     ///   - source: The Cucumber expression string.
@@ -110,22 +134,22 @@ public struct CucumberExpression: Sendable {
         self.pattern = compiledPattern
         self.paramTypeNames = typeNames
 
-        // Validate that the pattern compiles — fail fast at creation time
-        _ = try Regex(compiledPattern)
+        // Compile once, reuse on every match
+        self.compiledRegex = try SendableRegex(compiling: compiledPattern)
     }
 
     /// Matches a step text against this expression.
     ///
-    /// For each capture group, applies the parameter type's string transformer
-    /// to produce ``CucumberMatch/rawArguments`` and the typed transformer to
-    /// produce ``CucumberMatch/typedArguments``.
+    /// Uses the pre-compiled regex for fast matching. For each capture group,
+    /// applies the parameter type's string transformer to produce
+    /// ``CucumberMatch/rawArguments`` and the typed transformer to produce
+    /// ``CucumberMatch/typedArguments``.
     ///
     /// - Parameter text: The step text to match.
     /// - Returns: A ``CucumberMatch`` if the text matches, or `nil` if it doesn't.
     /// - Throws: If regex matching or argument transformation fails.
     public func match(_ text: String) throws -> CucumberMatch? {
-        let regex = try Regex(pattern)
-        guard let result = try regex.wholeMatch(in: text) else {
+        guard let result = try compiledRegex.regex.wholeMatch(in: text) else {
             return nil
         }
 
