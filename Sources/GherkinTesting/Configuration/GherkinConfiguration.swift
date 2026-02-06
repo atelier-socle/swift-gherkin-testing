@@ -5,13 +5,14 @@
 
 /// Configuration options for a Gherkin test run.
 ///
-/// Controls tag filtering, dry-run mode, and other execution behaviors.
-/// Reporters will be added in Phase 7.
+/// Controls tag filtering, dry-run mode, and reporters for output generation.
 ///
 /// ```swift
+/// let reporter = CucumberJSONReporter()
 /// let config = GherkinConfiguration(
 ///     tagFilter: try TagFilter("@smoke and not @wip"),
-///     dryRun: false
+///     dryRun: false,
+///     reporters: [reporter]
 /// )
 /// let runner = TestRunner(
 ///     definitions: mySteps,
@@ -32,17 +33,27 @@ public struct GherkinConfiguration: Sendable {
     /// steps have matching definitions without side effects.
     public var dryRun: Bool
 
+    /// The reporters that receive execution events and generate reports.
+    ///
+    /// Reporters are notified of feature, scenario, and step lifecycle
+    /// events during execution. After the run completes, call
+    /// ``GherkinReporter/generateReport()`` on each reporter to produce output.
+    public var reporters: [any GherkinReporter]
+
     /// Creates a new configuration.
     ///
     /// - Parameters:
     ///   - tagFilter: An optional tag filter expression. Defaults to `nil` (run all).
     ///   - dryRun: Whether to run in dry-run mode. Defaults to `false`.
+    ///   - reporters: The reporters to use. Defaults to empty.
     public init(
         tagFilter: TagFilter? = nil,
-        dryRun: Bool = false
+        dryRun: Bool = false,
+        reporters: [any GherkinReporter] = []
     ) {
         self.tagFilter = tagFilter
         self.dryRun = dryRun
+        self.reporters = reporters
     }
 
     /// A default configuration that runs all scenarios with no filtering.

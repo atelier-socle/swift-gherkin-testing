@@ -82,6 +82,16 @@ public struct TestRunner<F: GherkinFeature>: Sendable {
         let clock = ContinuousClock()
         let startTime = clock.now
 
+        // Notify reporters: feature starting
+        let startingFeature = FeatureResult(
+            name: featureName,
+            scenarioResults: [],
+            tags: featureTags
+        )
+        for reporter in configuration.reporters {
+            await reporter.featureStarted(startingFeature)
+        }
+
         // Before feature hooks
         try await hooks.executeBefore(scope: .feature, tags: featureTags)
 
@@ -95,11 +105,17 @@ public struct TestRunner<F: GherkinFeature>: Sendable {
                 let skippedStepResults = pickle.steps.map { step in
                     StepResult(step: step, status: .skipped, duration: .zero, location: nil)
                 }
-                scenarioResults.append(ScenarioResult(
+                let skippedResult = ScenarioResult(
                     name: pickle.name,
                     stepResults: skippedStepResults,
                     tags: pickleTags
-                ))
+                )
+                // Notify reporters of skipped scenario
+                for reporter in configuration.reporters {
+                    await reporter.scenarioStarted(skippedResult)
+                    await reporter.scenarioFinished(skippedResult)
+                }
+                scenarioResults.append(skippedResult)
                 continue
             }
 
@@ -118,16 +134,28 @@ public struct TestRunner<F: GherkinFeature>: Sendable {
 
         let duration = clock.now - startTime
 
-        return TestRunResult(
-            featureResults: [
-                FeatureResult(
-                    name: featureName,
-                    scenarioResults: scenarioResults,
-                    tags: featureTags
-                )
-            ],
+        let featureResult = FeatureResult(
+            name: featureName,
+            scenarioResults: scenarioResults,
+            tags: featureTags
+        )
+
+        // Notify reporters: feature finished
+        for reporter in configuration.reporters {
+            await reporter.featureFinished(featureResult)
+        }
+
+        let runResult = TestRunResult(
+            featureResults: [featureResult],
             duration: duration
         )
+
+        // Notify reporters: test run finished
+        for reporter in configuration.reporters {
+            await reporter.testRunFinished(runResult)
+        }
+
+        return runResult
     }
 
     /// Executes a single scenario (pickle) and returns its result.
@@ -146,6 +174,16 @@ public struct TestRunner<F: GherkinFeature>: Sendable {
     ) async -> ScenarioResult {
         // Fresh copy per scenario for isolation
         var scenarioFeature = feature
+
+        // Notify reporters: scenario starting
+        let startingScenario = ScenarioResult(
+            name: pickle.name,
+            stepResults: [],
+            tags: pickleTags
+        )
+        for reporter in configuration.reporters {
+            await reporter.scenarioStarted(startingScenario)
+        }
 
         // Before scenario hooks
         try? await hooks.executeBefore(scope: .scenario, tags: pickleTags)
@@ -174,17 +212,29 @@ public struct TestRunner<F: GherkinFeature>: Sendable {
                 }
             }
 
+            // Notify reporters: step finished
+            for reporter in configuration.reporters {
+                await reporter.stepFinished(stepResult)
+            }
+
             stepResults.append(stepResult)
         }
 
         // After scenario hooks (always run, even if steps failed)
         try? await hooks.executeAfter(scope: .scenario, tags: pickleTags)
 
-        return ScenarioResult(
+        let scenarioResult = ScenarioResult(
             name: pickle.name,
             stepResults: stepResults,
             tags: pickleTags
         )
+
+        // Notify reporters: scenario finished
+        for reporter in configuration.reporters {
+            await reporter.scenarioFinished(scenarioResult)
+        }
+
+        return scenarioResult
     }
 
     /// Executes a single step with hooks and timing.
