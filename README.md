@@ -161,6 +161,29 @@ struct AuthenticationSteps {
 struct LoginFeature { }
 ```
 
+### Loading .feature Files
+
+Load features from your test bundle resources with `.file()`:
+
+```swift
+@Feature(source: .file("Features/login.feature"))
+struct LoginFeature {
+    // step definitions...
+}
+```
+
+Add `.feature` files to your test target resources in `Package.swift`:
+
+```swift
+.testTarget(
+    name: "MyAppTests",
+    dependencies: ["GherkinTesting"],
+    resources: [.copy("Features")]
+)
+```
+
+By default, `.file()` loads from `Bundle.module` (SPM test targets). Xcode project targets using `Bundle.main` will be supported via an optional `bundle:` parameter.
+
 ### Hooks
 
 `@Before` and `@After` hooks run at feature, scenario, or step scope. Use `order:` to control execution order and `tags:` for conditional hooks.
@@ -260,6 +283,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute.
 
 ## License
 
-MIT License. See [LICENSE](LICENSE.md) for details.
+MIT License. See [LICENSE](LICENSE) for details.
 
 Copyright (c) 2026 Atelier Socle SAS
