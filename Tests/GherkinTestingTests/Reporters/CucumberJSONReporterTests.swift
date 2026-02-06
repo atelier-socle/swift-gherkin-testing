@@ -82,7 +82,6 @@ struct CucumberJSONReporterTests {
 
         await reporter.testRunFinished(result)
         let data = try await reporter.generateReport()
-        let json = try #require(String(data: data, encoding: .utf8))
 
         // Validate it's parsable by JSONDecoder
         let decoded = try JSONDecoder().decode(
