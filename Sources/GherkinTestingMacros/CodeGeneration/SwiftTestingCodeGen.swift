@@ -6,6 +6,7 @@
 import SwiftSyntax
 import SwiftSyntaxBuilder
 
+// Coverage: excluded — compile-time only (invoked by FeatureMacro during macro expansion)
 /// Generates Swift Testing `@Suite`/`@Test` structures for feature execution.
 ///
 /// Used by ``FeatureMacro`` for generating the test suite declarations.

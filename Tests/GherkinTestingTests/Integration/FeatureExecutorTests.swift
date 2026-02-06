@@ -149,4 +149,173 @@ struct FeatureExecutorTests {
         #expect(loc.fileID == "TestModule/MyTest.swift")
         #expect(loc.line == 10)
     }
+
+    // MARK: - FeatureExecutor.run()
+
+    @Test("run with inline source parses and executes scenarios")
+    func runInlineSource() async throws {
+        let gherkin = """
+            Feature: Test
+              Scenario: First
+                Given step one
+            """
+        let defs: [StepDefinition<StubFeature>] = [
+            StepDefinition(
+                keywordType: .context,
+                pattern: .exact("step one"),
+                sourceLocation: Location(line: 1),
+                handler: { _, _ in }
+            )
+        ]
+        let result = try await FeatureExecutor<StubFeature>.run(
+            source: .inline(gherkin),
+            definitions: defs,
+            featureFactory: { StubFeature() }
+        )
+        #expect(result.featureResults.count == 1)
+        #expect(result.featureResults[0].scenarioResults.count == 1)
+    }
+
+    @Test("run with scenario filter only runs matching scenario")
+    func runWithScenarioFilter() async throws {
+        let gherkin = """
+            Feature: Multi
+              Scenario: A
+                Given step a
+              Scenario: B
+                Given step b
+            """
+        let defs: [StepDefinition<StubFeature>] = [
+            StepDefinition(
+                keywordType: .context,
+                pattern: .exact("step a"),
+                sourceLocation: Location(line: 1),
+                handler: { _, _ in }
+            ),
+            StepDefinition(
+                keywordType: .context,
+                pattern: .exact("step b"),
+                sourceLocation: Location(line: 2),
+                handler: { _, _ in }
+            )
+        ]
+        let result = try await FeatureExecutor<StubFeature>.run(
+            source: .inline(gherkin),
+            definitions: defs,
+            scenarioFilter: "A",
+            featureFactory: { StubFeature() }
+        )
+        #expect(result.featureResults[0].scenarioResults.count == 1)
+        #expect(result.featureResults[0].scenarioResults[0].name == "A")
+    }
+
+    @Test("run with dryRun config returns result with suggestions")
+    func runDryRun() async throws {
+        let gherkin = """
+            Feature: DryRun
+              Scenario: Missing steps
+                Given undefined step here
+            """
+        let config = GherkinConfiguration(dryRun: true)
+        let result = try await FeatureExecutor<StubFeature>.run(
+            source: .inline(gherkin),
+            definitions: [],
+            configuration: config,
+            featureFactory: { StubFeature() }
+        )
+        #expect(!result.featureResults.isEmpty)
+    }
+
+    @Test("run with file source and non-existent file throws error")
+    func runFileSourceNotFound() async throws {
+        await #expect(throws: Error.self) {
+            _ = try await FeatureExecutor<StubFeature>.run(
+                source: .file("/nonexistent/path/to/feature.feature"),
+                definitions: [],
+                featureFactory: { StubFeature() }
+            )
+        }
+    }
+
+    @Test("buildStepSourceLocation for .file() without slash prefixes GherkinFeature/")
+    func buildSourceLocationFileNoSlash() {
+        let step = PickleStep(
+            id: "1",
+            text: "test",
+            argument: nil,
+            astNodeIds: ["5:3"]
+        )
+        let caller = CallerLocation(
+            fileID: "Module/Test.swift",
+            filePath: "/tmp/Test.swift",
+            line: 1,
+            column: 1
+        )
+        let loc = FeatureExecutor<StubFeature>.buildStepSourceLocation(
+            for: step,
+            source: .file("simple.feature"),
+            caller: caller
+        )
+        #expect(loc.fileID == "GherkinFeature/simple.feature")
+        #expect(loc.line == 5)
+        #expect(loc.column == 3)
+    }
+
+    // MARK: - FeatureExecutionError
+
+    @Test("FeatureExecutionError errorDescription formats failures")
+    func featureExecutionErrorDescription() {
+        let error = FeatureExecutionError(failures: ["Step A failed", "Step B undefined"])
+        let desc = error.errorDescription
+        #expect(desc?.contains("Feature execution failed") == true)
+        #expect(desc?.contains("Step A failed") == true)
+        #expect(desc?.contains("Step B undefined") == true)
+    }
+
+    @Test("FeatureExecutionError with empty failures")
+    func featureExecutionErrorEmpty() {
+        let error = FeatureExecutionError(failures: [])
+        let desc = error.errorDescription
+        #expect(desc?.contains("Feature execution failed") == true)
+    }
+
+    // MARK: - CallerLocation
+
+    @Test("CallerLocation stores all fields")
+    func callerLocationFields() {
+        let loc = CallerLocation(
+            fileID: "M/F.swift",
+            filePath: "/path/F.swift",
+            line: 42,
+            column: 7
+        )
+        #expect(loc.fileID == "M/F.swift")
+        #expect(loc.filePath == "/path/F.swift")
+        #expect(loc.line == 42)
+        #expect(loc.column == 7)
+    }
+
+    // MARK: - extractStepLine edge cases
+
+    @Test("extractStepLine with non-numeric parts returns nil")
+    func extractStepLineNonNumeric() {
+        let step = PickleStep(
+            id: "1",
+            text: "test",
+            argument: nil,
+            astNodeIds: ["abc:def"]
+        )
+        #expect(FeatureExecutor<StubFeature>.extractStepLine(from: step) == nil)
+    }
+
+    @Test("extractStepLine with single part returns nil")
+    func extractStepLineSinglePart() {
+        let step = PickleStep(
+            id: "1",
+            text: "test",
+            argument: nil,
+            astNodeIds: ["42"]
+        )
+        #expect(FeatureExecutor<StubFeature>.extractStepLine(from: step) == nil)
+    }
 }

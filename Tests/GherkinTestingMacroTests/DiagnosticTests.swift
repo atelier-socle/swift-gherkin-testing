@@ -23,8 +23,8 @@ private var testMacros: [String: any Macro.Type] {
     ]
 }
 
-@Suite("Diagnostic Tests")
-struct DiagnosticTests {
+@Suite("Diagnostic Tests — Error Diagnostics")
+struct DiagnosticErrorTests {
 
     @Test("Step macro on property emits diagnostic")
     func stepOnProperty() {
@@ -38,7 +38,8 @@ struct DiagnosticTests {
                 """,
             diagnostics: [
                 DiagnosticSpec(
-                    message: "Step macros (@Given, @When, @Then, @And, @But) can only be applied to functions",
+                    message:
+                        "Step macros (@Given, @When, @Then, @And, @But) can only be applied to functions",
                     line: 2,
                     column: 1
                 )
@@ -84,7 +85,8 @@ struct DiagnosticTests {
                 """,
             diagnostics: [
                 DiagnosticSpec(
-                    message: "Number of function parameters must match the number of capture groups in the expression",
+                    message:
+                        "Number of function parameters must match the number of capture groups in the expression",
                     line: 2,
                     column: 13
                 )
@@ -222,11 +224,221 @@ struct DiagnosticTests {
                 """,
             diagnostics: [
                 DiagnosticSpec(
-                    message: "Step macros (@Given, @When, @Then, @And, @But) can only be applied to functions",
+                    message:
+                        "Step macros (@Given, @When, @Then, @And, @But) can only be applied to functions",
                     line: 2,
                     column: 1
                 )
             ],
+            macros: testMacros
+        )
+    }
+
+    @Test("@And on property emits function requirement diagnostic")
+    func andOnProperty() {
+        assertMacroExpansion(
+            """
+            @And("conjunction step")
+            var y = 0
+            """,
+            expandedSource: """
+                var y = 0
+                """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message:
+                        "Step macros (@Given, @When, @Then, @And, @But) can only be applied to functions",
+                    line: 2,
+                    column: 1
+                )
+            ],
+            macros: testMacros
+        )
+    }
+
+    @Test("@But on property emits function requirement diagnostic")
+    func butOnProperty() {
+        assertMacroExpansion(
+            """
+            @But("exception step")
+            var z = 0
+            """,
+            expandedSource: """
+                var z = 0
+                """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message:
+                        "Step macros (@Given, @When, @Then, @And, @But) can only be applied to functions",
+                    line: 2,
+                    column: 1
+                )
+            ],
+            macros: testMacros
+        )
+    }
+
+    @Test("@Then with non-string literal emits diagnostic")
+    func thenNonStringLiteral() {
+        assertMacroExpansion(
+            """
+            @Then(variable)
+            func check() {
+            }
+            """,
+            expandedSource: """
+                func check() {
+                }
+                """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: "Step expression must be a string literal",
+                    line: 1,
+                    column: 1
+                )
+            ],
+            macros: testMacros
+        )
+    }
+
+    @Test("@StepLibrary on class emits struct requirement diagnostic")
+    func stepLibraryOnClass() {
+        assertMacroExpansion(
+            """
+            @StepLibrary
+            class BadClass {
+            }
+            """,
+            expandedSource: """
+                class BadClass {
+                }
+                """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: "@StepLibrary can only be applied to a struct",
+                    line: 1,
+                    column: 1
+                )
+            ],
+            macros: testMacros
+        )
+    }
+}
+
+@Suite("Diagnostic Tests — Code Generation")
+struct DiagnosticCodeGenTests {
+
+    @Test("Step macro with regex expression and matching params succeeds")
+    func stepWithRegexExpression() {
+        assertMacroExpansion(
+            """
+            @Given("^the user enters (.+) and (.+)$")
+            func enter(a: String, b: String) {
+            }
+            """,
+            expandedSource: """
+                func enter(a: String, b: String) {
+                }
+
+                static let __stepDef_enter = StepDefinition<Self>(
+                    keywordType: .context,
+                    pattern: .regex("^the user enters (.+) and (.+)$"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { feature, args in feature.enter(a: args[0], b: args[1]) }
+                )
+                """,
+            macros: testMacros
+        )
+    }
+
+    @Test("Step macro with cucumber expression generates cucumber pattern")
+    func stepWithCucumberExpression() {
+        assertMacroExpansion(
+            """
+            @When("I enter {string} and {string}")
+            func enter(a: String, b: String) {
+            }
+            """,
+            expandedSource: """
+                func enter(a: String, b: String) {
+                }
+
+                static let __stepDef_enter = StepDefinition<Self>(
+                    keywordType: .action,
+                    pattern: .cucumberExpression("I enter {string} and {string}"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { feature, args in feature.enter(a: args[0], b: args[1]) }
+                )
+                """,
+            macros: testMacros
+        )
+    }
+
+    @Test("Step macro with exact expression generates exact pattern")
+    func stepWithExactExpression() {
+        assertMacroExpansion(
+            """
+            @Then("the user is logged in")
+            func loggedIn() {
+            }
+            """,
+            expandedSource: """
+                func loggedIn() {
+                }
+
+                static let __stepDef_loggedIn = StepDefinition<Self>(
+                    keywordType: .outcome,
+                    pattern: .exact("the user is logged in"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { feature, args in feature.loggedIn() }
+                )
+                """,
+            macros: testMacros
+        )
+    }
+
+    @Test("Step macro with async throws function")
+    func stepAsyncThrows() {
+        assertMacroExpansion(
+            """
+            @Given("async step")
+            func doSetup() async throws {
+            }
+            """,
+            expandedSource: """
+                func doSetup() async throws {
+                }
+
+                static let __stepDef_doSetup = StepDefinition<Self>(
+                    keywordType: .context,
+                    pattern: .exact("async step"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { feature, args in try await feature.doSetup() }
+                )
+                """,
+            macros: testMacros
+        )
+    }
+
+    @Test("Step macro with _ parameter labels")
+    func stepUnderscoreLabels() {
+        assertMacroExpansion(
+            """
+            @Given("I have {int} items")
+            func haveItems(_ count: String) {
+            }
+            """,
+            expandedSource: """
+                func haveItems(_ count: String) {
+                }
+
+                static let __stepDef_haveItems = StepDefinition<Self>(
+                    keywordType: .context,
+                    pattern: .cucumberExpression("I have {int} items"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { feature, args in feature.haveItems(args[0]) }
+                )
+                """,
             macros: testMacros
         )
     }

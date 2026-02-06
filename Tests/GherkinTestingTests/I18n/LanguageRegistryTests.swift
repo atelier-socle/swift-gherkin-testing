@@ -101,6 +101,84 @@ struct LanguageRegistryTests {
         #expect(english?.examples.contains("Examples") == true)
         #expect(english?.examples.contains("Scenarios") == true)
     }
+
+    // MARK: - GherkinLanguage Properties
+
+    @Test("allStepKeywords combines all step keyword arrays")
+    func allStepKeywords() throws {
+        let lang = try #require(LanguageRegistry.language(for: "en"))
+        let allSteps = lang.allStepKeywords
+        #expect(allSteps.contains("Given "))
+        #expect(allSteps.contains("When "))
+        #expect(allSteps.contains("Then "))
+        #expect(allSteps.contains("And "))
+        #expect(allSteps.contains("But "))
+        #expect(allSteps.contains("* "))
+    }
+
+    @Test("allStructuralKeywords combines structural keyword arrays")
+    func allStructuralKeywords() throws {
+        let lang = try #require(LanguageRegistry.language(for: "en"))
+        let all = lang.allStructuralKeywords
+        #expect(all.contains("Feature"))
+        #expect(all.contains("Rule"))
+        #expect(all.contains("Background"))
+        #expect(all.contains("Scenario"))
+        #expect(all.contains("Scenario Outline"))
+        #expect(all.contains("Examples"))
+    }
+
+    @Test("GherkinLanguage is equatable and hashable")
+    func languageEquatable() throws {
+        let en1 = try #require(LanguageRegistry.language(for: "en"))
+        let en2 = try #require(LanguageRegistry.language(for: "en"))
+        let fr = try #require(LanguageRegistry.language(for: "fr"))
+        #expect(en1 == en2)
+        #expect(en1 != fr)
+
+        let set: Set<GherkinLanguage> = [en1, en2, fr]
+        #expect(set.count == 2)
+    }
+
+    @Test("language has correct native name")
+    func nativeName() throws {
+        let fr = try #require(LanguageRegistry.language(for: "fr"))
+        #expect(fr.native == "français")
+
+        let ja = try #require(LanguageRegistry.language(for: "ja"))
+        #expect(ja.native == "日本語")
+    }
+
+    @Test("language background keywords loaded")
+    func backgroundKeywords() throws {
+        let en = try #require(LanguageRegistry.language(for: "en"))
+        #expect(en.background.contains("Background"))
+
+        let fr = try #require(LanguageRegistry.language(for: "fr"))
+        #expect(fr.background.contains("Contexte"))
+    }
+
+    @Test("language rule keywords loaded")
+    func ruleKeywords() throws {
+        let en = try #require(LanguageRegistry.language(for: "en"))
+        #expect(en.rule.contains("Rule"))
+    }
+
+    @Test("all supported languages have non-empty feature keyword")
+    func allLanguagesHaveFeature() {
+        let codes = LanguageRegistry.supportedLanguageCodes
+        for code in codes {
+            let lang = LanguageRegistry.language(for: code)
+            #expect(lang != nil, "Language '\(code)' should be loaded")
+            #expect(lang?.feature.isEmpty == false, "Language '\(code)' should have feature keywords")
+        }
+    }
+
+    @Test("languages dictionary is populated with 70+ entries")
+    func languagesCount() {
+        let count = LanguageRegistry.languages.count
+        #expect(count >= 70)
+    }
 }
 
 @Suite("LanguageDetector Tests")

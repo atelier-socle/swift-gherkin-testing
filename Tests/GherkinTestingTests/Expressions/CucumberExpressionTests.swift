@@ -404,4 +404,68 @@ extension CucumberExpressionTests {
         let match = try #require(try expr.match("the user is logged in"))
         #expect(match.typedArguments.isEmpty)
     }
+
+    // MARK: - Additional Edge Cases for Coverage
+
+    @Test("match with unknown parameter type in registry returns raw string")
+    func matchUnknownParamFallback() throws {
+        var registry = ParameterTypeRegistry()
+        try registry.registerAny(
+            AnyParameterType(
+                name: "custom",
+                regexps: [#"\w+"#],
+                transformer: { $0 }
+            ))
+        let expr = try CucumberExpression("the {custom} step", registry: registry)
+        let match = try #require(try expr.match("the hello step"))
+        #expect(match.rawArguments == ["hello"])
+    }
+
+    @Test("CucumberMatch equatable compares rawArguments and paramTypeNames")
+    func matchEquatable() {
+        let m1 = CucumberMatch(
+            rawArguments: ["42"],
+            typedArguments: [42 as Int],
+            paramTypeNames: ["int"]
+        )
+        let m2 = CucumberMatch(
+            rawArguments: ["42"],
+            typedArguments: [42 as Int],
+            paramTypeNames: ["int"]
+        )
+        let m3 = CucumberMatch(
+            rawArguments: ["43"],
+            typedArguments: [43 as Int],
+            paramTypeNames: ["int"]
+        )
+        #expect(m1 == m2)
+        #expect(m1 != m3)
+    }
+
+    @Test("CucumberMatch equatable differs on paramTypeNames")
+    func matchEquatableDifferentTypes() {
+        let m1 = CucumberMatch(rawArguments: ["a"], typedArguments: ["a"], paramTypeNames: ["string"])
+        let m2 = CucumberMatch(rawArguments: ["a"], typedArguments: ["a"], paramTypeNames: ["word"])
+        #expect(m1 != m2)
+    }
+
+    @Test("parameterCount matches paramTypeNames count")
+    func parameterCountProperty() throws {
+        let expr = try CucumberExpression("I have {int} cats and {string} dogs")
+        #expect(expr.parameterCount == 2)
+    }
+
+    @Test("source property is preserved")
+    func sourceProperty() throws {
+        let source = "I have {int} cucumber(s)"
+        let expr = try CucumberExpression(source)
+        #expect(expr.source == source)
+    }
+
+    @Test("SendableRegex compiles and matches")
+    func sendableRegex() throws {
+        let regex = try SendableRegex(compiling: "^hello (\\w+)$")
+        let result = try regex.regex.wholeMatch(in: "hello world")
+        #expect(result != nil)
+    }
 }

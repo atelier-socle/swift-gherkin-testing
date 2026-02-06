@@ -6,6 +6,7 @@
 import SwiftCompilerPlugin
 import SwiftSyntaxMacros
 
+// Coverage: excluded — compile-time only (executed by the Swift compiler, not test runner)
 /// Entry point for the GherkinTesting compiler plugin.
 ///
 /// Registers all macros provided by the GherkinTesting framework:

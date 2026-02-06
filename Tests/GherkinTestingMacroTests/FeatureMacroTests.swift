@@ -229,4 +229,142 @@ struct FeatureMacroTests {
             macros: testMacros
         )
     }
+
+}
+
+// MARK: - Additional Coverage Tests
+
+@Suite("Feature Macro — Additional Coverage")
+struct FeatureMacroCoverageTests {
+
+    @Test("@Feature with .inline() and no scenarios generates single test")
+    func featureInlineNoScenarios() {
+        assertMacroExpansion(
+            #"""
+            @Feature(source: .inline("Feature: Empty"))
+            struct EmptyFeature {
+            }
+            """#,
+            expandedSource: #"""
+                struct EmptyFeature {
+                }
+
+                extension EmptyFeature: GherkinFeature {
+                }
+
+                extension EmptyFeature {
+                    static var __stepDefinitions: [StepDefinition<Self>] {
+                        []
+                    }
+                }
+
+                @Suite("\(EmptyFeature.self)")
+                struct EmptyFeature__GherkinTests {
+                    @Test("Feature: EmptyFeature")
+                    func feature_test() async throws {
+                        try await FeatureExecutor<EmptyFeature>.run(
+                            source: .inline("Feature: Empty"),
+                            definitions: EmptyFeature.__stepDefinitions,
+                            configuration: EmptyFeature.gherkinConfiguration,
+                            featureFactory: { EmptyFeature() }
+                        )
+                    }
+                }
+                """#,
+            macros: testMacros
+        )
+    }
+
+    @Test("@Feature with stepLibraries generates retyped definitions")
+    func featureWithStepLibraries() {
+        assertMacroExpansion(
+            #"""
+            @Feature(source: .inline("Feature: F\n  Scenario: S\n    Given x"), stepLibraries: [AuthSteps.self])
+            struct LibFeature {
+                @Given("x")
+                func stepX() {
+                }
+            }
+            """#,
+            expandedSource: #"""
+                struct LibFeature {
+                    @Given("x")
+                    func stepX() {
+                    }
+                }
+
+                extension LibFeature: GherkinFeature {
+                }
+
+                extension LibFeature {
+                    static var __stepDefinitions: [StepDefinition<Self>] {
+                        var defs: [StepDefinition<Self>] = [__stepDef_stepX]
+                        defs += AuthSteps.__stepDefinitions.map { $0.retyped(for: Self.self, using: { AuthSteps() }) }
+                        return defs
+                    }
+                }
+
+                @Suite("\(LibFeature.self)")
+                struct LibFeature__GherkinTests {
+                    @Test("Scenario: S")
+                    func scenario_S() async throws {
+                        try await FeatureExecutor<LibFeature>.run(
+                            source: .inline("Feature: F\n  Scenario: S\n    Given x"),
+                            definitions: LibFeature.__stepDefinitions,
+                            configuration: LibFeature.gherkinConfiguration,
+                            scenarioFilter: "S",
+                            featureFactory: { LibFeature() }
+                        )
+                    }
+                }
+                """#,
+            macros: testMacros
+        )
+    }
+
+    @Test("@Feature with invalid source type emits diagnostic")
+    func featureInvalidSourceType() {
+        assertMacroExpansion(
+            """
+            @Feature(source: .url("http://example.com"))
+            struct BadFeature {
+            }
+            """,
+            expandedSource: """
+                struct BadFeature {
+                }
+                """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: "@Feature 'source:' must be .inline(\"...\") or .file(\"...\")",
+                    line: 1,
+                    column: 17
+                )
+            ],
+            macros: testMacros
+        )
+    }
+
+    @Test("@Feature with non-function-call source emits diagnostic")
+    func featureNonFunctionCallSource() {
+        assertMacroExpansion(
+            """
+            @Feature(source: someVariable)
+            struct BadFeature {
+            }
+            """,
+            expandedSource: """
+                struct BadFeature {
+                }
+                """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: "@Feature 'source:' must be .inline(\"...\") or .file(\"...\")",
+                    line: 1,
+                    column: 17
+                )
+            ],
+            macros: testMacros
+        )
+    }
 }

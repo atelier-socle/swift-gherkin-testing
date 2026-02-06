@@ -214,4 +214,97 @@ struct ExpressionParserTests {
         #expect(pattern == "^the (red|green|blue) button$")
         #expect(types == ["color"])
     }
+
+    // MARK: - Additional Edge Cases
+
+    @Test("tokenizes escaped backslash")
+    func tokenizeEscapedBackslash() throws {
+        let tokens = try parser().tokenize(#"path\\to"#)
+        #expect(tokens == [.text(#"path\to"#)])
+    }
+
+    @Test("multiple parameters in one expression")
+    func compileThreeParams() throws {
+        let (pattern, types) = try parser().compile("{int} plus {int} equals {int}")
+        #expect(types == ["int", "int", "int"])
+        #expect(pattern.hasPrefix("^"))
+        #expect(pattern.hasSuffix("$"))
+    }
+
+    @Test("compiles parameter with multiple regex alternatives")
+    func compileMultiRegexParam() throws {
+        var registry = ParameterTypeRegistry()
+        try registry.registerAny(
+            AnyParameterType(
+                name: "quoted",
+                regexps: [#""[^"]*""#, #"'[^']*'"#],
+                transformer: { $0 }
+            ))
+        let customParser = ExpressionParser(registry: registry)
+        let (pattern, _) = try customParser.compile("I see {quoted}")
+        #expect(pattern.contains("|"))
+    }
+
+    // MARK: - ExpressionError Descriptions
+
+    @Test("ExpressionError.unterminatedParameter description")
+    func unterminatedParamDesc() {
+        let error = ExpressionError.unterminatedParameter("I have {int")
+        #expect(error.errorDescription?.contains("Unterminated parameter") == true)
+    }
+
+    @Test("ExpressionError.unterminatedOptional description")
+    func unterminatedOptionalDesc() {
+        let error = ExpressionError.unterminatedOptional("word(s")
+        #expect(error.errorDescription?.contains("Unterminated optional") == true)
+    }
+
+    @Test("ExpressionError.unknownParameterType description")
+    func unknownParamTypeDesc() {
+        let error = ExpressionError.unknownParameterType("color")
+        #expect(error.errorDescription?.contains("color") == true)
+    }
+
+    @Test("ExpressionError.emptyExpression description")
+    func emptyExpressionDesc() {
+        let error = ExpressionError.emptyExpression
+        #expect(error.errorDescription?.contains("empty") == true)
+    }
+
+    @Test("ExpressionError.emptyAlternative description")
+    func emptyAlternativeDesc() {
+        let error = ExpressionError.emptyAlternative("a//b")
+        #expect(error.errorDescription?.contains("Empty alternative") == true)
+    }
+
+    @Test("ExpressionError.parameterInAlternation description")
+    func paramInAlternationDesc() {
+        let error = ExpressionError.parameterInAlternation("a/{int}")
+        #expect(error.errorDescription?.contains("not allowed in alternation") == true)
+    }
+
+    @Test("ExpressionError.parameterInOptional description")
+    func paramInOptionalDesc() {
+        let error = ExpressionError.parameterInOptional("({int})")
+        #expect(error.errorDescription?.contains("not allowed in optional") == true)
+    }
+
+    // MARK: - Alternation Boundary Extraction
+
+    @Test("alternation without spaces stays intact")
+    func alternationNoSpaces() throws {
+        let tokens = try parser().tokenize("red/green/blue")
+        #expect(tokens == [.alternation(["red", "green", "blue"])])
+    }
+
+    @Test("alternation with prefix text")
+    func alternationWithPrefix() throws {
+        let tokens = try parser().tokenize("I run/walk fast")
+        #expect(
+            tokens == [
+                .text("I "),
+                .alternation(["run", "walk"]),
+                .text(" fast")
+            ])
+    }
 }

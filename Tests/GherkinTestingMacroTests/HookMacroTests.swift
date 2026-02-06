@@ -128,4 +128,140 @@ struct HookMacroTests {
             macros: testMacros
         )
     }
+
+    // MARK: - Additional Coverage Tests
+
+    @Test("@Before with step scope")
+    func beforeStepScope() {
+        assertMacroExpansion(
+            """
+            @Before(.step)
+            static func beforeStep() {
+            }
+            """,
+            expandedSource: """
+                static func beforeStep() {
+                }
+
+                static let __hook_beforeStep = Hook(
+                    scope: .step,
+                    tagFilter: nil,
+                    handler: { beforeStep() }
+                )
+                """,
+            macros: testMacros
+        )
+    }
+
+    @Test("@After with scenario scope")
+    func afterScenarioScope() {
+        assertMacroExpansion(
+            """
+            @After(.scenario)
+            static func cleanup() async {
+            }
+            """,
+            expandedSource: """
+                static func cleanup() async {
+                }
+
+                static let __hook_cleanup = Hook(
+                    scope: .scenario,
+                    tagFilter: nil,
+                    handler: { await cleanup() }
+                )
+                """,
+            macros: testMacros
+        )
+    }
+
+    @Test("@Before with order parameter")
+    func beforeWithOrder() {
+        assertMacroExpansion(
+            """
+            @Before(.scenario, order: 5)
+            static func ordered() {
+            }
+            """,
+            expandedSource: """
+                static func ordered() {
+                }
+
+                static let __hook_ordered = Hook(
+                    scope: .scenario,
+                    order: 5,
+                    tagFilter: nil,
+                    handler: { ordered() }
+                )
+                """,
+            macros: testMacros
+        )
+    }
+
+    @Test("@Before with negative order parameter")
+    func beforeWithNegativeOrder() {
+        assertMacroExpansion(
+            """
+            @Before(.scenario, order: -3)
+            static func earlyHook() {
+            }
+            """,
+            expandedSource: """
+                static func earlyHook() {
+                }
+
+                static let __hook_earlyHook = Hook(
+                    scope: .scenario,
+                    order: -3,
+                    tagFilter: nil,
+                    handler: { earlyHook() }
+                )
+                """,
+            macros: testMacros
+        )
+    }
+
+    @Test("@Before with default scope (no arguments)")
+    func beforeDefaultScope() {
+        assertMacroExpansion(
+            """
+            @Before
+            static func setUp() {
+            }
+            """,
+            expandedSource: """
+                static func setUp() {
+                }
+
+                static let __hook_setUp = Hook(
+                    scope: .scenario,
+                    tagFilter: nil,
+                    handler: { setUp() }
+                )
+                """,
+            macros: testMacros
+        )
+    }
+
+    @Test("@Before with throws only (not async)")
+    func beforeThrowsOnly() {
+        assertMacroExpansion(
+            """
+            @Before(.feature)
+            static func throwingSetup() throws {
+            }
+            """,
+            expandedSource: """
+                static func throwingSetup() throws {
+                }
+
+                static let __hook_throwingSetup = Hook(
+                    scope: .feature,
+                    tagFilter: nil,
+                    handler: { try throwingSetup() }
+                )
+                """,
+            macros: testMacros
+        )
+    }
 }

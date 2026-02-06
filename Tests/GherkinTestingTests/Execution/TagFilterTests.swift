@@ -203,4 +203,82 @@ struct TagFilterTests {
         #expect(filter1 == filter2)
         #expect(filter1 != filter3)
     }
+
+    // MARK: - Additional Edge Cases
+
+    @Test("tag directly adjacent to parenthesis")
+    func tagAdjacentToParen() throws {
+        let filter = try TagFilter("(@smoke)")
+        #expect(filter.matches(tags: ["@smoke"]))
+        #expect(!filter.matches(tags: []))
+    }
+
+    @Test("unknown word token in expression throws error")
+    func unknownWordInExpression() {
+        #expect(throws: TagFilterError.self) {
+            try TagFilter("@a xor @b")
+        }
+    }
+
+    @Test("extra tokens after expression throws error")
+    func extraTokensAfterExpression() {
+        #expect(throws: TagFilterError.self) {
+            try TagFilter("@a @b")
+        }
+    }
+
+    @Test("special characters in tag names")
+    func specialCharsInTags() throws {
+        let filter = try TagFilter("@feature-123")
+        #expect(filter.matches(tags: ["@feature-123"]))
+        #expect(!filter.matches(tags: ["@feature"]))
+    }
+
+    @Test("deeply nested expression")
+    func deeplyNested() throws {
+        let filter = try TagFilter("(((@a or @b) and @c) or @d)")
+        #expect(filter.matches(tags: ["@d"]))
+        #expect(filter.matches(tags: ["@a", "@c"]))
+        #expect(!filter.matches(tags: ["@a"]))
+    }
+
+    // MARK: - TagFilterError Descriptions
+
+    @Test("TagFilterError.emptyExpression description")
+    func emptyExpressionDescription() {
+        let error = TagFilterError.emptyExpression
+        #expect(error.errorDescription?.contains("empty") == true)
+    }
+
+    @Test("TagFilterError.unexpectedToken description")
+    func unexpectedTokenDescription() {
+        let error = TagFilterError.unexpectedToken("!", position: 3)
+        let desc = error.errorDescription
+        #expect(desc?.contains("!") == true)
+        #expect(desc?.contains("3") == true)
+    }
+
+    @Test("TagFilterError.unexpectedEndOfExpression description")
+    func unexpectedEndDescription() {
+        let error = TagFilterError.unexpectedEndOfExpression
+        #expect(error.errorDescription?.contains("ended unexpectedly") == true)
+    }
+
+    @Test("TagFilterError.missingClosingParenthesis description")
+    func missingClosingParenDescription() {
+        let error = TagFilterError.missingClosingParenthesis
+        #expect(error.errorDescription?.contains("closing parenthesis") == true)
+    }
+
+    // MARK: - TagToken value
+
+    @Test("TagToken value strings")
+    func tagTokenValues() {
+        #expect(TagToken.tag("@smoke").value == "@smoke")
+        #expect(TagToken.not.value == "not")
+        #expect(TagToken.and.value == "and")
+        #expect(TagToken.or.value == "or")
+        #expect(TagToken.leftParen.value == "(")
+        #expect(TagToken.rightParen.value == ")")
+    }
 }
