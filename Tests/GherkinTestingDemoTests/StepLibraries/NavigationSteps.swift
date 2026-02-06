@@ -3,8 +3,8 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import GherkinTesting
+import Testing
 
 /// Reusable navigation step definitions with async handlers.
 @StepLibrary

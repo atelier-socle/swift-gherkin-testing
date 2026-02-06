@@ -3,9 +3,9 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
+import SwiftDiagnostics
 import SwiftSyntax
 import SwiftSyntaxMacros
-import SwiftDiagnostics
 
 /// Macro implementation for `@Feature(source:stepLibraries:)`.
 ///
@@ -84,10 +84,11 @@ extension FeatureMacro: PeerMacro {
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         guard let structDecl = declaration.as(StructDeclSyntax.self) else {
-            context.diagnose(Diagnostic(
-                node: declaration,
-                message: GherkinDiagnostic.featureRequiresStruct
-            ))
+            context.diagnose(
+                Diagnostic(
+                    node: declaration,
+                    message: GherkinDiagnostic.featureRequiresStruct
+                ))
             return []
         }
 
@@ -104,74 +105,21 @@ extension FeatureMacro: PeerMacro {
 
         switch memberName {
         case "inline":
-            let scenarioNames = SyntaxHelpers.extractScenarioNames(from: stringValue)
-            let escapedSource = escapeMultilineString(stringValue)
-
-            if scenarioNames.isEmpty {
-                let suiteDecl: DeclSyntax = """
-                    @Suite("\(raw: typeName)")
-                    struct \(raw: suiteName) {
-                        @Test("Feature: \(raw: typeName)")
-                        func feature_test() async throws {
-                            try await FeatureExecutor<\(raw: typeName)>.run(
-                                source: .inline(\(raw: escapedSource)),
-                                definitions: \(raw: typeName).__stepDefinitions,\(raw: hooksArg)\(raw: configArg)
-                                featureFactory: { \(raw: typeName)() }
-                            )
-                        }
-                    }
-                    """
-                return [suiteDecl]
-            } else {
-                var methods: [String] = []
-                for name in scenarioNames {
-                    let methodName = "scenario_\(SyntaxHelpers.sanitizeIdentifier(name))"
-                    let escapedName = SyntaxHelpers.escapeForStringLiteral(name)
-                    methods.append("""
-                            @Test("Scenario: \(escapedName)")
-                            func \(methodName)() async throws {
-                                try await FeatureExecutor<\(typeName)>.run(
-                                    source: .inline(\(escapedSource)),
-                                    definitions: \(typeName).__stepDefinitions,\(hooksArg)\(configArg)
-                                    scenarioFilter: "\(escapedName)",
-                                    featureFactory: { \(typeName)() }
-                                )
-                            }
-                        """)
-                }
-                let methodsCode = methods.joined(separator: "\n\n")
-                let suiteDecl: DeclSyntax = """
-                    @Suite("\(raw: typeName)")
-                    struct \(raw: suiteName) {
-                    \(raw: methodsCode)
-                    }
-                    """
-                return [suiteDecl]
-            }
-
+            return generateInlineSuite(
+                typeName: typeName, suiteName: suiteName, stringValue: stringValue,
+                hooksArg: hooksArg, configArg: configArg
+            )
         case "file":
-            let escapedPath = SyntaxHelpers.escapeForStringLiteral(stringValue)
-            let suiteDecl: DeclSyntax = """
-                @Suite("\(raw: typeName)")
-                struct \(raw: suiteName) {
-                    @Test("Feature: \(raw: typeName)")
-                    func feature_test() async throws {
-                        try await FeatureExecutor<\(raw: typeName)>.run(
-                            source: .file("\(raw: escapedPath)"),
-                            definitions: \(raw: typeName).__stepDefinitions,\(raw: hooksArg)
-                            bundle: Bundle.module,\(raw: configArg)
-                            featureFactory: { \(raw: typeName)() }
-                        )
-                    }
-                }
-                """
-            return [suiteDecl]
-
+            return generateFileSuite(
+                typeName: typeName, suiteName: suiteName, stringValue: stringValue,
+                hooksArg: hooksArg, configArg: configArg
+            )
         default:
-            context.diagnose(Diagnostic(
-                node: node,
-                message: GherkinDiagnostic.featureInvalidSource
-            ))
+            context.diagnose(
+                Diagnostic(
+                    node: node,
+                    message: GherkinDiagnostic.featureInvalidSource
+                ))
             return []
         }
     }
@@ -186,32 +134,38 @@ extension FeatureMacro {
         in context: some MacroExpansionContext
     ) -> (memberName: String, stringValue: String)? {
         guard let arguments = node.arguments?.as(LabeledExprListSyntax.self),
-              let sourceArg = arguments.first(where: { $0.label?.text == "source" }) else {
-            context.diagnose(Diagnostic(
-                node: node,
-                message: GherkinDiagnostic.featureMissingSource
-            ))
+            let sourceArg = arguments.first(where: { $0.label?.text == "source" })
+        else {
+            context.diagnose(
+                Diagnostic(
+                    node: node,
+                    message: GherkinDiagnostic.featureMissingSource
+                ))
             return nil
         }
 
         guard let funcCall = sourceArg.expression.as(FunctionCallExprSyntax.self),
-              let memberAccess = funcCall.calledExpression.as(MemberAccessExprSyntax.self) else {
-            context.diagnose(Diagnostic(
-                node: sourceArg.expression,
-                message: GherkinDiagnostic.featureInvalidSource
-            ))
+            let memberAccess = funcCall.calledExpression.as(MemberAccessExprSyntax.self)
+        else {
+            context.diagnose(
+                Diagnostic(
+                    node: sourceArg.expression,
+                    message: GherkinDiagnostic.featureInvalidSource
+                ))
             return nil
         }
 
         let memberName = memberAccess.declName.baseName.text
 
         guard let callArg = funcCall.arguments.first,
-              let stringLiteral = callArg.expression.as(StringLiteralExprSyntax.self),
-              let stringValue = SyntaxHelpers.extractStringLiteral(from: stringLiteral) else {
-            context.diagnose(Diagnostic(
-                node: sourceArg.expression,
-                message: GherkinDiagnostic.featureInvalidSource
-            ))
+            let stringLiteral = callArg.expression.as(StringLiteralExprSyntax.self),
+            let stringValue = SyntaxHelpers.extractStringLiteral(from: stringLiteral)
+        else {
+            context.diagnose(
+                Diagnostic(
+                    node: sourceArg.expression,
+                    message: GherkinDiagnostic.featureInvalidSource
+                ))
             return nil
         }
 
@@ -228,7 +182,8 @@ extension FeatureMacro {
 
             let hasStepAttr = funcDecl.attributes.contains { attrElement in
                 guard case .attribute(let attr) = attrElement,
-                      let identifier = attr.attributeName.as(IdentifierTypeSyntax.self) else {
+                    let identifier = attr.attributeName.as(IdentifierTypeSyntax.self)
+                else {
                     return false
                 }
                 return stepAttributeNames.contains(identifier.name.text)
@@ -260,8 +215,9 @@ extension FeatureMacro {
 
             for attrElement in funcDecl.attributes {
                 guard case .attribute(let attr) = attrElement,
-                      let identifier = attr.attributeName.as(IdentifierTypeSyntax.self),
-                      let timing = hookAttributes[identifier.name.text] else {
+                    let identifier = attr.attributeName.as(IdentifierTypeSyntax.self),
+                    let timing = hookAttributes[identifier.name.text]
+                else {
                     continue
                 }
                 hooks.append(HookInfo(funcName: funcDecl.name.text, timing: timing))
@@ -299,11 +255,10 @@ extension FeatureMacro {
 
         var typeNames: [String] = []
         for element in arrayExpr.elements {
-            if let memberAccess = element.expression.as(MemberAccessExprSyntax.self),
-               memberAccess.declName.baseName.text == "self",
-               let base = memberAccess.base?.as(DeclReferenceExprSyntax.self) {
-                typeNames.append(base.baseName.text)
-            }
+            guard let memberAccess = element.expression.as(MemberAccessExprSyntax.self) else { continue }
+            guard memberAccess.declName.baseName.text == "self" else { continue }
+            guard let base = memberAccess.base?.as(DeclReferenceExprSyntax.self) else { continue }
+            typeNames.append(base.baseName.text)
         }
         return typeNames
     }
@@ -322,7 +277,7 @@ extension FeatureMacro {
         for libType in libraryTypeNames {
             lines.append(
                 "defs += \(libType).__stepDefinitions.map "
-                + "{ $0.retyped(for: Self.self, using: { \(libType)() }) }"
+                    + "{ $0.retyped(for: Self.self, using: { \(libType)() }) }"
             )
         }
         lines.append("return defs")
@@ -338,5 +293,86 @@ extension FeatureMacro {
     static func escapeMultilineString(_ string: String) -> String {
         let escaped = SyntaxHelpers.escapeForStringLiteral(string)
         return "\"\(escaped)\""
+    }
+
+    /// Generates the `@Suite` struct for an `.inline(...)` source.
+    static func generateInlineSuite(
+        typeName: String,
+        suiteName: String,
+        stringValue: String,
+        hooksArg: String,
+        configArg: String
+    ) -> [DeclSyntax] {
+        let scenarioNames = SyntaxHelpers.extractScenarioNames(from: stringValue)
+        let escapedSource = escapeMultilineString(stringValue)
+
+        if scenarioNames.isEmpty {
+            let suiteDecl: DeclSyntax = """
+                @Suite("\(raw: typeName)")
+                struct \(raw: suiteName) {
+                    @Test("Feature: \(raw: typeName)")
+                    func feature_test() async throws {
+                        try await FeatureExecutor<\(raw: typeName)>.run(
+                            source: .inline(\(raw: escapedSource)),
+                            definitions: \(raw: typeName).__stepDefinitions,\(raw: hooksArg)\(raw: configArg)
+                            featureFactory: { \(raw: typeName)() }
+                        )
+                    }
+                }
+                """
+            return [suiteDecl]
+        }
+
+        var methods: [String] = []
+        for name in scenarioNames {
+            let methodName = "scenario_\(SyntaxHelpers.sanitizeIdentifier(name))"
+            let escapedName = SyntaxHelpers.escapeForStringLiteral(name)
+            methods.append(
+                """
+                    @Test("Scenario: \(escapedName)")
+                    func \(methodName)() async throws {
+                        try await FeatureExecutor<\(typeName)>.run(
+                            source: .inline(\(escapedSource)),
+                            definitions: \(typeName).__stepDefinitions,\(hooksArg)\(configArg)
+                            scenarioFilter: "\(escapedName)",
+                            featureFactory: { \(typeName)() }
+                        )
+                    }
+                """)
+        }
+        let methodsCode = methods.joined(separator: "\n\n")
+        let suiteDecl: DeclSyntax = """
+            @Suite("\(raw: typeName)")
+            struct \(raw: suiteName) {
+            \(raw: methodsCode)
+            }
+            """
+        return [suiteDecl]
+    }
+
+    /// Generates the `@Suite` struct for a `.file(...)` source.
+    static func generateFileSuite(
+        typeName: String,
+        suiteName: String,
+        stringValue: String,
+        hooksArg: String,
+        configArg: String
+    ) -> [DeclSyntax] {
+        let escapedPath = SyntaxHelpers.escapeForStringLiteral(stringValue)
+        let suiteDecl: DeclSyntax = """
+            @Suite("\(raw: typeName)")
+            struct \(raw: suiteName) {
+                @Test("Feature: \(raw: typeName)")
+                func feature_test() async throws {
+                    try await FeatureExecutor<\(raw: typeName)>.run(
+                        source: .file("\(raw: escapedPath)"),
+                        definitions: \(raw: typeName).__stepDefinitions,\(raw: hooksArg)
+                        bundle: Bundle.module,\(raw: configArg)
+                        featureFactory: { \(raw: typeName)() }
+                    )
+                }
+            }
+            """
+        return [suiteDecl]
     }
 }

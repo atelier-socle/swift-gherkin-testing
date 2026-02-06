@@ -240,7 +240,8 @@ extension HTMLReporter {
 
     private func formatDuration(_ duration: Duration) -> String {
         let components = duration.components
-        let totalSeconds = Double(components.seconds)
+        let totalSeconds =
+            Double(components.seconds)
             + Double(components.attoseconds) / 1e18
         if totalSeconds < 1 {
             return String(format: "%.0fms", totalSeconds * 1000)
@@ -263,6 +264,10 @@ extension HTMLReporter {
 
 extension HTMLReporter {
     private func inlineCSS() -> String {
+        cssVariables() + cssLayout() + cssComponents()
+    }
+
+    private func cssVariables() -> String {
         """
         :root {
           --bg: #ffffff; --fg: #1a1a2e; --card-bg: #f8f9fa;
@@ -282,6 +287,12 @@ extension HTMLReporter {
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                background: var(--bg); color: var(--fg); padding: 20px; max-width: 1200px; margin: 0 auto; }
         h1 { margin-bottom: 16px; }
+
+        """
+    }
+
+    private func cssLayout() -> String {
+        """
         .summary { margin-bottom: 24px; }
         .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
         .summary-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
@@ -301,6 +312,12 @@ extension HTMLReporter {
         .filter-btn.active { background: var(--fg); color: var(--bg); }
         .tag-filter { padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px;
                       background: var(--card-bg); color: var(--fg); font-size: 13px; }
+
+        """
+    }
+
+    private func cssComponents() -> String {
+        """
         .feature { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
         .feature-header, .scenario-header { padding: 12px 16px; cursor: pointer; display: flex;
                                              align-items: center; gap: 8px; background: var(--card-bg); }

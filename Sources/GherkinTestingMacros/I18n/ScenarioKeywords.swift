@@ -143,7 +143,7 @@ enum ScenarioKeywords {
         "劇本大綱:",
         "场景大纲:",
         "場景大綱:",
-        "📖:",
+        "📖:"
     ]
 
     /// All scenario keywords (checked after outline keywords).
@@ -261,7 +261,7 @@ enum ScenarioKeywords {
         "场景:",
         "場景:",
         "📕:",
-        "🥒:",
+        "🥒:"
     ]
 
     /// Combined list: outline prefixes first, then scenario prefixes.

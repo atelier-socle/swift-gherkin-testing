@@ -12,7 +12,7 @@ import Testing
 private var testMacros: [String: any Macro.Type] {
     [
         "Before": BeforeMacro.self,
-        "After": AfterMacro.self,
+        "After": AfterMacro.self
     ]
 }
 
@@ -28,15 +28,15 @@ struct HookMacroTests {
             }
             """,
             expandedSource: """
-            static func setUp() async throws {
-            }
+                static func setUp() async throws {
+                }
 
-            static let __hook_setUp = Hook(
-                scope: .scenario,
-                tagFilter: nil,
-                handler: { try await setUp() }
-            )
-            """,
+                static let __hook_setUp = Hook(
+                    scope: .scenario,
+                    tagFilter: nil,
+                    handler: { try await setUp() }
+                )
+                """,
             macros: testMacros
         )
     }
@@ -50,15 +50,15 @@ struct HookMacroTests {
             }
             """,
             expandedSource: """
-            static func tearDown() {
-            }
+                static func tearDown() {
+                }
 
-            static let __hook_tearDown = Hook(
-                scope: .feature,
-                tagFilter: nil,
-                handler: { tearDown() }
-            )
-            """,
+                static let __hook_tearDown = Hook(
+                    scope: .feature,
+                    tagFilter: nil,
+                    handler: { tearDown() }
+                )
+                """,
             macros: testMacros
         )
     }
@@ -72,15 +72,15 @@ struct HookMacroTests {
             }
             """,
             expandedSource: """
-            static func smokeSetup() {
-            }
+                static func smokeSetup() {
+                }
 
-            static let __hook_smokeSetup = Hook(
-                scope: .scenario,
-                tagFilter: try? TagFilter("@smoke"),
-                handler: { smokeSetup() }
-            )
-            """,
+                static let __hook_smokeSetup = Hook(
+                    scope: .scenario,
+                    tagFilter: try? TagFilter("@smoke"),
+                    handler: { smokeSetup() }
+                )
+                """,
             macros: testMacros
         )
     }
@@ -94,9 +94,9 @@ struct HookMacroTests {
             }
             """,
             expandedSource: """
-            func setUp() {
-            }
-            """,
+                func setUp() {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "@Before/@After hooks must be applied to static functions",
@@ -116,8 +116,8 @@ struct HookMacroTests {
             var foo = 42
             """,
             expandedSource: """
-            var foo = 42
-            """,
+                var foo = 42
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "@Before/@After can only be applied to functions",

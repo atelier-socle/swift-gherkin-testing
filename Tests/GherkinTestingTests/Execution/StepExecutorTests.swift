@@ -4,6 +4,7 @@
 // Copyright © 2026 Atelier Socle. MIT License.
 
 import Testing
+
 @testable import GherkinTesting
 
 /// A minimal feature type for testing step execution.

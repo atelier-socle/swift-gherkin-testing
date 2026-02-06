@@ -4,6 +4,7 @@
 // Copyright © 2026 Atelier Socle. MIT License.
 
 import Testing
+
 @testable import GherkinTesting
 
 @Suite("ExampleExpansion Tests")
@@ -107,14 +108,20 @@ struct ExampleExpansionTests {
 
     @Test("Substitutes placeholders in DataTable cells")
     func dataTableSubstitution() {
-        let dt = DataTable(location: Location(line: 1), rows: [
-            TableRow(location: Location(line: 1), cells: [
-                TableCell(location: Location(line: 1), value: "header"),
-            ]),
-            TableRow(location: Location(line: 2), cells: [
-                TableCell(location: Location(line: 2), value: "<name>"),
-            ]),
-        ])
+        let dt = DataTable(
+            location: Location(line: 1),
+            rows: [
+                TableRow(
+                    location: Location(line: 1),
+                    cells: [
+                        TableCell(location: Location(line: 1), value: "header")
+                    ]),
+                TableRow(
+                    location: Location(line: 2),
+                    cells: [
+                        TableCell(location: Location(line: 2), value: "<name>")
+                    ])
+            ])
         let result = ExampleExpansion.substitute(in: dt, values: ["name": "Alice"])
         #expect(result.rows[0].cells[0].value == "header")
         #expect(result.rows[1].cells[0].value == "Alice")
@@ -122,23 +129,31 @@ struct ExampleExpansionTests {
 
     @Test("DataTable with no placeholders unchanged")
     func dataTableNoPlaceholders() {
-        let dt = DataTable(location: Location(line: 1), rows: [
-            TableRow(location: Location(line: 1), cells: [
-                TableCell(location: Location(line: 1), value: "static"),
-            ]),
-        ])
+        let dt = DataTable(
+            location: Location(line: 1),
+            rows: [
+                TableRow(
+                    location: Location(line: 1),
+                    cells: [
+                        TableCell(location: Location(line: 1), value: "static")
+                    ])
+            ])
         let result = ExampleExpansion.substitute(in: dt, values: ["x": "1"])
         #expect(result.rows[0].cells[0].value == "static")
     }
 
     @Test("DataTable substitutes in multiple cells")
     func dataTableMultipleCells() {
-        let dt = DataTable(location: Location(line: 1), rows: [
-            TableRow(location: Location(line: 1), cells: [
-                TableCell(location: Location(line: 1), value: "<a>"),
-                TableCell(location: Location(line: 1), value: "<b>"),
-            ]),
-        ])
+        let dt = DataTable(
+            location: Location(line: 1),
+            rows: [
+                TableRow(
+                    location: Location(line: 1),
+                    cells: [
+                        TableCell(location: Location(line: 1), value: "<a>"),
+                        TableCell(location: Location(line: 1), value: "<b>")
+                    ])
+            ])
         let result = ExampleExpansion.substitute(in: dt, values: ["a": "1", "b": "2"])
         #expect(result.rows[0].cells[0].value == "1")
         #expect(result.rows[0].cells[1].value == "2")

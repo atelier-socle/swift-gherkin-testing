@@ -4,6 +4,7 @@
 // Copyright © 2026 Atelier Socle. MIT License.
 
 import Testing
+
 @testable import GherkinTesting
 
 /// A minimal feature for runner tests.
@@ -92,13 +93,15 @@ struct TestRunnerTests {
         let definitions = [
             loggingDefinition("step A", log: log),
             loggingDefinition("step B", log: log),
-            loggingDefinition("step C", log: log),
+            loggingDefinition("step C", log: log)
         ]
-        let pickle = makePickle(name: "Scenario 1", steps: [
-            makeStep("step A", id: "1"),
-            makeStep("step B", id: "2"),
-            makeStep("step C", id: "3"),
-        ])
+        let pickle = makePickle(
+            name: "Scenario 1",
+            steps: [
+                makeStep("step A", id: "1"),
+                makeStep("step B", id: "2"),
+                makeStep("step C", id: "3")
+            ])
         let runner = TestRunner(definitions: definitions)
 
         let result = try await runner.run(
@@ -123,7 +126,7 @@ struct TestRunnerTests {
         let pickles = [
             makePickle(name: "S1", steps: [makeStep("step")], id: "p1"),
             makePickle(name: "S2", steps: [makeStep("step")], id: "p2"),
-            makePickle(name: "S3", steps: [makeStep("step")], id: "p3"),
+            makePickle(name: "S3", steps: [makeStep("step")], id: "p3")
         ]
         let runner = TestRunner(definitions: definitions)
 
@@ -145,13 +148,15 @@ struct TestRunnerTests {
         let definitions: [StepDefinition<RunnerTestFeature>] = [
             noopDefinition("step A"),
             failingDefinition("step B"),
-            noopDefinition("step C"),
+            noopDefinition("step C")
         ]
-        let pickle = makePickle(name: "Scenario", steps: [
-            makeStep("step A", id: "1"),
-            makeStep("step B", id: "2"),
-            makeStep("step C", id: "3"),
-        ])
+        let pickle = makePickle(
+            name: "Scenario",
+            steps: [
+                makeStep("step A", id: "1"),
+                makeStep("step B", id: "2"),
+                makeStep("step C", id: "3")
+            ])
         let runner = TestRunner(definitions: definitions)
 
         let result = try await runner.run(
@@ -174,11 +179,13 @@ struct TestRunnerTests {
     @Test("undefined step causes remaining steps to be skipped")
     func undefinedSkipsRest() async throws {
         let definitions = [noopDefinition("step A")]
-        let pickle = makePickle(name: "Scenario", steps: [
-            makeStep("step A", id: "1"),
-            makeStep("undefined step", id: "2"),
-            makeStep("step A", id: "3"),
-        ])
+        let pickle = makePickle(
+            name: "Scenario",
+            steps: [
+                makeStep("step A", id: "1"),
+                makeStep("undefined step", id: "2"),
+                makeStep("step A", id: "3")
+            ])
         let runner = TestRunner(definitions: definitions)
 
         let result = try await runner.run(
@@ -200,9 +207,11 @@ struct TestRunnerTests {
     func dryRunMode() async throws {
         let log = RunnerLog()
         let definitions = [loggingDefinition("step A", log: log)]
-        let pickle = makePickle(name: "Scenario", steps: [
-            makeStep("step A"),
-        ])
+        let pickle = makePickle(
+            name: "Scenario",
+            steps: [
+                makeStep("step A")
+            ])
         let config = GherkinConfiguration(dryRun: true)
         let runner = TestRunner(definitions: definitions, configuration: config)
 
@@ -224,9 +233,11 @@ struct TestRunnerTests {
             definitions: [],
             configuration: GherkinConfiguration(dryRun: true)
         )
-        let pickle = makePickle(name: "Scenario", steps: [
-            makeStep("missing step"),
-        ])
+        let pickle = makePickle(
+            name: "Scenario",
+            steps: [
+                makeStep("missing step")
+            ])
 
         let result = try await runner.run(
             pickles: [pickle],
@@ -242,15 +253,17 @@ struct TestRunnerTests {
     func dryRunReportsAmbiguous() async throws {
         let definitions = [
             noopDefinition("ambiguous step"),
-            noopDefinition("ambiguous step"),
+            noopDefinition("ambiguous step")
         ]
         let runner = TestRunner(
             definitions: definitions,
             configuration: GherkinConfiguration(dryRun: true)
         )
-        let pickle = makePickle(name: "Scenario", steps: [
-            makeStep("ambiguous step"),
-        ])
+        let pickle = makePickle(
+            name: "Scenario",
+            steps: [
+                makeStep("ambiguous step")
+            ])
 
         let result = try await runner.run(
             pickles: [pickle],
@@ -262,7 +275,11 @@ struct TestRunnerTests {
         #expect(result.featureResults[0].scenarioResults[0].stepResults[0].status == .ambiguous)
     }
 
-    // MARK: - Tag Filtering
+}
+
+// MARK: - Tag Filtering
+
+extension TestRunnerTests {
 
     @Test("tag filter marks non-matching pickles as skipped")
     func tagFilterSkips() async throws {
@@ -327,8 +344,11 @@ struct TestRunnerTests {
         #expect(result.featureResults[0].scenarioResults[1].name == "WIP")
         #expect(result.featureResults[0].scenarioResults[1].status == .skipped)
     }
+}
 
-    // MARK: - Hooks Lifecycle
+// MARK: - Hooks Lifecycle
+
+extension TestRunnerTests {
 
     @Test("hooks execute in correct lifecycle order")
     func hooksLifecycle() async throws {
@@ -338,7 +358,7 @@ struct TestRunnerTests {
                 pattern: .exact("do something"),
                 sourceLocation: Location(line: 1),
                 handler: { _, _ in await log.append("step-exec") }
-            ),
+            )
         ]
         var hooks = HookRegistry()
         hooks.addBefore(Hook(scope: .feature) { await log.append("before-feature") })
@@ -359,15 +379,16 @@ struct TestRunnerTests {
         )
 
         let entries = await log.entries
-        #expect(entries == [
-            "before-feature",
-            "before-scenario",
-            "before-step",
-            "step-exec",
-            "after-step",
-            "after-scenario",
-            "after-feature",
-        ])
+        #expect(
+            entries == [
+                "before-feature",
+                "before-scenario",
+                "before-step",
+                "step-exec",
+                "after-step",
+                "after-scenario",
+                "after-feature"
+            ])
     }
 
     @Test("after hooks run even when step fails")
@@ -392,8 +413,11 @@ struct TestRunnerTests {
         #expect(entries.contains("after-step"))
         #expect(entries.contains("after-scenario"))
     }
+}
 
-    // MARK: - Edge Cases
+// MARK: - Edge Cases
+
+extension TestRunnerTests {
 
     @Test("empty pickle list produces empty results")
     func emptyPickles() async throws {
@@ -429,10 +453,12 @@ struct TestRunnerTests {
     @Test("all undefined steps")
     func allUndefined() async throws {
         let runner = TestRunner<RunnerTestFeature>(definitions: [])
-        let pickle = makePickle(name: "S", steps: [
-            makeStep("undef1", id: "1"),
-            makeStep("undef2", id: "2"),
-        ])
+        let pickle = makePickle(
+            name: "S",
+            steps: [
+                makeStep("undef1", id: "1"),
+                makeStep("undef2", id: "2")
+            ])
 
         let result = try await runner.run(
             pickles: [pickle],
@@ -455,7 +481,7 @@ struct TestRunnerTests {
                 handler: { feature, _ in
                     feature.log.append("mutated")
                 }
-            ),
+            )
         ]
         let pickle1 = makePickle(name: "S1", steps: [makeStep("mutate")], id: "p1")
         let pickle2 = makePickle(name: "S2", steps: [makeStep("mutate")], id: "p2")

@@ -3,8 +3,9 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import Foundation
+import Testing
+
 @testable import GherkinTesting
 
 // MARK: - Test Helpers
@@ -356,7 +357,7 @@ struct CucumberJSONReporterTests {
         let steps = [
             makeStepResult(text: "the user opens the app"),
             makeStepResult(text: "they tap login"),
-            makeStepResult(text: "they see the dashboard"),
+            makeStepResult(text: "they see the dashboard")
         ]
         let scenario = makeScenarioResult(stepResults: steps)
         let feature = makeFeatureResult(scenarioResults: [scenario])

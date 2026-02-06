@@ -4,6 +4,7 @@
 // Copyright © 2026 Atelier Socle. MIT License.
 
 import Testing
+
 @testable import GherkinTesting
 
 @Suite("GherkinLexer Tests")
@@ -184,11 +185,11 @@ struct GherkinLexerTests {
     @Test("Doc string with triple quotes")
     func docStringTripleQuotes() {
         let source = """
-            \"\"\"
-            content line 1
-            content line 2
-            \"\"\"
-        """
+                \"\"\"
+                content line 1
+                content line 2
+                \"\"\"
+            """
         let lexer = GherkinLexer(source: source)
         let tokens = lexer.tokenize()
 
@@ -196,16 +197,16 @@ struct GherkinLexerTests {
         #expect(tokens[0].keyword == "\"\"\"")
         #expect(tokens[1].type == .docStringContent)
         #expect(tokens[2].type == .docStringContent)
-        #expect(tokens[3].type == .docString) // closing
+        #expect(tokens[3].type == .docString)  // closing
     }
 
     @Test("Doc string with backticks and media type")
     func docStringBackticksMediaType() {
         let source = """
-            ```json
-            {"key": "value"}
-            ```
-        """
+                ```json
+                {"key": "value"}
+                ```
+            """
         let lexer = GherkinLexer(source: source)
         let tokens = lexer.tokenize()
 
@@ -240,16 +241,16 @@ struct GherkinLexerTests {
     @Test("Tokens have correct line numbers")
     func tokenLineNumbers() {
         let source = """
-        Feature: Test
-          Scenario: S1
-            Given step
-        """
+            Feature: Test
+              Scenario: S1
+                Given step
+            """
         let lexer = GherkinLexer(source: source)
         let tokens = lexer.tokenize()
 
-        #expect(tokens[0].location.line == 1) // Feature
-        #expect(tokens[1].location.line == 2) // Scenario
-        #expect(tokens[2].location.line == 3) // Given
+        #expect(tokens[0].location.line == 1)  // Feature
+        #expect(tokens[1].location.line == 2)  // Scenario
+        #expect(tokens[2].location.line == 3)  // Given
     }
 
     // MARK: - Background and Other Keywords
@@ -293,18 +294,18 @@ struct GherkinLexerTests {
     @Test("Full feature tokenization")
     func fullFeature() {
         let source = """
-        @smoke
-        Feature: Login
-          As a user
+            @smoke
+            Feature: Login
+              As a user
 
-          Background:
-            Given the app is running
+              Background:
+                Given the app is running
 
-          Scenario: Valid login
-            Given valid credentials
-            When I log in
-            Then I see the dashboard
-        """
+              Scenario: Valid login
+                Given valid credentials
+                When I log in
+                Then I see the dashboard
+            """
         let lexer = GherkinLexer(source: source)
         let tokens = lexer.tokenize()
 

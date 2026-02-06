@@ -4,6 +4,7 @@
 // Copyright © 2026 Atelier Socle. MIT License.
 
 import Testing
+
 @testable import GherkinTesting
 
 @Suite("CucumberExpression")
@@ -269,8 +270,11 @@ struct CucumberExpressionTests {
         #expect(expr.pattern.hasPrefix("^"))
         #expect(expr.pattern.hasSuffix("$"))
     }
+}
 
-    // MARK: - Combinations
+// MARK: - Combinations & Typed Arguments
+
+extension CucumberExpressionTests {
 
     @Test("optional + alternation + parameter combined")
     func combinedFeatures() throws {
@@ -297,8 +301,6 @@ struct CucumberExpressionTests {
         let match = try #require(try expr.match("version 2.0.1 is released"))
         #expect(match.rawArguments == ["2.0.1"])
     }
-
-    // MARK: - Typed Arguments
 
     @Test("{int} produces typed Int value")
     func typedInt() throws {

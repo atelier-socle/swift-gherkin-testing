@@ -4,6 +4,7 @@
 // Copyright © 2026 Atelier Socle. MIT License.
 
 import Testing
+
 @testable import GherkinTesting
 
 @Suite("LanguageRegistry Tests")
@@ -74,7 +75,7 @@ struct LanguageRegistryTests {
         #expect(codes.contains("en"))
         #expect(codes.contains("fr"))
         #expect(codes.contains("ja"))
-        #expect(codes.count > 50) // Should have 70+ languages
+        #expect(codes.count > 50)  // Should have 70+ languages
     }
 
     @Test("All step keywords include wildcard")
@@ -114,9 +115,9 @@ struct LanguageDetectorTests {
     @Test("Detects language header")
     func detectsLanguageHeader() {
         let source = """
-        # language: fr
-        Fonctionnalité: Test
-        """
+            # language: fr
+            Fonctionnalité: Test
+            """
         let code = LanguageDetector.detectLanguageCode(from: source)
         #expect(code == "fr")
     }
@@ -144,9 +145,9 @@ struct LanguageDetectorTests {
     @Test("Skips regular comments before language header")
     func skipsRegularComments() {
         let source = """
-        # Some comment
-        # language: fr
-        """
+            # Some comment
+            # language: fr
+            """
         let code = LanguageDetector.detectLanguageCode(from: source)
         #expect(code == "fr")
     }
@@ -154,9 +155,9 @@ struct LanguageDetectorTests {
     @Test("Stops at first non-comment, non-empty line")
     func stopsAtContent() {
         let source = """
-        Feature: Test
-        # language: fr
-        """
+            Feature: Test
+            # language: fr
+            """
         let code = LanguageDetector.detectLanguageCode(from: source)
         #expect(code == nil)
     }

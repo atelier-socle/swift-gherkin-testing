@@ -148,60 +148,59 @@ extension TagFilter {
         while index < input.endIndex {
             let char = input[index]
 
-            // Skip whitespace
             if char.isWhitespace {
                 index = input.index(after: index)
-                continue
-            }
-
-            // Parentheses
-            if char == "(" {
+            } else if char == "(" {
                 tokens.append(.leftParen)
                 index = input.index(after: index)
-                continue
-            }
-            if char == ")" {
+            } else if char == ")" {
                 tokens.append(.rightParen)
                 index = input.index(after: index)
-                continue
+            } else if char == "@" {
+                tokens.append(readTagToken(from: input, at: &index))
+            } else if char.isLetter {
+                tokens.append(try readWordToken(from: input, at: &index))
+            } else {
+                let pos = input.distance(from: input.startIndex, to: index)
+                throw TagFilterError.unexpectedToken(String(char), position: pos)
             }
-
-            // Tag: starts with @
-            if char == "@" {
-                let start = index
-                index = input.index(after: index)
-                while index < input.endIndex,
-                      !input[index].isWhitespace,
-                      input[index] != "(" && input[index] != ")" {
-                    index = input.index(after: index)
-                }
-                tokens.append(.tag(String(input[start..<index])))
-                continue
-            }
-
-            // Word: could be "not", "and", "or"
-            if char.isLetter {
-                let start = index
-                while index < input.endIndex, input[index].isLetter {
-                    index = input.index(after: index)
-                }
-                let word = String(input[start..<index])
-                switch word {
-                case "not": tokens.append(.not)
-                case "and": tokens.append(.and)
-                case "or": tokens.append(.or)
-                default:
-                    let pos = input.distance(from: input.startIndex, to: start)
-                    throw TagFilterError.unexpectedToken(word, position: pos)
-                }
-                continue
-            }
-
-            let pos = input.distance(from: input.startIndex, to: index)
-            throw TagFilterError.unexpectedToken(String(char), position: pos)
         }
 
         return tokens
+    }
+
+    /// Reads a tag token starting with `@` from the input.
+    private static func readTagToken(
+        from input: String,
+        at index: inout String.Index
+    ) -> TagToken {
+        let tagBreakChars: Set<Character> = ["(", ")"]
+        let start = index
+        index = input.index(after: index)
+        while index < input.endIndex && !input[index].isWhitespace && !tagBreakChars.contains(input[index]) {
+            index = input.index(after: index)
+        }
+        return .tag(String(input[start..<index]))
+    }
+
+    /// Reads a keyword token (`not`, `and`, `or`) from the input.
+    private static func readWordToken(
+        from input: String,
+        at index: inout String.Index
+    ) throws -> TagToken {
+        let start = index
+        while index < input.endIndex, input[index].isLetter {
+            index = input.index(after: index)
+        }
+        let word = String(input[start..<index])
+        switch word {
+        case "not": return .not
+        case "and": return .and
+        case "or": return .or
+        default:
+            let pos = input.distance(from: input.startIndex, to: start)
+            throw TagFilterError.unexpectedToken(word, position: pos)
+        }
     }
 }
 

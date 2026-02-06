@@ -4,6 +4,7 @@
 // Copyright © 2026 Atelier Socle. MIT License.
 
 import Testing
+
 @testable import GherkinTesting
 
 @Suite("AST Type Tests")
@@ -98,9 +99,11 @@ struct ASTTests {
 
     @Test("DataTable creation")
     func dataTableCreation() {
-        let row = TableRow(location: Location(line: 1), cells: [
-            TableCell(location: Location(line: 1, column: 3), value: "x")
-        ])
+        let row = TableRow(
+            location: Location(line: 1),
+            cells: [
+                TableCell(location: Location(line: 1, column: 3), value: "x")
+            ])
         let table = DataTable(location: Location(line: 1), rows: [row])
         #expect(table.rows.count == 1)
     }
@@ -124,9 +127,11 @@ struct ASTTests {
 
     @Test("Examples creation with name")
     func examplesCreation() {
-        let header = TableRow(location: Location(line: 1), cells: [
-            TableCell(location: Location(line: 1, column: 3), value: "x")
-        ])
+        let header = TableRow(
+            location: Location(line: 1),
+            cells: [
+                TableCell(location: Location(line: 1, column: 3), value: "x")
+            ])
         let ex = Examples(
             location: Location(line: 1),
             tags: [],

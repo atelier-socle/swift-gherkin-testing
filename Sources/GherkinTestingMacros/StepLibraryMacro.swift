@@ -3,9 +3,9 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
+import SwiftDiagnostics
 import SwiftSyntax
 import SwiftSyntaxMacros
-import SwiftDiagnostics
 
 /// Macro implementation for `@StepLibrary`.
 ///
@@ -24,10 +24,11 @@ public struct StepLibraryMacro: MemberMacro, ExtensionMacro {
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         guard let structDecl = declaration.as(StructDeclSyntax.self) else {
-            context.diagnose(Diagnostic(
-                node: declaration,
-                message: GherkinDiagnostic.stepLibraryRequiresStruct
-            ))
+            context.diagnose(
+                Diagnostic(
+                    node: declaration,
+                    message: GherkinDiagnostic.stepLibraryRequiresStruct
+                ))
             return []
         }
 
@@ -70,7 +71,8 @@ public struct StepLibraryMacro: MemberMacro, ExtensionMacro {
 
             let hasStepAttr = funcDecl.attributes.contains { attrElement in
                 guard case .attribute(let attr) = attrElement,
-                      let identifier = attr.attributeName.as(IdentifierTypeSyntax.self) else {
+                    let identifier = attr.attributeName.as(IdentifierTypeSyntax.self)
+                else {
                     return false
                 }
                 return stepAttributeNames.contains(identifier.name.text)

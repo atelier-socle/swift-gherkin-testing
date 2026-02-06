@@ -3,8 +3,8 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import GherkinTesting
+import Testing
 
 // MARK: - @Feature Demo: i18n — Japanese (# language: ja)
 
@@ -20,17 +20,19 @@ import GherkinTesting
 /// Note: Japanese step keywords in gherkin-languages.json do NOT include
 /// a trailing space (unlike English `"Given "` or French `"Soit "`).
 /// The step text follows directly after the keyword without a space separator.
-@Feature(source: .inline("""
-    # language: ja
-    @auth
-    機能: ログイン
-      ユーザーは有効な資格情報でログインできます。
+@Feature(
+    source: .inline(
+        """
+        # language: ja
+        @auth
+        機能: ログイン
+          ユーザーは有効な資格情報でログインできます。
 
-      シナリオ: 正常ログイン
-        前提アプリが起動している
-        もしユーザーが "alice" と "secret123" を入力する
-        ならばダッシュボードが表示される
-    """))
+          シナリオ: 正常ログイン
+            前提アプリが起動している
+            もしユーザーが "alice" と "secret123" を入力する
+            ならばダッシュボードが表示される
+        """))
 struct JapaneseLoginFeature {
     let auth = MockAuthService()
 

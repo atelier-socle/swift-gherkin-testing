@@ -128,7 +128,8 @@ public struct HookRegistry: Sendable {
     ///   - tags: The current tags to evaluate hook filters against.
     /// - Throws: Any error thrown by a hook handler.
     public func executeBefore(scope: HookScope, tags: [String]) async throws {
-        let sorted = beforeHooks
+        let sorted =
+            beforeHooks
             .filter { $0.scope == scope }
             .sorted { $0.order < $1.order }
         for hook in sorted {

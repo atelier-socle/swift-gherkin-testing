@@ -33,7 +33,8 @@ enum SwiftTestingCodeGen {
         var testMethods: [String] = []
 
         if scenarioNames.isEmpty {
-            testMethods.append("""
+            testMethods.append(
+                """
                     @Test("Feature: \(typeName)")
                     func feature_test() async throws {
                         try await FeatureExecutor<\(typeName)>.run(
@@ -47,7 +48,8 @@ enum SwiftTestingCodeGen {
             for name in scenarioNames {
                 let methodName = "scenario_\(SyntaxHelpers.sanitizeIdentifier(name))"
                 let displayName = SyntaxHelpers.escapeForStringLiteral(name)
-                testMethods.append("""
+                testMethods.append(
+                    """
                         @Test("Scenario: \(displayName)")
                         func \(methodName)() async throws {
                             try await FeatureExecutor<\(typeName)>.run(

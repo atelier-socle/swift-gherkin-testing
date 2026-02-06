@@ -35,7 +35,7 @@ public enum LanguageDetector: Sendable {
             if trimmed.hasPrefix("#") {
                 let afterHash = trimmed.dropFirst().trimmingCharacters(in: .whitespaces)
                 if afterHash.lowercased().hasPrefix("language:") {
-                    let codeStart = afterHash.index(afterHash.startIndex, offsetBy: 9) // "language:".count
+                    let codeStart = afterHash.index(afterHash.startIndex, offsetBy: 9)  // "language:".count
                     let code = afterHash[codeStart...].trimmingCharacters(in: .whitespaces)
                     return code.isEmpty ? nil : code
                 }

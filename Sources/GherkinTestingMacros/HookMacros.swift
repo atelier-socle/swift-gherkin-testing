@@ -3,9 +3,9 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
+import SwiftDiagnostics
 import SwiftSyntax
 import SwiftSyntaxMacros
-import SwiftDiagnostics
 
 /// Base implementation shared by `@Before` and `@After` hook macros.
 ///
@@ -35,19 +35,21 @@ enum HookMacroBase {
     ) throws -> [DeclSyntax] {
         // Validate: must be on a function
         guard let funcDecl = declaration.as(FunctionDeclSyntax.self) else {
-            context.diagnose(Diagnostic(
-                node: declaration,
-                message: GherkinDiagnostic.hookRequiresFunction
-            ))
+            context.diagnose(
+                Diagnostic(
+                    node: declaration,
+                    message: GherkinDiagnostic.hookRequiresFunction
+                ))
             return []
         }
 
         // Validate: must be static
         guard SyntaxHelpers.isStatic(funcDecl) else {
-            context.diagnose(Diagnostic(
-                node: funcDecl,
-                message: GherkinDiagnostic.hookRequiresStaticFunction
-            ))
+            context.diagnose(
+                Diagnostic(
+                    node: funcDecl,
+                    message: GherkinDiagnostic.hookRequiresStaticFunction
+                ))
             return []
         }
 
@@ -61,10 +63,11 @@ enum HookMacroBase {
         // Validate scope
         let validScopes: Set<String> = ["feature", "scenario", "step"]
         guard validScopes.contains(scope) else {
-            context.diagnose(Diagnostic(
-                node: node,
-                message: GherkinDiagnostic.hookInvalidScope
-            ))
+            context.diagnose(
+                Diagnostic(
+                    node: node,
+                    message: GherkinDiagnostic.hookInvalidScope
+                ))
             return []
         }
 
@@ -126,18 +129,16 @@ enum HookMacroBase {
             return nil
         }
 
-        for arg in arguments {
-            if arg.label?.text == "order" {
-                if let intLiteral = arg.expression.as(IntegerLiteralExprSyntax.self) {
-                    return Int(intLiteral.literal.text)
-                }
-                // Handle negative: PrefixOperatorExprSyntax("-") wrapping IntegerLiteralExprSyntax
-                if let prefix = arg.expression.as(PrefixOperatorExprSyntax.self),
-                   prefix.operator.text == "-",
-                   let intLiteral = prefix.expression.as(IntegerLiteralExprSyntax.self),
-                   let value = Int(intLiteral.literal.text) {
-                    return -value
-                }
+        for arg in arguments where arg.label?.text == "order" {
+            if let intLiteral = arg.expression.as(IntegerLiteralExprSyntax.self) {
+                return Int(intLiteral.literal.text)
+            }
+            // Handle negative: PrefixOperatorExprSyntax("-") wrapping IntegerLiteralExprSyntax
+            guard let prefix = arg.expression.as(PrefixOperatorExprSyntax.self) else { continue }
+            guard prefix.operator.text == "-" else { continue }
+            guard let intLiteral = prefix.expression.as(IntegerLiteralExprSyntax.self) else { continue }
+            if let value = Int(intLiteral.literal.text) {
+                return -value
             }
         }
 
@@ -152,11 +153,9 @@ enum HookMacroBase {
             return nil
         }
 
-        for arg in arguments {
-            if arg.label?.text == "tags" {
-                if let stringLiteral = arg.expression.as(StringLiteralExprSyntax.self) {
-                    return SyntaxHelpers.extractStringLiteral(from: stringLiteral)
-                }
+        for arg in arguments where arg.label?.text == "tags" {
+            if let stringLiteral = arg.expression.as(StringLiteralExprSyntax.self) {
+                return SyntaxHelpers.extractStringLiteral(from: stringLiteral)
             }
         }
 

@@ -3,8 +3,8 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import GherkinTesting
+import Testing
 
 // MARK: - Step Library Composition Demo
 
@@ -36,7 +36,8 @@ struct GreetingSteps {
 /// }
 /// ```
 @Feature(
-    source: .inline("""
+    source: .inline(
+        """
         Feature: Library Composition
           Scenario: Steps from library
             Given a greeting is prepared

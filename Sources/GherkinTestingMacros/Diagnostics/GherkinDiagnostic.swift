@@ -14,43 +14,43 @@ enum GherkinDiagnostic: String, DiagnosticMessage {
     // MARK: - @Feature diagnostics
 
     /// The `source:` argument is missing from `@Feature`.
-    case featureMissingSource = "featureMissingSource"
+    case featureMissingSource
 
     /// The `source:` argument must be `.inline(...)` or `.file(...)`.
-    case featureInvalidSource = "featureInvalidSource"
+    case featureInvalidSource
 
     /// `@Feature` can only be applied to a `struct`.
-    case featureRequiresStruct = "featureRequiresStruct"
+    case featureRequiresStruct
 
     // MARK: - Step macro diagnostics
 
     /// A step macro expression argument must be a string literal.
-    case stepExpressionNotStringLiteral = "stepExpressionNotStringLiteral"
+    case stepExpressionNotStringLiteral
 
     /// A step macro can only be applied to a function declaration.
-    case stepRequiresFunction = "stepRequiresFunction"
+    case stepRequiresFunction
 
     /// The step expression string is empty.
-    case stepExpressionEmpty = "stepExpressionEmpty"
+    case stepExpressionEmpty
 
     /// The function parameter count does not match the number of capture groups.
-    case stepParameterCountMismatch = "stepParameterCountMismatch"
+    case stepParameterCountMismatch
 
     // MARK: - Hook macro diagnostics
 
     /// `@Before`/`@After` can only be applied to a `static` function.
-    case hookRequiresStaticFunction = "hookRequiresStaticFunction"
+    case hookRequiresStaticFunction
 
     /// `@Before`/`@After` can only be applied to a function declaration.
-    case hookRequiresFunction = "hookRequiresFunction"
+    case hookRequiresFunction
 
     /// The scope argument must be `.feature`, `.scenario`, or `.step`.
-    case hookInvalidScope = "hookInvalidScope"
+    case hookInvalidScope
 
     // MARK: - @StepLibrary diagnostics
 
     /// `@StepLibrary` can only be applied to a `struct`.
-    case stepLibraryRequiresStruct = "stepLibraryRequiresStruct"
+    case stepLibraryRequiresStruct
 
     // MARK: - DiagnosticMessage conformance
 

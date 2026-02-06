@@ -61,13 +61,16 @@ struct FeatureExecutorTests {
             argument: nil,
             astNodeIds: ["7:5"]
         )
+        let caller = CallerLocation(
+            fileID: "TestModule/MyTest.swift",
+            filePath: "/path/to/MyTest.swift",
+            line: 42,
+            column: 9
+        )
         let loc = FeatureExecutor<StubFeature>.buildStepSourceLocation(
             for: step,
             source: .file("login.feature"),
-            callerFileID: "TestModule/MyTest.swift",
-            callerFilePath: "/path/to/MyTest.swift",
-            callerLine: 42,
-            callerColumn: 9
+            caller: caller
         )
         // For .file() source, SourceLocation should point to the .feature file line
         #expect(loc.line == 7)
@@ -82,13 +85,16 @@ struct FeatureExecutorTests {
             argument: nil,
             astNodeIds: ["3:5"]
         )
+        let caller = CallerLocation(
+            fileID: "TestModule/MyTest.swift",
+            filePath: "/path/to/MyTest.swift",
+            line: 42,
+            column: 9
+        )
         let loc = FeatureExecutor<StubFeature>.buildStepSourceLocation(
             for: step,
             source: .file("/path/to/login.feature"),
-            callerFileID: "TestModule/MyTest.swift",
-            callerFilePath: "/path/to/MyTest.swift",
-            callerLine: 42,
-            callerColumn: 9
+            caller: caller
         )
         // Absolute paths already contain /, so fileID is the path itself
         #expect(loc.fileID == "/path/to/login.feature")
@@ -103,13 +109,16 @@ struct FeatureExecutorTests {
             argument: nil,
             astNodeIds: ["7:5"]
         )
+        let caller = CallerLocation(
+            fileID: "TestModule/MyTest.swift",
+            filePath: "/path/to/MyTest.swift",
+            line: 42,
+            column: 9
+        )
         let loc = FeatureExecutor<StubFeature>.buildStepSourceLocation(
             for: step,
             source: .inline("Feature: Test\n  Scenario: Test\n    Given the user clicks login"),
-            callerFileID: "TestModule/MyTest.swift",
-            callerFilePath: "/path/to/MyTest.swift",
-            callerLine: 42,
-            callerColumn: 9
+            caller: caller
         )
         // For .inline() source, SourceLocation should use caller's location
         #expect(loc.fileID == "TestModule/MyTest.swift")
@@ -125,13 +134,16 @@ struct FeatureExecutorTests {
             argument: nil,
             astNodeIds: []
         )
+        let caller = CallerLocation(
+            fileID: "TestModule/MyTest.swift",
+            filePath: "/path/to/MyTest.swift",
+            line: 10,
+            column: 1
+        )
         let loc = FeatureExecutor<StubFeature>.buildStepSourceLocation(
             for: step,
             source: .file("test.feature"),
-            callerFileID: "TestModule/MyTest.swift",
-            callerFilePath: "/path/to/MyTest.swift",
-            callerLine: 10,
-            callerColumn: 1
+            caller: caller
         )
         // Falls back to caller location when no astNodeIds
         #expect(loc.fileID == "TestModule/MyTest.swift")

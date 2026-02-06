@@ -4,6 +4,7 @@
 // Copyright © 2026 Atelier Socle. MIT License.
 
 import Testing
+
 @testable import GherkinTesting
 
 @Suite("ExampleRepresentable Tests")
@@ -83,25 +84,25 @@ struct ExampleRepresentableTests {
 
     @Test("Optional String from example")
     func optionalString() {
-        let result: String?? = Optional<String>.fromExample("hello")
+        let result: String?? = String?.fromExample("hello")
         #expect(result == .some("hello"))
     }
 
     @Test("Optional empty string becomes nil")
     func optionalEmpty() {
-        let result: String?? = Optional<String>.fromExample("")
+        let result: String?? = String?.fromExample("")
         #expect(result == .some(nil))
     }
 
     @Test("Optional Int from valid string")
     func optionalInt() {
-        let result: Int?? = Optional<Int>.fromExample("42")
+        let result: Int?? = Int?.fromExample("42")
         #expect(result == .some(42))
     }
 
     @Test("Optional Int from invalid string returns nil")
     func optionalIntInvalid() {
-        let result: Int?? = Optional<Int>.fromExample("abc")
+        let result: Int?? = Int?.fromExample("abc")
         #expect(result == nil)
     }
 }

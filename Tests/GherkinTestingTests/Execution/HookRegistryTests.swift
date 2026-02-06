@@ -4,6 +4,7 @@
 // Copyright © 2026 Atelier Socle. MIT License.
 
 import Testing
+
 @testable import GherkinTesting
 
 /// Thread-safe log for tracking hook execution order.
@@ -80,10 +81,11 @@ struct HookRegistryTests {
         let log = HookLog()
         var registry = HookRegistry()
         registry.addAfter(Hook(scope: .scenario) { await log.append("first") })
-        registry.addAfter(Hook(scope: .scenario) {
-            await log.append("throws")
-            throw HookError()
-        })
+        registry.addAfter(
+            Hook(scope: .scenario) {
+                await log.append("throws")
+                throw HookError()
+            })
         registry.addAfter(Hook(scope: .scenario) { await log.append("third") })
 
         await #expect(throws: HookError.self) {
@@ -100,11 +102,12 @@ struct HookRegistryTests {
     func hookWithTagFilter() async throws {
         let log = HookLog()
         var registry = HookRegistry()
-        registry.addBefore(Hook(
-            scope: .scenario,
-            tagFilter: try TagFilter("@smoke"),
-            handler: { await log.append("smoke-hook") }
-        ))
+        registry.addBefore(
+            Hook(
+                scope: .scenario,
+                tagFilter: try TagFilter("@smoke"),
+                handler: { await log.append("smoke-hook") }
+            ))
 
         try await registry.executeBefore(scope: .scenario, tags: ["@smoke"])
         let entries = await log.entries
@@ -115,11 +118,12 @@ struct HookRegistryTests {
     func hookWithTagFilterSkipped() async throws {
         let log = HookLog()
         var registry = HookRegistry()
-        registry.addBefore(Hook(
-            scope: .scenario,
-            tagFilter: try TagFilter("@smoke"),
-            handler: { await log.append("smoke-hook") }
-        ))
+        registry.addBefore(
+            Hook(
+                scope: .scenario,
+                tagFilter: try TagFilter("@smoke"),
+                handler: { await log.append("smoke-hook") }
+            ))
 
         try await registry.executeBefore(scope: .scenario, tags: ["@login"])
         let entries = await log.entries
@@ -131,11 +135,12 @@ struct HookRegistryTests {
         let log = HookLog()
         var registry = HookRegistry()
         registry.addBefore(Hook(scope: .scenario) { await log.append("always") })
-        registry.addBefore(Hook(
-            scope: .scenario,
-            tagFilter: try TagFilter("@smoke"),
-            handler: { await log.append("smoke-only") }
-        ))
+        registry.addBefore(
+            Hook(
+                scope: .scenario,
+                tagFilter: try TagFilter("@smoke"),
+                handler: { await log.append("smoke-only") }
+            ))
         registry.addBefore(Hook(scope: .scenario) { await log.append("always2") })
 
         try await registry.executeBefore(scope: .scenario, tags: ["@login"])
@@ -170,11 +175,12 @@ struct HookRegistryTests {
             try await registry.executeAfter(scope: .step, tags: [])
         }
         let entries = await log.entries
-        #expect(entries == [
-            "before-step", "after-step",
-            "before-step", "after-step",
-            "before-step", "after-step",
-        ])
+        #expect(
+            entries == [
+                "before-step", "after-step",
+                "before-step", "after-step",
+                "before-step", "after-step"
+            ])
     }
 
     // MARK: - Empty Registry

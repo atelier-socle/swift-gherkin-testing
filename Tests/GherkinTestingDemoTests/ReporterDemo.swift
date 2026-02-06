@@ -3,9 +3,9 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import Foundation
 import GherkinTesting
+import Testing
 
 // MARK: - Reporter Demo (uses manual runtime API for programmatic result access)
 //

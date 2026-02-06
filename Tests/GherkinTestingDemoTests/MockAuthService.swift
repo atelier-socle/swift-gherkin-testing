@@ -12,7 +12,7 @@ actor MockAuthService {
     /// Known valid credentials (username → password).
     private let validCredentials: [String: String] = [
         "alice": "secret123",
-        "bob": "password456",
+        "bob": "password456"
     ]
 
     /// Whether the app has been launched.

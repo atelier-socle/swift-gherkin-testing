@@ -74,11 +74,11 @@ public struct StepSuggestion: Sendable, Equatable {
         let keyword = macroKeyword(for: keywordType)
         let escapedExpression = expression.replacing("\\", with: "\\\\").replacing("\"", with: "\\\"")
         let signature = """
-        @\(keyword)("\(escapedExpression)")
-        func \(funcName)() async throws {
-            throw PendingStepError()
-        }
-        """
+            @\(keyword)("\(escapedExpression)")
+            func \(funcName)() async throws {
+                throw PendingStepError()
+            }
+            """
         return StepSuggestion(
             stepText: stepText,
             suggestedExpression: expression,

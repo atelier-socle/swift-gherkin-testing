@@ -3,8 +3,8 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import GherkinTesting
+import Testing
 
 // MARK: - @StepLibrary Demo
 //

@@ -5,6 +5,7 @@
 
 import Foundation
 import Testing
+
 @testable import GherkinTesting
 
 @Suite("End-to-End Parser Tests")
@@ -16,11 +17,13 @@ struct EndToEndTests {
 
     func loadFixture(language: String = "en", name: String) throws -> String {
         let bundle = Bundle.module
-        guard let url = bundle.url(
-            forResource: name,
-            withExtension: "feature",
-            subdirectory: "Fixtures/\(language)"
-        ) else {
+        guard
+            let url = bundle.url(
+                forResource: name,
+                withExtension: "feature",
+                subdirectory: "Fixtures/\(language)"
+            )
+        else {
             throw FixtureError.notFound("\(language)/\(name).feature")
         }
         return try String(contentsOf: url, encoding: .utf8)
@@ -103,7 +106,7 @@ struct EndToEndTests {
         // Simple data table
         let step1 = try #require(feature.scenarios[0].steps.first)
         let table = try #require(step1.dataTable)
-        #expect(table.rows.count == 3) // header + 2
+        #expect(table.rows.count == 3)  // header + 2
 
         // Escaped data table
         let step2 = try #require(feature.scenarios[1].steps.first)
@@ -142,7 +145,7 @@ struct EndToEndTests {
         #expect(feature.tags.count == 2)
         #expect(feature.background != nil)
         #expect(feature.description != nil)
-        #expect(feature.scenarios.count >= 2) // Basic + outline
+        #expect(feature.scenarios.count >= 2)  // Basic + outline
         #expect(feature.rules.count == 1)
 
         // Check that the rule has scenarios with docstring and data table

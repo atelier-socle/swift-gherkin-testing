@@ -3,9 +3,9 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import Foundation
 import GherkinTesting
+import Testing
 
 // MARK: - @Feature with Reporters: JSON + JUnit XML + HTML via CompositeReporter
 
@@ -18,22 +18,24 @@ import GherkinTesting
 /// A separate verification test then calls `FeatureExecutor.run()` with
 /// fresh reporter instances to validate report output, since the auto-generated
 /// tests run independently.
-@Feature(source: .inline("""
-    @auth @report
-    Feature: Login with Reporters
-      Background:
-        Given the app is launched
+@Feature(
+    source: .inline(
+        """
+        @auth @report
+        Feature: Login with Reporters
+          Background:
+            Given the app is launched
 
-      Scenario: Successful login
-        Given the user is on the login page
-        When they enter "alice" and "secret123"
-        Then they should see the dashboard
+          Scenario: Successful login
+            Given the user is on the login page
+            When they enter "alice" and "secret123"
+            Then they should see the dashboard
 
-      Scenario: Failed login
-        Given the user is on the login page
-        When they enter "alice" and "wrong"
-        Then they should see an error message
-    """))
+          Scenario: Failed login
+            Given the user is on the login page
+            When they enter "alice" and "wrong"
+            Then they should see an error message
+        """))
 struct ReporterLoginFeature {
     let auth = MockAuthService()
 
@@ -45,7 +47,7 @@ struct ReporterLoginFeature {
             CompositeReporter(reporters: [
                 CucumberJSONReporter(),
                 JUnitXMLReporter(),
-                HTMLReporter(),
+                HTMLReporter()
             ])
         ])
     }
@@ -101,7 +103,8 @@ struct ReporterFeatureVerificationTests {
         let config = GherkinConfiguration(reporters: [composite])
 
         try await FeatureExecutor<ReporterLoginFeature>.run(
-            source: .inline("""
+            source: .inline(
+                """
                 @auth @report
                 Feature: Login with Reporters
                   Background:

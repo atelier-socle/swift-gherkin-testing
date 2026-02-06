@@ -46,10 +46,10 @@ public actor JUnitXMLReporter: GherkinReporter {
     public func generateReport() throws -> Data {
         guard let runResult else {
             let xml = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <testsuites>
-            </testsuites>
-            """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <testsuites>
+                </testsuites>
+                """
             guard let data = xml.data(using: .utf8) else {
                 throw ReporterError.encodingFailed
             }
@@ -170,7 +170,8 @@ extension JUnitXMLReporter {
 
     private func formatDuration(_ duration: Duration) -> String {
         let components = duration.components
-        let totalSeconds = Double(components.seconds)
+        let totalSeconds =
+            Double(components.seconds)
             + Double(components.attoseconds) / 1e18
         return String(format: "%.3f", totalSeconds)
     }

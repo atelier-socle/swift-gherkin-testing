@@ -89,10 +89,11 @@ private struct ParserContext {
                 advance()
             case .comment:
                 let token = advance()
-                comments.append(Comment(
-                    location: token.location,
-                    text: token.text
-                ))
+                comments.append(
+                    Comment(
+                        location: token.location,
+                        text: token.text
+                    ))
             case .language:
                 // Language directive is NOT a comment per the spec — skip it silently
                 advance()
@@ -101,9 +102,11 @@ private struct ParserContext {
             }
         }
     }
+}
 
-    // MARK: - Document Parsing
+// MARK: - Document & Feature Parsing
 
+extension ParserContext {
     mutating func parseDocument() throws -> GherkinDocument {
         skipWhitespaceAndComments()
 
@@ -112,8 +115,6 @@ private struct ParserContext {
             if currentToken.type == .tagLine || currentToken.type == .feature {
                 feature = try parseFeature()
             } else {
-                // Skip any remaining content after consuming comments/empty lines
-                // that isn't a feature. Consume trailing comments and empty lines.
                 skipRemainingContent()
             }
         }
@@ -135,8 +136,6 @@ private struct ParserContext {
             }
         }
     }
-
-    // MARK: - Feature Parsing
 
     mutating func parseFeature() throws -> Feature {
         let tags = parseTags()
@@ -161,10 +160,7 @@ private struct ParserContext {
 
             switch currentToken.type {
             case .background:
-                if children.contains(where: {
-                    if case .background = $0 { return true }
-                    return false
-                }) {
+                if containsBackground(children) {
                     throw ParserError.duplicateBackground(at: currentToken.location)
                 }
                 let bg = try parseBackground()
@@ -178,7 +174,6 @@ private struct ParserContext {
             case .eof:
                 break
             default:
-                // Consume unexpected tokens and continue
                 advance()
             }
         }
@@ -194,8 +189,43 @@ private struct ParserContext {
         )
     }
 
-    // MARK: - Rule Parsing
+    /// Checks whether the children list already contains a Background.
+    private func containsBackground(_ children: [FeatureChild]) -> Bool {
+        children.contains(where: {
+            if case .background = $0 { return true }
+            return false
+        })
+    }
 
+    /// Checks whether the children list already contains a Background.
+    private func containsRuleBackground(_ children: [RuleChild]) -> Bool {
+        children.contains(where: {
+            if case .background = $0 { return true }
+            return false
+        })
+    }
+
+    /// Checks if the current tag line is followed by a Rule keyword (possibly with more tags in between).
+    func isTagFollowedByRule() -> Bool {
+        var lookahead = position
+        while lookahead < tokens.count {
+            let type = tokens[lookahead].type
+            switch type {
+            case .tagLine, .empty, .comment:
+                lookahead += 1
+            case .rule:
+                return true
+            default:
+                return false
+            }
+        }
+        return false
+    }
+}
+
+// MARK: - Rule, Background, Scenario Parsing
+
+extension ParserContext {
     mutating func parseRule(tags: [Tag]) throws -> Rule {
         guard currentToken.type == .rule else {
             throw ParserError.unexpectedToken(currentToken, expected: "Rule keyword")
@@ -210,14 +240,7 @@ private struct ParserContext {
             skipWhitespaceAndComments()
             if isAtEnd { break }
 
-            // Check if we hit something that belongs to the parent (another Rule, Feature-level tag+scenario)
-            if currentToken.type == .rule { break }
-            if currentToken.type == .feature { break }
-
-            // Peek ahead for tags that might precede a rule (which ends this rule)
-            if currentToken.type == .tagLine {
-                if isTagFollowedByRule() { break }
-            }
+            if shouldEndRuleScope() { break }
 
             let nextTags = parseTags()
             skipWhitespaceAndComments()
@@ -225,10 +248,7 @@ private struct ParserContext {
 
             switch currentToken.type {
             case .background:
-                if children.contains(where: {
-                    if case .background = $0 { return true }
-                    return false
-                }) {
+                if containsRuleBackground(children) {
                     throw ParserError.duplicateBackground(at: currentToken.location)
                 }
                 let bg = try parseBackground()
@@ -253,24 +273,17 @@ private struct ParserContext {
         )
     }
 
-    /// Checks if the current tag line is followed by a Rule keyword (possibly with more tags in between).
-    func isTagFollowedByRule() -> Bool {
-        var lookahead = position
-        while lookahead < tokens.count {
-            let type = tokens[lookahead].type
-            switch type {
-            case .tagLine, .empty, .comment:
-                lookahead += 1
-            case .rule:
-                return true
-            default:
-                return false
-            }
+    /// Checks if the current token indicates this rule's scope should end.
+    private func shouldEndRuleScope() -> Bool {
+        switch currentToken.type {
+        case .rule, .feature:
+            return true
+        case .tagLine:
+            return isTagFollowedByRule()
+        default:
+            return false
         }
-        return false
     }
-
-    // MARK: - Background Parsing
 
     mutating func parseBackground() throws -> Background {
         guard currentToken.type == .background else {
@@ -289,8 +302,6 @@ private struct ParserContext {
             steps: steps
         )
     }
-
-    // MARK: - Scenario Parsing
 
     mutating func parseScenario(tags: [Tag]) throws -> Scenario {
         let isOutline = currentToken.type == .scenarioOutline
@@ -358,9 +369,11 @@ private struct ParserContext {
         }
         return false
     }
+}
 
-    // MARK: - Examples Parsing
+// MARK: - Examples, Steps, DocString, DataTable, Tags, Description Parsing
 
+extension ParserContext {
     mutating func parseExamples(tags: [Tag]) throws -> Examples {
         guard currentToken.type == .examples else {
             throw ParserError.unexpectedToken(currentToken, expected: "Examples keyword")
@@ -403,8 +416,6 @@ private struct ParserContext {
         )
     }
 
-    // MARK: - Step Parsing
-
     mutating func parseSteps() throws -> [Step] {
         var steps: [Step] = []
         var lastKeywordType: StepKeywordType = .unknown
@@ -446,14 +457,15 @@ private struct ParserContext {
                 dataTable = parseDataTable()
             }
 
-            steps.append(Step(
-                location: stepToken.location,
-                keyword: keyword,
-                keywordType: keywordType,
-                text: stepToken.text,
-                docString: docString,
-                dataTable: dataTable
-            ))
+            steps.append(
+                Step(
+                    location: stepToken.location,
+                    keyword: keyword,
+                    keywordType: keywordType,
+                    text: stepToken.text,
+                    docString: docString,
+                    dataTable: dataTable
+                ))
         }
 
         return steps
@@ -493,8 +505,6 @@ private struct ParserContext {
 
         return .conjunction
     }
-
-    // MARK: - DocString Parsing
 
     mutating func parseDocString() throws -> DocString {
         guard currentToken.type == .docString else {
@@ -537,8 +547,6 @@ private struct ParserContext {
         )
     }
 
-    // MARK: - DataTable Parsing
-
     mutating func parseDataTable() -> DataTable {
         var rows: [TableRow] = []
         let startLocation = currentToken.location
@@ -565,8 +573,6 @@ private struct ParserContext {
         return TableRow(location: token.location, cells: cells)
     }
 
-    // MARK: - Tags Parsing
-
     mutating func parseTags() -> [Tag] {
         var tags: [Tag] = []
 
@@ -578,10 +584,11 @@ private struct ParserContext {
             for tagStr in tagStrings {
                 let trimmed = tagStr.trimmingCharacters(in: .whitespaces)
                 if trimmed.hasPrefix("@") && trimmed.count > 1 {
-                    tags.append(Tag(
-                        location: Location(line: token.location.line, column: col),
-                        name: trimmed
-                    ))
+                    tags.append(
+                        Tag(
+                            location: Location(line: token.location.line, column: col),
+                            name: trimmed
+                        ))
                 }
                 col += tagStr.count + 1
             }
@@ -599,8 +606,6 @@ private struct ParserContext {
 
         return tags
     }
-
-    // MARK: - Description Parsing
 
     mutating func parseDescription() -> String? {
         var lines: [String] = []

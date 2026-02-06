@@ -3,9 +3,9 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import Foundation
 import GherkinTesting
+import Testing
 
 // MARK: - @Feature Demo: .file() source loading from Bundle.module
 

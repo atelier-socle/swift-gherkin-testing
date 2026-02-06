@@ -3,8 +3,9 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import Foundation
+import Testing
+
 @testable import GherkinTesting
 
 // MARK: - Benchmark Helper
@@ -70,7 +71,7 @@ private func generateOutlineSource(exampleCount: Int) -> String {
         "    Then the output is <output>",
         "",
         "    Examples:",
-        "      | input | output |",
+        "      | input | output |"
     ]
     for i in 0..<exampleCount {
         lines.append("      | val\(i) | out\(i) |")
@@ -101,8 +102,9 @@ struct BenchmarkTests {
         }
         // Ideal local target: < 10ms
         print("Benchmark [Lexer 1000 lines]: median = \(result.median)")
-        #expect(result.median < .seconds(1),
-                "Lexer median \(result.median) exceeded CI threshold of 1s")
+        #expect(
+            result.median < .seconds(1),
+            "Lexer median \(result.median) exceeded CI threshold of 1s")
     }
 
     // MARK: - 2. Parser: 1000-line file
@@ -116,8 +118,9 @@ struct BenchmarkTests {
         }
         // Ideal local target: < 10ms
         print("Benchmark [Parser 1000 lines]: median = \(result.median)")
-        #expect(result.median < .seconds(5),
-                "Parser median \(result.median) exceeded CI threshold of 5s")
+        #expect(
+            result.median < .seconds(5),
+            "Parser median \(result.median) exceeded CI threshold of 5s")
     }
 
     // MARK: - 3. Compiler: 100 scenarios
@@ -135,8 +138,9 @@ struct BenchmarkTests {
         }
         // Ideal local target: < 10ms
         print("Benchmark [Compiler 100 scenarios]: median = \(result.median)")
-        #expect(result.median < .seconds(1),
-                "Compiler median \(result.median) exceeded CI threshold of 1s")
+        #expect(
+            result.median < .seconds(1),
+            "Compiler median \(result.median) exceeded CI threshold of 1s")
     }
 
     // MARK: - 4. Compiler: 10K outline expansion (lazy)
@@ -157,8 +161,9 @@ struct BenchmarkTests {
         }
         // Ideal local target: < 500ms
         print("Benchmark [Lazy 10K expansion]: median = \(result.median)")
-        #expect(result.median < .seconds(10),
-                "Lazy 10K expansion median \(result.median) exceeded CI threshold of 10s")
+        #expect(
+            result.median < .seconds(10),
+            "Lazy 10K expansion median \(result.median) exceeded CI threshold of 10s")
     }
 
     // MARK: - 5. Step matching: exact (1000 matches)
@@ -184,8 +189,9 @@ struct BenchmarkTests {
         }
         // Ideal local target: < 5ms
         print("Benchmark [Exact matching 1000]: median = \(result.median)")
-        #expect(result.median < .seconds(1),
-                "Exact matching median \(result.median) exceeded CI threshold of 1s")
+        #expect(
+            result.median < .seconds(1),
+            "Exact matching median \(result.median) exceeded CI threshold of 1s")
     }
 
     // MARK: - 6. Step matching: Cucumber Expression (1000 matches)
@@ -207,13 +213,13 @@ struct BenchmarkTests {
                 pattern: .cucumberExpression("the user {string} is logged in"),
                 sourceLocation: Location(line: 3),
                 handler: { _, _ in }
-            ),
+            )
         ]
         let matcher = RegexStepMatcher<BenchmarkFeature>(definitions: definitions)
         let texts = [
             "I have 42 cucumbers",
             "the price is 9.99 dollars",
-            "the user \"alice\" is logged in",
+            "the user \"alice\" is logged in"
         ]
         let steps = (0..<1000).map { i in
             PickleStep(id: "s\(i)", text: texts[i % 3], argument: nil, astNodeIds: [])
@@ -226,8 +232,9 @@ struct BenchmarkTests {
         }
         // Ideal local target: < 50ms
         print("Benchmark [Cucumber expression 1000]: median = \(result.median)")
-        #expect(result.median < .seconds(5),
-                "Cucumber expression matching median \(result.median) exceeded CI threshold of 5s")
+        #expect(
+            result.median < .seconds(5),
+            "Cucumber expression matching median \(result.median) exceeded CI threshold of 5s")
     }
 
     // MARK: - 7. Step matching: regex (1000 matches)
@@ -244,12 +251,12 @@ struct BenchmarkTests {
                 pattern: .regex("^the (\\w+) is (\\w+)$"),
                 sourceLocation: Location(line: 2),
                 handler: { _, _ in }
-            ),
+            )
         ]
         let matcher = RegexStepMatcher<BenchmarkFeature>(definitions: definitions)
         let texts = [
             "I have 99 items",
-            "the status is active",
+            "the status is active"
         ]
         let steps = (0..<1000).map { i in
             PickleStep(id: "s\(i)", text: texts[i % 2], argument: nil, astNodeIds: [])
@@ -262,8 +269,9 @@ struct BenchmarkTests {
         }
         // Ideal local target: < 50ms
         print("Benchmark [Regex matching 1000]: median = \(result.median)")
-        #expect(result.median < .seconds(5),
-                "Regex matching median \(result.median) exceeded CI threshold of 5s")
+        #expect(
+            result.median < .seconds(5),
+            "Regex matching median \(result.median) exceeded CI threshold of 5s")
     }
 
     // MARK: - 8. Tag filter evaluation (10K evaluations)
@@ -276,7 +284,7 @@ struct BenchmarkTests {
             ["@regression", "@wip"],
             ["@smoke", "@regression"],
             ["@wip"],
-            ["@other"],
+            ["@other"]
         ]
 
         let result = benchmark {
@@ -286,8 +294,9 @@ struct BenchmarkTests {
         }
         // Ideal local target: < 10ms
         print("Benchmark [Tag filter 10K]: median = \(result.median)")
-        #expect(result.median < .seconds(1),
-                "Tag filter median \(result.median) exceeded CI threshold of 1s")
+        #expect(
+            result.median < .seconds(1),
+            "Tag filter median \(result.median) exceeded CI threshold of 1s")
     }
 
     // MARK: - 9. i18n language lookup (all languages)
@@ -303,8 +312,9 @@ struct BenchmarkTests {
         }
         // Ideal local target: < 1ms
         print("Benchmark [Language lookup all]: median = \(result.median)")
-        #expect(result.median < .milliseconds(500),
-                "Language lookup median \(result.median) exceeded CI threshold of 500ms")
+        #expect(
+            result.median < .milliseconds(500),
+            "Language lookup median \(result.median) exceeded CI threshold of 500ms")
     }
 
     // MARK: - 10. Reporter generation (100 scenarios)
@@ -334,7 +344,8 @@ struct BenchmarkTests {
         }
         // Ideal local target: < 50ms
         print("Benchmark [Reporter 100 scenarios]: median = \(result.median)")
-        #expect(result.median < .seconds(5),
-                "Reporter generation median \(result.median) exceeded CI threshold of 5s")
+        #expect(
+            result.median < .seconds(5),
+            "Reporter generation median \(result.median) exceeded CI threshold of 5s")
     }
 }

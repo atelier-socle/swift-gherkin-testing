@@ -17,11 +17,13 @@ func loadFixture(_ relativePath: String) throws -> String {
     let name = filename.split(separator: ".").first.map(String.init) ?? filename
     let ext = filename.split(separator: ".").last.map(String.init) ?? "feature"
 
-    guard let url = Bundle.module.url(
-        forResource: name,
-        withExtension: ext,
-        subdirectory: "Fixtures/\(directory)"
-    ) else {
+    guard
+        let url = Bundle.module.url(
+            forResource: name,
+            withExtension: ext,
+            subdirectory: "Fixtures/\(directory)"
+        )
+    else {
         throw FixtureError.notFound(relativePath)
     }
     return try String(contentsOf: url, encoding: .utf8)

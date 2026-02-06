@@ -3,8 +3,9 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import Foundation
+import Testing
+
 @testable import GherkinTesting
 
 // MARK: - Test Helpers
@@ -214,14 +215,15 @@ struct CompositeReporterTests {
         await composite.testRunFinished(result)
 
         let events = await spy.events
-        #expect(events == [
-            "featureStarted:F1",
-            "scenarioStarted:S1",
-            "stepFinished:step A",
-            "scenarioFinished:S1",
-            "featureFinished:F1",
-            "testRunFinished",
-        ])
+        #expect(
+            events == [
+                "featureStarted:F1",
+                "scenarioStarted:S1",
+                "stepFinished:step A",
+                "scenarioFinished:S1",
+                "featureFinished:F1",
+                "testRunFinished"
+            ])
     }
 
     @Test("works with real reporters")

@@ -64,16 +64,6 @@ public struct PickleSequence: Sequence, Sendable {
     let document: GherkinDocument
     let uri: String
 
-    /// Creates a new pickle sequence.
-    ///
-    /// - Parameters:
-    ///   - document: The parsed Gherkin document.
-    ///   - uri: The source file URI.
-    init(document: GherkinDocument, uri: String) {
-        self.document = document
-        self.uri = uri
-    }
-
     public func makeIterator() -> PickleIterator {
         PickleIterator(document: document, uri: uri)
     }
@@ -115,12 +105,13 @@ public struct PickleIterator: IteratorProtocol, Sendable {
                 case .background(let bg):
                     featureBackground = bg
                 case .scenario(let scenario):
-                    items.append(WorkItem(
-                        scenario: scenario,
-                        featureBackground: featureBackground,
-                        ruleBackground: nil,
-                        ruleTags: []
-                    ))
+                    items.append(
+                        WorkItem(
+                            scenario: scenario,
+                            featureBackground: featureBackground,
+                            ruleBackground: nil,
+                            ruleTags: []
+                        ))
                 case .rule(let rule):
                     var ruleBackground: Background?
                     for ruleChild in rule.children {
@@ -128,12 +119,13 @@ public struct PickleIterator: IteratorProtocol, Sendable {
                         case .background(let bg):
                             ruleBackground = bg
                         case .scenario(let scenario):
-                            items.append(WorkItem(
-                                scenario: scenario,
-                                featureBackground: featureBackground,
-                                ruleBackground: ruleBackground,
-                                ruleTags: rule.tags
-                            ))
+                            items.append(
+                                WorkItem(
+                                    scenario: scenario,
+                                    featureBackground: featureBackground,
+                                    ruleBackground: ruleBackground,
+                                    ruleTags: rule.tags
+                                ))
                         }
                     }
                 }
@@ -223,62 +215,52 @@ public struct PickleIterator: IteratorProtocol, Sendable {
         let scenario = item.scenario
         let id = nextId()
 
-        // Build name
         var name = scenario.name
         if let values = exampleValues {
             name = ExampleExpansion.substitute(in: name, values: values)
         }
 
-        // Build tags: feature ∪ rule ∪ scenario ∪ examples
-        var tags: [PickleTag] = []
-        tags.reserveCapacity(
-            featureTags.count + item.ruleTags.count + scenario.tags.count + examplesTags.count
-        )
-        for tag in featureTags {
-            tags.append(PickleTag(name: tag.name, astNodeId: tagId(tag)))
-        }
-        for tag in item.ruleTags {
-            tags.append(PickleTag(name: tag.name, astNodeId: tagId(tag)))
-        }
-        for tag in scenario.tags {
-            tags.append(PickleTag(name: tag.name, astNodeId: tagId(tag)))
-        }
-        for tag in examplesTags {
-            tags.append(PickleTag(name: tag.name, astNodeId: tagId(tag)))
-        }
+        let tags = buildPickleTags(item: item, examplesTags: examplesTags)
+        let steps = buildPickleSteps(item: item, exampleValues: exampleValues)
 
-        // Build steps: feature bg + rule bg + scenario steps
-        var steps: [PickleStep] = []
-
-        if let featureBg = item.featureBackground {
-            for step in featureBg.steps {
-                steps.append(makePickleStep(step, exampleValues: exampleValues))
-            }
-        }
-        if let ruleBg = item.ruleBackground {
-            for step in ruleBg.steps {
-                steps.append(makePickleStep(step, exampleValues: exampleValues))
-            }
-        }
-        for step in scenario.steps {
-            steps.append(makePickleStep(step, exampleValues: exampleValues))
-        }
-
-        // Build ast node IDs
         var astNodeIds = ["\(scenario.location.line):\(scenario.location.column)"]
         if let rowIdx = examplesRowIndex {
             astNodeIds.append("row:\(rowIdx)")
         }
 
         return Pickle(
-            id: id,
-            uri: uri,
-            name: name,
-            language: language,
-            tags: tags,
-            steps: steps,
-            astNodeIds: astNodeIds
+            id: id, uri: uri, name: name, language: language,
+            tags: tags, steps: steps, astNodeIds: astNodeIds
         )
+    }
+
+    /// Builds the merged tag list: feature + rule + scenario + examples tags.
+    private func buildPickleTags(item: WorkItem, examplesTags: [Tag]) -> [PickleTag] {
+        let tagSources = [featureTags, item.ruleTags, item.scenario.tags, examplesTags]
+        var tags: [PickleTag] = []
+        tags.reserveCapacity(tagSources.reduce(0) { $0 + $1.count })
+        for source in tagSources {
+            for tag in source {
+                tags.append(PickleTag(name: tag.name, astNodeId: tagId(tag)))
+            }
+        }
+        return tags
+    }
+
+    /// Builds the merged step list: feature background + rule background + scenario steps.
+    private mutating func buildPickleSteps(item: WorkItem, exampleValues: [String: String]?) -> [PickleStep] {
+        var steps: [PickleStep] = []
+        let backgrounds = [item.featureBackground, item.ruleBackground]
+        for bg in backgrounds {
+            guard let bg else { continue }
+            for step in bg.steps {
+                steps.append(makePickleStep(step, exampleValues: exampleValues))
+            }
+        }
+        for step in item.scenario.steps {
+            steps.append(makePickleStep(step, exampleValues: exampleValues))
+        }
+        return steps
     }
 
     private mutating func makePickleStep(

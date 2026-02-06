@@ -3,8 +3,8 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import GherkinTesting
+import Testing
 
 // MARK: - @Feature with Dry-Run: collect suggestions without execution
 
@@ -13,13 +13,15 @@ import GherkinTesting
 /// Because `gherkinConfiguration` returns `dryRun: true`, the generated
 /// `@Test` method matches steps without executing handlers. Undefined steps
 /// are NOT reported as test failures in dry-run mode — they are discovery-only.
-@Feature(source: .inline("""
-    Feature: Undefined Steps
-      Scenario: Unimplemented scenario
-        Given the user has 42 items
-        When they add "apples" to the cart
-        Then the total is 9.99
-    """))
+@Feature(
+    source: .inline(
+        """
+        Feature: Undefined Steps
+          Scenario: Unimplemented scenario
+            Given the user has 42 items
+            When they add "apples" to the cart
+            Then the total is 9.99
+        """))
 struct DryRunDemoFeature {
 
     /// Dry-run configuration: steps are matched but not executed.
@@ -41,7 +43,8 @@ struct DryRunFeatureVerificationTests {
     @Test("Dry-run collects suggestions for all undefined steps")
     func dryRunSuggestions() async throws {
         let result = try await FeatureExecutor<DryRunDemoFeature>.run(
-            source: .inline("""
+            source: .inline(
+                """
                 Feature: Undefined Steps
                   Scenario: Unimplemented scenario
                     Given the user has 42 items

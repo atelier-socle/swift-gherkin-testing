@@ -12,16 +12,16 @@ let package = Package(
         .tvOS(.v17),
         .watchOS(.v10),
         .visionOS(.v1),
-        .macCatalyst(.v17),
+        .macCatalyst(.v17)
     ],
     products: [
         .library(
             name: "GherkinTesting",
             targets: ["GherkinTesting"]
-        ),
+        )
     ],
     dependencies: [
-        .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "601.0.0"),
+        .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "601.0.0")
     ],
     targets: [
         // MARK: - Macro Plugin (compiler only, not shipped at runtime)
@@ -31,7 +31,7 @@ let package = Package(
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
-                .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax")
             ],
             path: "Sources/GherkinTestingMacros"
         ),
@@ -42,7 +42,7 @@ let package = Package(
             dependencies: ["GherkinTestingMacros"],
             path: "Sources/GherkinTesting",
             resources: [
-                .copy("I18n/Resources/gherkin-languages.json"),
+                .copy("I18n/Resources/gherkin-languages.json")
             ],
         ),
 
@@ -52,7 +52,7 @@ let package = Package(
             dependencies: ["GherkinTesting"],
             path: "Tests/GherkinTestingTests",
             resources: [
-                .copy("Fixtures"),
+                .copy("Fixtures")
             ]
         ),
 
@@ -61,7 +61,7 @@ let package = Package(
             name: "GherkinTestingMacroTests",
             dependencies: [
                 "GherkinTestingMacros",
-                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax")
             ],
             path: "Tests/GherkinTestingMacroTests"
         ),
@@ -72,8 +72,8 @@ let package = Package(
             dependencies: ["GherkinTesting"],
             path: "Tests/GherkinTestingDemoTests",
             resources: [
-                .copy("Fixtures"),
+                .copy("Fixtures")
             ]
-        ),
+        )
     ]
 )

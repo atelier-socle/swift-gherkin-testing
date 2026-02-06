@@ -53,11 +53,8 @@ public struct GherkinLexer: Sendable {
         language: GherkinLanguage
     ) -> [(keyword: String, type: StepKeywordType)] {
         let allKeywords: [(keyword: String, type: StepKeywordType)] =
-            language.given.map { ($0, .context) } +
-            language.when.map { ($0, .action) } +
-            language.then.map { ($0, .outcome) } +
-            language.and.map { ($0, .conjunction) } +
-            language.but.map { ($0, .conjunction) }
+            language.given.map { ($0, .context) } + language.when.map { ($0, .action) } + language.then.map { ($0, .outcome) }
+            + language.and.map { ($0, .conjunction) } + language.but.map { ($0, .conjunction) }
         return allKeywords.sorted { $0.keyword.count > $1.keyword.count }
     }
 
@@ -68,223 +65,231 @@ public struct GherkinLexer: Sendable {
         let lines = source.split(separator: "\n", omittingEmptySubsequences: false)
         var tokens: [Token] = []
         tokens.reserveCapacity(lines.count + 1)
-
-        var inDocString = false
-        var docStringDelimiter = ""
-        var docStringIndent = 0
-        let lineCount = lines.count
+        var docState = DocStringState()
 
         for (index, line) in lines.enumerated() {
             let lineNumber = index + 1
             let lineStr = String(line)
 
-            if inDocString {
-                let trimmed = lineStr.trimmingCharacters(in: .whitespaces)
-                if trimmed.hasPrefix(docStringDelimiter) {
-                    // End of doc string
-                    let col = lineStr.distance(
-                        from: lineStr.startIndex,
-                        to: lineStr.firstIndex(where: { !$0.isWhitespace }) ?? lineStr.startIndex
-                    ) + 1
-                    tokens.append(Token(
-                        type: .docString,
-                        location: Location(line: lineNumber, column: col),
-                        keyword: docStringDelimiter,
-                        text: ""
-                    ))
-                    inDocString = false
-                    docStringDelimiter = ""
-                } else {
-                    // Content inside doc string — remove indentation up to the opening delimiter's indent
-                    let content: String
-                    if docStringIndent > 0 && lineStr.count >= docStringIndent {
-                        let prefixToRemove = lineStr.prefix(docStringIndent)
-                        if prefixToRemove.allSatisfy({ $0.isWhitespace }) {
-                            content = String(lineStr.dropFirst(docStringIndent))
-                        } else {
-                            content = lineStr
-                        }
-                    } else {
-                        content = lineStr
-                    }
-                    tokens.append(Token(
-                        type: .docStringContent,
-                        location: Location(line: lineNumber, column: 1),
-                        text: content
-                    ))
-                }
+            if docState.active {
+                processDocStringLine(lineStr: lineStr, lineNumber: lineNumber, state: &docState, tokens: &tokens)
                 continue
             }
 
             let trimmed = lineStr.trimmingCharacters(in: .whitespaces)
 
-            // Empty line
             if trimmed.isEmpty {
-                tokens.append(Token(
-                    type: .empty,
-                    location: Location(line: lineNumber, column: 1)
-                ))
+                tokens.append(Token(type: .empty, location: Location(line: lineNumber, column: 1)))
                 continue
             }
 
-            // Comment line
             if trimmed.hasPrefix("#") {
-                // Check for language directive
-                let afterHash = trimmed.dropFirst().trimmingCharacters(in: .whitespaces)
-                if afterHash.lowercased().hasPrefix("language:") {
-                    let codeStart = afterHash.index(afterHash.startIndex, offsetBy: 9)
-                    let code = afterHash[codeStart...].trimmingCharacters(in: .whitespaces)
-                    let col = columnOf(firstNonWhitespace: lineStr)
-                    tokens.append(Token(
-                        type: .language,
-                        location: Location(line: lineNumber, column: col),
-                        keyword: "# language:",
-                        text: code
-                    ))
-                } else {
-                    let col = columnOf(firstNonWhitespace: lineStr)
-                    tokens.append(Token(
-                        type: .comment,
-                        location: Location(line: lineNumber, column: col),
-                        text: trimmed
-                    ))
-                }
+                tokens.append(tokenizeComment(lineStr: lineStr, trimmed: trimmed, lineNumber: lineNumber))
                 continue
             }
 
-            // Tag line
             if trimmed.hasPrefix("@") {
                 let col = columnOf(firstNonWhitespace: lineStr)
-                tokens.append(Token(
-                    type: .tagLine,
-                    location: Location(line: lineNumber, column: col),
-                    text: trimmed
-                ))
+                tokens.append(Token(type: .tagLine, location: Location(line: lineNumber, column: col), text: trimmed))
                 continue
             }
 
-            // Doc string opening
-            if trimmed.hasPrefix("\"\"\"") || trimmed.hasPrefix("```") {
-                let delimiter = trimmed.hasPrefix("\"\"\"") ? "\"\"\"" : "```"
-                let mediaType = String(trimmed.dropFirst(3)).trimmingCharacters(in: .whitespaces)
-                let col = columnOf(firstNonWhitespace: lineStr)
-                docStringIndent = col - 1
-                tokens.append(Token(
-                    type: .docString,
-                    location: Location(line: lineNumber, column: col),
-                    keyword: delimiter,
-                    text: mediaType
-                ))
-                inDocString = true
-                docStringDelimiter = delimiter
+            if let opening = tokenizeDocStringOpening(lineStr: lineStr, trimmed: trimmed, lineNumber: lineNumber, state: &docState) {
+                tokens.append(opening)
                 continue
             }
 
-            // Table row
             if trimmed.hasPrefix("|") {
                 let col = columnOf(firstNonWhitespace: lineStr)
                 let cells = parseTableCells(line: lineStr, lineNumber: lineNumber)
-                tokens.append(Token(
-                    type: .tableRow,
-                    location: Location(line: lineNumber, column: col),
-                    text: trimmed,
-                    items: cells
-                ))
+                tokens.append(Token(type: .tableRow, location: Location(line: lineNumber, column: col), text: trimmed, items: cells))
                 continue
             }
 
-            // Keyword matching
             if let token = matchKeyword(line: lineStr, trimmed: trimmed, lineNumber: lineNumber) {
                 tokens.append(token)
                 continue
             }
 
-            // Other (description or unrecognized text)
             let col = columnOf(firstNonWhitespace: lineStr)
-            tokens.append(Token(
-                type: .other,
-                location: Location(line: lineNumber, column: col),
-                text: trimmed
-            ))
+            tokens.append(Token(type: .other, location: Location(line: lineNumber, column: col), text: trimmed))
         }
 
-        // EOF
-        tokens.append(Token(
-            type: .eof,
-            location: Location(line: lineCount + 1),
-            text: ""
-        ))
-
+        tokens.append(Token(type: .eof, location: Location(line: lines.count + 1), text: ""))
         return tokens
+    }
+
+    // MARK: - Doc String Helpers
+
+    /// Mutable state tracked during multi-line doc string tokenization.
+    private struct DocStringState {
+        var active = false
+        var delimiter = ""
+        var indent = 0
+    }
+
+    /// Processes a line inside a doc string block.
+    ///
+    /// - Parameters:
+    ///   - lineStr: The raw line string.
+    ///   - lineNumber: The 1-based line number.
+    ///   - state: The doc string state to update.
+    ///   - tokens: The token array to append to.
+    private func processDocStringLine(
+        lineStr: String,
+        lineNumber: Int,
+        state: inout DocStringState,
+        tokens: inout [Token]
+    ) {
+        let trimmed = lineStr.trimmingCharacters(in: .whitespaces)
+        if trimmed.hasPrefix(state.delimiter) {
+            let col = columnOf(firstNonWhitespace: lineStr)
+            tokens.append(
+                Token(
+                    type: .docString,
+                    location: Location(line: lineNumber, column: col),
+                    keyword: state.delimiter,
+                    text: ""
+                ))
+            state.active = false
+            state.delimiter = ""
+        } else {
+            let content = extractDocStringContent(lineStr: lineStr, indent: state.indent)
+            tokens.append(
+                Token(
+                    type: .docStringContent,
+                    location: Location(line: lineNumber, column: 1),
+                    text: content
+                ))
+        }
+    }
+
+    /// Removes leading indentation from a doc string content line.
+    ///
+    /// - Parameters:
+    ///   - lineStr: The raw line string.
+    ///   - indent: The indent level of the opening delimiter.
+    /// - Returns: The content with leading indentation stripped.
+    private func extractDocStringContent(lineStr: String, indent: Int) -> String {
+        if indent > 0 && lineStr.count >= indent {
+            let prefixToRemove = lineStr.prefix(indent)
+            if prefixToRemove.allSatisfy({ $0.isWhitespace }) {
+                return String(lineStr.dropFirst(indent))
+            }
+        }
+        return lineStr
+    }
+
+    // MARK: - Line Classification Helpers
+
+    /// Tokenizes a comment or language directive line.
+    ///
+    /// - Parameters:
+    ///   - lineStr: The raw line string.
+    ///   - trimmed: The whitespace-trimmed line.
+    ///   - lineNumber: The 1-based line number.
+    /// - Returns: A `.comment` or `.language` token.
+    private func tokenizeComment(lineStr: String, trimmed: String, lineNumber: Int) -> Token {
+        let afterHash = trimmed.dropFirst().trimmingCharacters(in: .whitespaces)
+        if afterHash.lowercased().hasPrefix("language:") {
+            let codeStart = afterHash.index(afterHash.startIndex, offsetBy: 9)
+            let code = afterHash[codeStart...].trimmingCharacters(in: .whitespaces)
+            let col = columnOf(firstNonWhitespace: lineStr)
+            return Token(
+                type: .language,
+                location: Location(line: lineNumber, column: col),
+                keyword: "# language:",
+                text: code
+            )
+        }
+        let col = columnOf(firstNonWhitespace: lineStr)
+        return Token(
+            type: .comment,
+            location: Location(line: lineNumber, column: col),
+            text: trimmed
+        )
+    }
+
+    /// Detects and tokenizes a doc string opening delimiter.
+    ///
+    /// - Parameters:
+    ///   - lineStr: The raw line string.
+    ///   - trimmed: The whitespace-trimmed line.
+    ///   - lineNumber: The 1-based line number.
+    ///   - state: The doc string state to update if opening is found.
+    /// - Returns: A `.docString` token if the line opens a doc string, `nil` otherwise.
+    private func tokenizeDocStringOpening(
+        lineStr: String,
+        trimmed: String,
+        lineNumber: Int,
+        state: inout DocStringState
+    ) -> Token? {
+        let delimiter: String
+        if trimmed.hasPrefix("\"\"\"") {
+            delimiter = "\"\"\""
+        } else if trimmed.hasPrefix("```") {
+            delimiter = "```"
+        } else {
+            return nil
+        }
+        let mediaType = String(trimmed.dropFirst(3)).trimmingCharacters(in: .whitespaces)
+        let col = columnOf(firstNonWhitespace: lineStr)
+        state.active = true
+        state.delimiter = delimiter
+        state.indent = col - 1
+        return Token(
+            type: .docString,
+            location: Location(line: lineNumber, column: col),
+            keyword: delimiter,
+            text: mediaType
+        )
     }
 
     // MARK: - Private Helpers
 
     /// Returns the 1-based column of the first non-whitespace character.
     private func columnOf(firstNonWhitespace line: String) -> Int {
-        for (index, char) in line.enumerated() {
-            if !char.isWhitespace {
-                return index + 1
-            }
+        for (index, char) in line.enumerated() where !char.isWhitespace {
+            return index + 1
         }
         return 1
     }
 
     /// Attempts to match a keyword at the start of the trimmed line.
     private func matchKeyword(line: String, trimmed: String, lineNumber: Int) -> Token? {
-        // Try feature keywords
-        for kw in language.feature {
-            if let token = matchStructuralKeyword(trimmed: trimmed, line: line, keyword: kw,
-                                                   type: .feature, lineNumber: lineNumber) {
-                return token
-            }
-        }
+        let keywordGroups: [(keywords: [String], type: TokenType)] = [
+            (language.feature, .feature),
+            (language.rule, .rule),
+            (language.background, .background),
+            (language.scenarioOutline, .scenarioOutline),
+            (language.scenario, .scenario),
+            (language.examples, .examples)
+        ]
 
-        // Try rule keywords
-        for kw in language.rule {
-            if let token = matchStructuralKeyword(trimmed: trimmed, line: line, keyword: kw,
-                                                   type: .rule, lineNumber: lineNumber) {
-                return token
-            }
-        }
-
-        // Try background keywords
-        for kw in language.background {
-            if let token = matchStructuralKeyword(trimmed: trimmed, line: line, keyword: kw,
-                                                   type: .background, lineNumber: lineNumber) {
-                return token
-            }
-        }
-
-        // Try scenario outline keywords (must be before scenario to match longer keywords first)
-        for kw in language.scenarioOutline {
-            if let token = matchStructuralKeyword(trimmed: trimmed, line: line, keyword: kw,
-                                                   type: .scenarioOutline, lineNumber: lineNumber) {
-                return token
-            }
-        }
-
-        // Try scenario keywords
-        for kw in language.scenario {
-            if let token = matchStructuralKeyword(trimmed: trimmed, line: line, keyword: kw,
-                                                   type: .scenario, lineNumber: lineNumber) {
-                return token
-            }
-        }
-
-        // Try examples keywords
-        for kw in language.examples {
-            if let token = matchStructuralKeyword(trimmed: trimmed, line: line, keyword: kw,
-                                                   type: .examples, lineNumber: lineNumber) {
-                return token
-            }
-        }
-
-        // Try step keywords (these include trailing space)
-        if let token = matchStepKeyword(trimmed: trimmed, line: line, lineNumber: lineNumber) {
+        if let token = matchFirstStructuralKeyword(groups: keywordGroups, trimmed: trimmed, line: line, lineNumber: lineNumber) {
             return token
         }
 
+        return matchStepKeyword(trimmed: trimmed, line: line, lineNumber: lineNumber)
+    }
+
+    /// Iterates keyword groups to find the first matching structural keyword.
+    private func matchFirstStructuralKeyword(
+        groups: [(keywords: [String], type: TokenType)],
+        trimmed: String,
+        line: String,
+        lineNumber: Int
+    ) -> Token? {
+        for group in groups {
+            for kw in group.keywords {
+                if let token = matchStructuralKeyword(
+                    trimmed: trimmed, line: line, keyword: kw,
+                    type: group.type, lineNumber: lineNumber
+                ) {
+                    return token
+                }
+            }
+        }
         return nil
     }
 
@@ -311,20 +316,16 @@ public struct GherkinLexer: Sendable {
 
     /// Matches a step keyword (Given, When, Then, And, But, *) at the start of the line.
     private func matchStepKeyword(trimmed: String, line: String, lineNumber: Int) -> Token? {
-        // Uses pre-sorted keywords (longest first) from init
-        for (keyword, _) in sortedStepKeywords {
-            if trimmed.hasPrefix(keyword) {
-                let col = columnOf(firstNonWhitespace: line)
-                let rest = String(trimmed.dropFirst(keyword.count))
-                return Token(
-                    type: .step,
-                    location: Location(line: lineNumber, column: col),
-                    keyword: keyword,
-                    text: rest
-                )
-            }
+        for (keyword, _) in sortedStepKeywords where trimmed.hasPrefix(keyword) {
+            let col = columnOf(firstNonWhitespace: line)
+            let rest = String(trimmed.dropFirst(keyword.count))
+            return Token(
+                type: .step,
+                location: Location(line: lineNumber, column: col),
+                keyword: keyword,
+                text: rest
+            )
         }
-
         return nil
     }
 

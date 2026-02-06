@@ -4,6 +4,7 @@
 // Copyright © 2026 Atelier Socle. MIT License.
 
 import Testing
+
 @testable import GherkinTesting
 
 @Suite("ExpressionParser")
@@ -66,23 +67,25 @@ struct ExpressionParserTests {
     @Test("tokenizes mixed expression")
     func tokenizeMixed() throws {
         let tokens = try parser().tokenize("I have {int} cucumber(s)")
-        #expect(tokens == [
-            .text("I have "),
-            .parameter("int"),
-            .text(" cucumber"),
-            .optional("s"),
-        ])
+        #expect(
+            tokens == [
+                .text("I have "),
+                .parameter("int"),
+                .text(" cucumber"),
+                .optional("s")
+            ])
     }
 
     @Test("tokenizes alternation adjacent to parameter")
     func tokenizeAlternationWithParam() throws {
         let tokens = try parser().tokenize("I eat/drink a {word}")
-        #expect(tokens == [
-            .text("I "),
-            .alternation(["eat", "drink"]),
-            .text(" a "),
-            .parameter("word"),
-        ])
+        #expect(
+            tokens == [
+                .text("I "),
+                .alternation(["eat", "drink"]),
+                .text(" a "),
+                .parameter("word")
+            ])
     }
 
     @Test("tokenizes multiple alternation parts")
@@ -200,11 +203,12 @@ struct ExpressionParserTests {
     @Test("compiles with custom parameter type")
     func compileCustomType() throws {
         var registry = ParameterTypeRegistry()
-        try registry.registerAny(AnyParameterType(
-            name: "color",
-            regexps: ["red|green|blue"],
-            transformer: { $0 }
-        ))
+        try registry.registerAny(
+            AnyParameterType(
+                name: "color",
+                regexps: ["red|green|blue"],
+                transformer: { $0 }
+            ))
         let customParser = ExpressionParser(registry: registry)
         let (pattern, types) = try customParser.compile("the {color} button")
         #expect(pattern == "^the (red|green|blue) button$")

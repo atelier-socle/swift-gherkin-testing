@@ -4,6 +4,7 @@
 // Copyright © 2026 Atelier Socle. MIT License.
 
 import Testing
+
 @testable import GherkinTesting
 
 /// Helper to create a PickleStep for result tests.
@@ -82,7 +83,7 @@ struct ExecutionResultTests {
     func allStepsPassed() {
         let results = [
             StepResult(step: step("a"), status: .passed, duration: .milliseconds(10), location: nil),
-            StepResult(step: step("b"), status: .passed, duration: .milliseconds(20), location: nil),
+            StepResult(step: step("b"), status: .passed, duration: .milliseconds(20), location: nil)
         ]
         let scenario = ScenarioResult(name: "test", stepResults: results, tags: [])
         #expect(scenario.status == .passed)
@@ -93,7 +94,7 @@ struct ExecutionResultTests {
         let results = [
             StepResult(step: step("a"), status: .passed, duration: .zero, location: nil),
             StepResult(step: step("b"), status: .failed(StepFailure(message: "err")), duration: .zero, location: nil),
-            StepResult(step: step("c"), status: .skipped, duration: .zero, location: nil),
+            StepResult(step: step("c"), status: .skipped, duration: .zero, location: nil)
         ]
         let scenario = ScenarioResult(name: "test", stepResults: results, tags: [])
         #expect(scenario.status == .failed(StepFailure(message: "err")))
@@ -103,7 +104,7 @@ struct ExecutionResultTests {
     func undefinedStep() {
         let results = [
             StepResult(step: step("a"), status: .passed, duration: .zero, location: nil),
-            StepResult(step: step("b"), status: .undefined, duration: .zero, location: nil),
+            StepResult(step: step("b"), status: .undefined, duration: .zero, location: nil)
         ]
         let scenario = ScenarioResult(name: "test", stepResults: results, tags: [])
         #expect(scenario.status == .undefined)
@@ -112,7 +113,7 @@ struct ExecutionResultTests {
     @Test("ambiguous step → scenario ambiguous")
     func ambiguousStep() {
         let results = [
-            StepResult(step: step("a"), status: .ambiguous, duration: .zero, location: nil),
+            StepResult(step: step("a"), status: .ambiguous, duration: .zero, location: nil)
         ]
         let scenario = ScenarioResult(name: "test", stepResults: results, tags: [])
         #expect(scenario.status == .ambiguous)
@@ -121,7 +122,7 @@ struct ExecutionResultTests {
     @Test("pending step → scenario pending")
     func pendingStep() {
         let results = [
-            StepResult(step: step("a"), status: .pending, duration: .zero, location: nil),
+            StepResult(step: step("a"), status: .pending, duration: .zero, location: nil)
         ]
         let scenario = ScenarioResult(name: "test", stepResults: results, tags: [])
         #expect(scenario.status == .pending)
@@ -131,7 +132,7 @@ struct ExecutionResultTests {
     func allSkipped() {
         let results = [
             StepResult(step: step("a"), status: .skipped, duration: .zero, location: nil),
-            StepResult(step: step("b"), status: .skipped, duration: .zero, location: nil),
+            StepResult(step: step("b"), status: .skipped, duration: .zero, location: nil)
         ]
         let scenario = ScenarioResult(name: "test", stepResults: results, tags: [])
         #expect(scenario.status == .skipped)
@@ -141,7 +142,7 @@ struct ExecutionResultTests {
     func failedOverridesUndefined() {
         let results = [
             StepResult(step: step("a"), status: .undefined, duration: .zero, location: nil),
-            StepResult(step: step("b"), status: .failed(StepFailure(message: "err")), duration: .zero, location: nil),
+            StepResult(step: step("b"), status: .failed(StepFailure(message: "err")), duration: .zero, location: nil)
         ]
         let scenario = ScenarioResult(name: "test", stepResults: results, tags: [])
         #expect(scenario.status == .failed(StepFailure(message: "err")))
@@ -154,7 +155,7 @@ struct ExecutionResultTests {
         let results = [
             StepResult(step: step("a"), status: .passed, duration: .milliseconds(10), location: nil),
             StepResult(step: step("b"), status: .passed, duration: .milliseconds(20), location: nil),
-            StepResult(step: step("c"), status: .passed, duration: .milliseconds(30), location: nil),
+            StepResult(step: step("c"), status: .passed, duration: .milliseconds(30), location: nil)
         ]
         let scenario = ScenarioResult(name: "test", stepResults: results, tags: [])
         #expect(scenario.duration == .milliseconds(60))
@@ -162,12 +163,16 @@ struct ExecutionResultTests {
 
     @Test("feature duration sums scenario durations")
     func featureDuration() {
-        let s1 = ScenarioResult(name: "s1", stepResults: [
-            StepResult(step: step("a"), status: .passed, duration: .milliseconds(100), location: nil),
-        ], tags: [])
-        let s2 = ScenarioResult(name: "s2", stepResults: [
-            StepResult(step: step("b"), status: .passed, duration: .milliseconds(200), location: nil),
-        ], tags: [])
+        let s1 = ScenarioResult(
+            name: "s1",
+            stepResults: [
+                StepResult(step: step("a"), status: .passed, duration: .milliseconds(100), location: nil)
+            ], tags: [])
+        let s2 = ScenarioResult(
+            name: "s2",
+            stepResults: [
+                StepResult(step: step("b"), status: .passed, duration: .milliseconds(200), location: nil)
+            ], tags: [])
         let feature = FeatureResult(name: "feature", scenarioResults: [s1, s2], tags: [])
         #expect(feature.duration == .milliseconds(300))
     }
@@ -176,21 +181,27 @@ struct ExecutionResultTests {
 
     @Test("feature with all passing scenarios → passed")
     func featureAllPassed() {
-        let s1 = ScenarioResult(name: "s1", stepResults: [
-            StepResult(step: step("a"), status: .passed, duration: .zero, location: nil),
-        ], tags: [])
+        let s1 = ScenarioResult(
+            name: "s1",
+            stepResults: [
+                StepResult(step: step("a"), status: .passed, duration: .zero, location: nil)
+            ], tags: [])
         let feature = FeatureResult(name: "f", scenarioResults: [s1], tags: [])
         #expect(feature.status == .passed)
     }
 
     @Test("feature with one failed scenario → failed")
     func featureOneFailed() {
-        let s1 = ScenarioResult(name: "s1", stepResults: [
-            StepResult(step: step("a"), status: .passed, duration: .zero, location: nil),
-        ], tags: [])
-        let s2 = ScenarioResult(name: "s2", stepResults: [
-            StepResult(step: step("b"), status: .failed(StepFailure(message: "err")), duration: .zero, location: nil),
-        ], tags: [])
+        let s1 = ScenarioResult(
+            name: "s1",
+            stepResults: [
+                StepResult(step: step("a"), status: .passed, duration: .zero, location: nil)
+            ], tags: [])
+        let s2 = ScenarioResult(
+            name: "s2",
+            stepResults: [
+                StepResult(step: step("b"), status: .failed(StepFailure(message: "err")), duration: .zero, location: nil)
+            ], tags: [])
         let feature = FeatureResult(name: "f", scenarioResults: [s1, s2], tags: [])
         #expect(feature.status == .failed(StepFailure(message: "err")))
     }
@@ -205,21 +216,31 @@ struct ExecutionResultTests {
 
     @Test("summary counts")
     func summaryCounts() {
-        let passed = ScenarioResult(name: "p", stepResults: [
-            StepResult(step: step("a"), status: .passed, duration: .zero, location: nil),
-        ], tags: [])
-        let failed = ScenarioResult(name: "f", stepResults: [
-            StepResult(step: step("b"), status: .failed(StepFailure(message: "err")), duration: .zero, location: nil),
-        ], tags: [])
-        let undefined = ScenarioResult(name: "u", stepResults: [
-            StepResult(step: step("c"), status: .undefined, duration: .zero, location: nil),
-        ], tags: [])
-        let pending = ScenarioResult(name: "pe", stepResults: [
-            StepResult(step: step("d"), status: .pending, duration: .zero, location: nil),
-        ], tags: [])
-        let skipped = ScenarioResult(name: "s", stepResults: [
-            StepResult(step: step("e"), status: .skipped, duration: .zero, location: nil),
-        ], tags: [])
+        let passed = ScenarioResult(
+            name: "p",
+            stepResults: [
+                StepResult(step: step("a"), status: .passed, duration: .zero, location: nil)
+            ], tags: [])
+        let failed = ScenarioResult(
+            name: "f",
+            stepResults: [
+                StepResult(step: step("b"), status: .failed(StepFailure(message: "err")), duration: .zero, location: nil)
+            ], tags: [])
+        let undefined = ScenarioResult(
+            name: "u",
+            stepResults: [
+                StepResult(step: step("c"), status: .undefined, duration: .zero, location: nil)
+            ], tags: [])
+        let pending = ScenarioResult(
+            name: "pe",
+            stepResults: [
+                StepResult(step: step("d"), status: .pending, duration: .zero, location: nil)
+            ], tags: [])
+        let skipped = ScenarioResult(
+            name: "s",
+            stepResults: [
+                StepResult(step: step("e"), status: .skipped, duration: .zero, location: nil)
+            ], tags: [])
 
         let featureResult = FeatureResult(
             name: "test",

@@ -4,6 +4,7 @@
 // Copyright © 2026 Atelier Socle. MIT License.
 
 import Testing
+
 @testable import GherkinTesting
 
 /// A feature type for matcher tests.
@@ -61,7 +62,7 @@ struct RegexStepMatcherTests {
     func exactOverCucumber() throws {
         let defs: [StepDefinition<MatcherFeature>] = [
             cucumberDef("the user clicks submit", line: 1),
-            exactDef("the user clicks submit", line: 2),
+            exactDef("the user clicks submit", line: 2)
         ]
         let matcher = RegexStepMatcher(definitions: defs)
         let match = try matcher.match(pickleStep("the user clicks submit"))
@@ -72,7 +73,7 @@ struct RegexStepMatcherTests {
     func exactOverRegex() throws {
         let defs: [StepDefinition<MatcherFeature>] = [
             regexDef("^the user clicks submit$", line: 1),
-            exactDef("the user clicks submit", line: 2),
+            exactDef("the user clicks submit", line: 2)
         ]
         let matcher = RegexStepMatcher(definitions: defs)
         let match = try matcher.match(pickleStep("the user clicks submit"))
@@ -83,7 +84,7 @@ struct RegexStepMatcherTests {
     func cucumberOverRegex() throws {
         let defs: [StepDefinition<MatcherFeature>] = [
             regexDef("^the user has (\\d+) items$", line: 1),
-            cucumberDef("the user has {int} items", line: 2),
+            cucumberDef("the user has {int} items", line: 2)
         ]
         let matcher = RegexStepMatcher(definitions: defs)
         let match = try matcher.match(pickleStep("the user has 42 items"))
@@ -173,7 +174,8 @@ struct RegexStepMatcherTests {
             try matcher.match(pickleStep("hello"))
         } throws: { error in
             guard let e = error as? StepMatchError,
-                  case .ambiguous(let text, let descs) = e else { return false }
+                case .ambiguous(let text, let descs) = e
+            else { return false }
             return text == "hello" && descs.count == 2
         }
     }
@@ -182,14 +184,15 @@ struct RegexStepMatcherTests {
     func ambiguousTwoCucumber() throws {
         let defs = [
             cucumberDef("I have {int} items", line: 1),
-            cucumberDef("I have {} items", line: 2),
+            cucumberDef("I have {} items", line: 2)
         ]
         let matcher = RegexStepMatcher(definitions: defs)
         #expect {
             try matcher.match(pickleStep("I have 5 items"))
         } throws: { error in
             guard let e = error as? StepMatchError,
-                  case .ambiguous = e else { return false }
+                case .ambiguous = e
+            else { return false }
             return true
         }
     }
@@ -198,7 +201,7 @@ struct RegexStepMatcherTests {
     func notAmbiguousDiffPriority() throws {
         let defs: [StepDefinition<MatcherFeature>] = [
             exactDef("hello world", line: 1),
-            regexDef("^hello world$", line: 2),
+            regexDef("^hello world$", line: 2)
         ]
         let matcher = RegexStepMatcher(definitions: defs)
         let match = try matcher.match(pickleStep("hello world"))
@@ -210,11 +213,12 @@ struct RegexStepMatcherTests {
     @Test("uses custom parameter type from registry")
     func customRegistry() throws {
         var registry = ParameterTypeRegistry()
-        try registry.registerAny(AnyParameterType(
-            name: "color",
-            regexps: ["red|green|blue"],
-            transformer: { $0 }
-        ))
+        try registry.registerAny(
+            AnyParameterType(
+                name: "color",
+                regexps: ["red|green|blue"],
+                transformer: { $0 }
+            ))
 
         let defs = [cucumberDef("the {color} button")]
         let matcher = RegexStepMatcher(definitions: defs, registry: registry)

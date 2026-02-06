@@ -90,19 +90,19 @@ enum SyntaxHelpers {
     ///
     /// - Parameter string: The string to trim.
     /// - Returns: The trimmed string.
+    private static let whitespaceChars: Set<Character> = [" ", "\t", "\n", "\r"]
+
     static func trimWhitespace(_ string: some StringProtocol) -> String {
         var start = string.startIndex
         var end = string.endIndex
 
-        while start < end && (string[start] == " " || string[start] == "\t"
-                              || string[start] == "\n" || string[start] == "\r") {
+        while start < end && whitespaceChars.contains(string[start]) {
             start = string.index(after: start)
         }
 
         while end > start {
             let prev = string.index(before: end)
-            if string[prev] == " " || string[prev] == "\t"
-                || string[prev] == "\n" || string[prev] == "\r" {
+            if whitespaceChars.contains(string[prev]) {
                 end = prev
             } else {
                 break
@@ -226,10 +226,8 @@ enum SyntaxHelpers {
             return .regex
         }
         let regexIndicators = [#"\d"#, #"\s"#, #"\w"#, #"\b"#, "[", "]"]
-        for indicator in regexIndicators {
-            if containsSubstring(expression, indicator) {
-                return .regex
-            }
+        for indicator in regexIndicators where containsSubstring(expression, indicator) {
+            return .regex
         }
 
         // Cucumber expression indicators: {param}, (optional), alternation /
@@ -249,12 +247,10 @@ enum SyntaxHelpers {
     /// Checks if the expression contains unescaped parentheses (Cucumber optional text).
     private static func containsCucumberOptional(_ expression: String) -> Bool {
         let chars = Array(expression)
-        for i in 0..<chars.count {
-            if chars[i] == "(" {
-                // Check it's not escaped
-                if i == 0 || chars[i - 1] != "\\" {
-                    return true
-                }
+        for i in 0..<chars.count where chars[i] == "(" {
+            // Check it's not escaped
+            if i == 0 || chars[i - 1] != "\\" {
+                return true
             }
         }
         return false
@@ -263,11 +259,9 @@ enum SyntaxHelpers {
     /// Checks if the expression contains unescaped `/` (Cucumber alternation).
     private static func containsUnescapedSlash(_ expression: String) -> Bool {
         let chars = Array(expression)
-        for i in 0..<chars.count {
-            if chars[i] == "/" {
-                if i == 0 || chars[i - 1] != "\\" {
-                    return true
-                }
+        for i in 0..<chars.count where chars[i] == "/" {
+            if i == 0 || chars[i - 1] != "\\" {
+                return true
             }
         }
         return false
@@ -420,14 +414,12 @@ enum SyntaxHelpers {
 
         for line in source.split(separator: "\n", omittingEmptySubsequences: false) {
             let trimmed = trimWhitespace(line)
-            for prefix in ScenarioKeywords.allPrefixes {
-                if trimmed.hasPrefix(prefix) {
-                    let name = trimWhitespace(String(trimmed.dropFirst(prefix.count)))
-                    if !name.isEmpty {
-                        names.append(name)
-                    }
-                    break
+            for prefix in ScenarioKeywords.allPrefixes where trimmed.hasPrefix(prefix) {
+                let name = trimWhitespace(String(trimmed.dropFirst(prefix.count)))
+                if !name.isEmpty {
+                    names.append(name)
                 }
+                break
             }
         }
 

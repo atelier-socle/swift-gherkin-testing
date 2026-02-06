@@ -14,7 +14,7 @@ private var testMacros: [String: any Macro.Type] {
         "StepLibrary": StepLibraryMacro.self,
         "Given": GivenMacro.self,
         "When": WhenMacro.self,
-        "Then": ThenMacro.self,
+        "Then": ThenMacro.self
     ]
 }
 
@@ -36,22 +36,22 @@ struct StepLibraryMacroTests {
             }
             """,
             expandedSource: """
-            struct SharedSteps {
-                @Given("logged in")
-                func loggedIn() {
-                }
-                @When("click logout")
-                func clickLogout() {
+                struct SharedSteps {
+                    @Given("logged in")
+                    func loggedIn() {
+                    }
+                    @When("click logout")
+                    func clickLogout() {
+                    }
+
+                    static var __stepDefinitions: [StepDefinition<Self>] {
+                        [__stepDef_loggedIn, __stepDef_clickLogout]
+                    }
                 }
 
-                static var __stepDefinitions: [StepDefinition<Self>] {
-                    [__stepDef_loggedIn, __stepDef_clickLogout]
+                extension SharedSteps: StepLibrary {
                 }
-            }
-
-            extension SharedSteps: StepLibrary {
-            }
-            """,
+                """,
             macros: testMacros
         )
     }
@@ -65,16 +65,16 @@ struct StepLibraryMacroTests {
             }
             """,
             expandedSource: """
-            struct EmptySteps {
+                struct EmptySteps {
 
-                static var __stepDefinitions: [StepDefinition<Self>] {
-                    []
+                    static var __stepDefinitions: [StepDefinition<Self>] {
+                        []
+                    }
                 }
-            }
 
-            extension EmptySteps: StepLibrary {
-            }
-            """,
+                extension EmptySteps: StepLibrary {
+                }
+                """,
             macros: testMacros
         )
     }
@@ -88,9 +88,9 @@ struct StepLibraryMacroTests {
             }
             """,
             expandedSource: """
-            class BadLibrary {
-            }
-            """,
+                class BadLibrary {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "@StepLibrary can only be applied to a struct",

@@ -3,8 +3,8 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import GherkinTesting
+import Testing
 
 // MARK: - @Feature Demo: Registration with Scenario Outline, Data Table, Typed Params
 
@@ -19,41 +19,43 @@ import GherkinTesting
 /// - `{word}` and `{string}` Cucumber expressions
 /// - `@And` step macro
 /// - `#expect` assertions with typed values
-@Feature(source: .inline("""
-    @auth
-    Feature: Registration
-      New users can create an account.
+@Feature(
+    source: .inline(
+        """
+        @auth
+        Feature: Registration
+          New users can create an account.
 
-      Scenario: Successful registration
-        Given the user is on the registration page
-        When they fill in the registration form with valid data
-        And they submit the form
-        Then their account is created
-        And they are redirected to the welcome page
+          Scenario: Successful registration
+            Given the user is on the registration page
+            When they fill in the registration form with valid data
+            And they submit the form
+            Then their account is created
+            And they are redirected to the welcome page
 
-      Scenario Outline: Invalid registration
-        Given the user is on the registration page
-        When they fill in the <field> with "<value>"
-        Then they should see the validation error "<error>"
+          Scenario Outline: Invalid registration
+            Given the user is on the registration page
+            When they fill in the <field> with "<value>"
+            Then they should see the validation error "<error>"
 
-        Examples:
-          | field    | value | error                    |
-          | email    |       | Email is required        |
-          | password | 123   | Password is too short    |
-          | username | a     | Username is too short    |
+            Examples:
+              | field    | value | error                    |
+              | email    |       | Email is required        |
+              | password | 123   | Password is too short    |
+              | username | a     | Username is too short    |
 
-      Scenario: Validation rules summary
-        Given the following validation rules:
-          | field    | minLength | required |
-          | email    | 0         | true     |
-          | password | 6         | false    |
-          | username | 2         | false    |
-        Then there are 3 rules loaded
+          Scenario: Validation rules summary
+            Given the following validation rules:
+              | field    | minLength | required |
+              | email    | 0         | true     |
+              | password | 6         | false    |
+              | username | 2         | false    |
+            Then there are 3 rules loaded
 
-      Scenario: Password strength scoring
-        Given a password "secure456"
-        Then the password strength is 8.5 out of 10
-    """))
+          Scenario: Password strength scoring
+            Given a password "secure456"
+            Then the password strength is 8.5 out of 10
+        """))
 struct RegistrationFeature {
     let auth = MockAuthService()
 

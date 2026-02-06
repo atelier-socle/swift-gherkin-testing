@@ -3,8 +3,9 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import Foundation
+import Testing
+
 @testable import GherkinTesting
 
 // MARK: - Test Helpers
@@ -345,7 +346,7 @@ struct HTMLReporterTests {
             makeStepResult(text: "fail", status: .failed(StepFailure(message: "err"))),
             makeStepResult(text: "skip", status: .skipped),
             makeStepResult(text: "pend", status: .pending),
-            makeStepResult(text: "undef", status: .undefined),
+            makeStepResult(text: "undef", status: .undefined)
         ]
         let scenarios = steps.enumerated().map { i, step in
             makeScenarioResult(name: "S\(i)", stepResults: [step])

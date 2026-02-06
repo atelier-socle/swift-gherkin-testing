@@ -3,9 +3,9 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import Foundation
 import GherkinTesting
+import Testing
 
 // MARK: - @Feature Demo: Pending Steps
 
@@ -14,13 +14,15 @@ import GherkinTesting
 /// When a handler throws `PendingStepError`, the step is marked `.pending`
 /// (not `.failed`), and subsequent steps are `.skipped`. Since `.pending`
 /// does not trigger `Issue.record()`, the @Feature test passes silently.
-@Feature(source: .inline("""
-    Feature: Pending Steps
-      Scenario: Work in progress
-        Given a working setup step
-        When a pending action is attempted
-        Then this step is skipped automatically
-    """))
+@Feature(
+    source: .inline(
+        """
+        Feature: Pending Steps
+          Scenario: Work in progress
+            Given a working setup step
+            When a pending action is attempted
+            Then this step is skipped automatically
+        """))
 struct PendingStepFeature {
     @Given("a working setup step")
     func workingStep() async throws {
@@ -45,7 +47,8 @@ struct PendingStepVerificationTests {
     @Test("PendingStepError results in pending status")
     func pendingStatus() async throws {
         let result = try await FeatureExecutor<PendingStepFeature>.run(
-            source: .inline("""
+            source: .inline(
+                """
                 Feature: Pending Steps
                   Scenario: Work in progress
                     Given a working setup step
@@ -71,11 +74,13 @@ struct PendingStepVerificationTests {
 /// Uses `dryRun: true` in `gherkinConfiguration` so the @Feature test passes
 /// (ambiguous issues are suppressed in dry-run). The verification test confirms
 /// the `.ambiguous` status is detected.
-@Feature(source: .inline("""
-    Feature: Ambiguous Steps
-      Scenario: Two definitions match
-        Given an ambiguous step
-    """))
+@Feature(
+    source: .inline(
+        """
+        Feature: Ambiguous Steps
+          Scenario: Two definitions match
+            Given an ambiguous step
+        """))
 struct AmbiguousStepFeature {
     static var gherkinConfiguration: GherkinConfiguration {
         GherkinConfiguration(dryRun: true)
@@ -99,7 +104,8 @@ struct AmbiguousStepVerificationTests {
     @Test("Two matching definitions produce ambiguous status")
     func ambiguousStatus() async throws {
         let result = try await FeatureExecutor<AmbiguousStepFeature>.run(
-            source: .inline("""
+            source: .inline(
+                """
                 Feature: Ambiguous Steps
                   Scenario: Two definitions match
                     Given an ambiguous step
@@ -122,12 +128,14 @@ struct AmbiguousStepVerificationTests {
 /// The expression starts with `^` which triggers regex detection in the macro.
 /// Capture groups `(\w+)` and `(\d+)` extract typed parameters.
 /// Uses raw string literal `#"..."#` to avoid double-escaping backslashes.
-@Feature(source: .inline("""
-    Feature: Regex Patterns
-      Scenario: Match with regex
-        Given the user alice is 30 years old
-        Then the user info is correct
-    """))
+@Feature(
+    source: .inline(
+        """
+        Feature: Regex Patterns
+          Scenario: Match with regex
+            Given the user alice is 30 years old
+            Then the user info is correct
+        """))
 struct RegexPatternFeature {
     @Given(#"^the user (\w+) is (\d+) years old$"#)
     func userAge(name: String, age: String) async throws {
@@ -148,12 +156,14 @@ struct RegexPatternFeature {
 ///
 /// `{}` matches any text (equivalent to `(.+)` regex) and captures it
 /// as an anonymous string argument without a named type.
-@Feature(source: .inline("""
-    Feature: Anonymous Parameters
-      Scenario: Capture anonymous param
-        Given the red basket is ready
-        Then the basket color is confirmed
-    """))
+@Feature(
+    source: .inline(
+        """
+        Feature: Anonymous Parameters
+          Scenario: Capture anonymous param
+            Given the red basket is ready
+            Then the basket color is confirmed
+        """))
 struct AnonymousParamFeature {
     @Given("the {} basket is ready")
     func basketReady(color: String) async throws {

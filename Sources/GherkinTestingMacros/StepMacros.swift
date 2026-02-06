@@ -3,9 +3,9 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
+import SwiftDiagnostics
 import SwiftSyntax
 import SwiftSyntaxMacros
-import SwiftDiagnostics
 
 /// Base implementation shared by all step macros (@Given, @When, @Then, @And, @But).
 ///
@@ -30,31 +30,35 @@ enum StepMacroBase {
     ) throws -> [DeclSyntax] {
         // Validate: must be on a function
         guard let funcDecl = declaration.as(FunctionDeclSyntax.self) else {
-            context.diagnose(Diagnostic(
-                node: declaration,
-                message: GherkinDiagnostic.stepRequiresFunction
-            ))
+            context.diagnose(
+                Diagnostic(
+                    node: declaration,
+                    message: GherkinDiagnostic.stepRequiresFunction
+                ))
             return []
         }
 
         // Extract the expression string from the first argument
         guard let arguments = node.arguments?.as(LabeledExprListSyntax.self),
-              let firstArg = arguments.first,
-              let stringLiteral = firstArg.expression.as(StringLiteralExprSyntax.self),
-              let expression = SyntaxHelpers.extractStringLiteral(from: stringLiteral) else {
-            context.diagnose(Diagnostic(
-                node: node,
-                message: GherkinDiagnostic.stepExpressionNotStringLiteral
-            ))
+            let firstArg = arguments.first,
+            let stringLiteral = firstArg.expression.as(StringLiteralExprSyntax.self),
+            let expression = SyntaxHelpers.extractStringLiteral(from: stringLiteral)
+        else {
+            context.diagnose(
+                Diagnostic(
+                    node: node,
+                    message: GherkinDiagnostic.stepExpressionNotStringLiteral
+                ))
             return []
         }
 
         // Validate: expression must not be empty
         if SyntaxHelpers.trimWhitespace(expression).isEmpty {
-            context.diagnose(Diagnostic(
-                node: node,
-                message: GherkinDiagnostic.stepExpressionEmpty
-            ))
+            context.diagnose(
+                Diagnostic(
+                    node: node,
+                    message: GherkinDiagnostic.stepExpressionEmpty
+                ))
             return []
         }
 
@@ -68,14 +72,15 @@ enum StepMacroBase {
         // Validate parameter count matches capture groups
         let captureCount = SyntaxHelpers.captureGroupCount(in: expression)
         if captureCount != paramCount {
-            context.diagnose(Diagnostic(
-                node: funcDecl.signature.parameterClause,
-                message: GherkinDiagnostic.stepParameterCountMismatch
-            ))
+            context.diagnose(
+                Diagnostic(
+                    node: funcDecl.signature.parameterClause,
+                    message: GherkinDiagnostic.stepParameterCountMismatch
+                ))
             return []
         }
 
-        let decl = StepRegistryCodeGen.generateStepDefinition(
+        let spec = StepRegistryCodeGen.StepSpec(
             funcName: funcName,
             expression: expression,
             kind: kind,
@@ -85,6 +90,7 @@ enum StepMacroBase {
             isMutating: isMutating,
             paramNames: paramNames
         )
+        let decl = StepRegistryCodeGen.generateStepDefinition(spec: spec)
 
         return [decl]
     }

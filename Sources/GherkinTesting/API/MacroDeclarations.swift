@@ -40,10 +40,11 @@
 public macro Feature(
     source: FeatureSource,
     stepLibraries: [any StepLibrary.Type] = []
-) = #externalMacro(
-    module: "GherkinTestingMacros",
-    type: "FeatureMacro"
-)
+) =
+    #externalMacro(
+        module: "GherkinTestingMacros",
+        type: "FeatureMacro"
+    )
 
 // MARK: - Step Macros
 
@@ -60,10 +61,11 @@ public macro Feature(
 /// mutating func itemsInCart(count: String) { }
 /// ```
 @attached(peer, names: prefixed(__stepDef_))
-public macro Given(_ expression: String) = #externalMacro(
-    module: "GherkinTestingMacros",
-    type: "GivenMacro"
-)
+public macro Given(_ expression: String) =
+    #externalMacro(
+        module: "GherkinTestingMacros",
+        type: "GivenMacro"
+    )
 
 /// Declares a step definition for `When` (action) steps.
 ///
@@ -72,10 +74,11 @@ public macro Given(_ expression: String) = #externalMacro(
 /// mutating func clickLogin() { }
 /// ```
 @attached(peer, names: prefixed(__stepDef_))
-public macro When(_ expression: String) = #externalMacro(
-    module: "GherkinTestingMacros",
-    type: "WhenMacro"
-)
+public macro When(_ expression: String) =
+    #externalMacro(
+        module: "GherkinTestingMacros",
+        type: "WhenMacro"
+    )
 
 /// Declares a step definition for `Then` (outcome) steps.
 ///
@@ -84,10 +87,11 @@ public macro When(_ expression: String) = #externalMacro(
 /// mutating func seeDashboard() { }
 /// ```
 @attached(peer, names: prefixed(__stepDef_))
-public macro Then(_ expression: String) = #externalMacro(
-    module: "GherkinTestingMacros",
-    type: "ThenMacro"
-)
+public macro Then(_ expression: String) =
+    #externalMacro(
+        module: "GherkinTestingMacros",
+        type: "ThenMacro"
+    )
 
 /// Declares a step definition for `And` (conjunction) steps.
 ///
@@ -96,10 +100,11 @@ public macro Then(_ expression: String) = #externalMacro(
 /// mutating func cartEmpty() { }
 /// ```
 @attached(peer, names: prefixed(__stepDef_))
-public macro And(_ expression: String) = #externalMacro(
-    module: "GherkinTestingMacros",
-    type: "AndMacro"
-)
+public macro And(_ expression: String) =
+    #externalMacro(
+        module: "GherkinTestingMacros",
+        type: "AndMacro"
+    )
 
 /// Declares a step definition for `But` (conjunction) steps.
 ///
@@ -108,10 +113,11 @@ public macro And(_ expression: String) = #externalMacro(
 /// mutating func notAdmin() { }
 /// ```
 @attached(peer, names: prefixed(__stepDef_))
-public macro But(_ expression: String) = #externalMacro(
-    module: "GherkinTestingMacros",
-    type: "ButMacro"
-)
+public macro But(_ expression: String) =
+    #externalMacro(
+        module: "GherkinTestingMacros",
+        type: "ButMacro"
+    )
 
 // MARK: - Hook Macros
 
@@ -127,10 +133,11 @@ public macro But(_ expression: String) = #externalMacro(
 /// static func setupSmoke() async throws { }
 /// ```
 @attached(peer, names: prefixed(__hook_))
-public macro Before(_ scope: HookScope = .scenario, tags: String? = nil, order: Int = 0) = #externalMacro(
-    module: "GherkinTestingMacros",
-    type: "BeforeMacro"
-)
+public macro Before(_ scope: HookScope = .scenario, tags: String? = nil, order: Int = 0) =
+    #externalMacro(
+        module: "GherkinTestingMacros",
+        type: "BeforeMacro"
+    )
 
 /// Declares an after hook that runs after the specified scope.
 ///
@@ -142,10 +149,11 @@ public macro Before(_ scope: HookScope = .scenario, tags: String? = nil, order: 
 /// static func tearDown() async throws { }
 /// ```
 @attached(peer, names: prefixed(__hook_))
-public macro After(_ scope: HookScope = .scenario, tags: String? = nil, order: Int = 0) = #externalMacro(
-    module: "GherkinTestingMacros",
-    type: "AfterMacro"
-)
+public macro After(_ scope: HookScope = .scenario, tags: String? = nil, order: Int = 0) =
+    #externalMacro(
+        module: "GherkinTestingMacros",
+        type: "AfterMacro"
+    )
 
 // MARK: - StepLibrary Macro
 
@@ -163,7 +171,8 @@ public macro After(_ scope: HookScope = .scenario, tags: String? = nil, order: I
 /// ```
 @attached(member, names: named(__stepDefinitions))
 @attached(extension, conformances: StepLibrary)
-public macro StepLibrary() = #externalMacro(
-    module: "GherkinTestingMacros",
-    type: "StepLibraryMacro"
-)
+public macro StepLibrary() =
+    #externalMacro(
+        module: "GherkinTestingMacros",
+        type: "StepLibraryMacro"
+    )

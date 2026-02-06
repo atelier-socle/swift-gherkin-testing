@@ -3,8 +3,9 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import Foundation
+import Testing
+
 @testable import GherkinTesting
 
 // MARK: - Test Helpers
@@ -93,12 +94,16 @@ struct JUnitXMLReporterTests {
         let reporter = JUnitXMLReporter()
         let step = makeStepResult(text: "step", duration: .milliseconds(500))
         let s1 = makeScenarioResult(name: "S1", stepResults: [step])
-        let s2 = makeScenarioResult(name: "S2", stepResults: [
-            makeStepResult(text: "fail", status: .failed(StepFailure(message: "err"))),
-        ])
-        let s3 = makeScenarioResult(name: "S3", stepResults: [
-            makeStepResult(text: "skip", status: .skipped),
-        ])
+        let s2 = makeScenarioResult(
+            name: "S2",
+            stepResults: [
+                makeStepResult(text: "fail", status: .failed(StepFailure(message: "err")))
+            ])
+        let s3 = makeScenarioResult(
+            name: "S3",
+            stepResults: [
+                makeStepResult(text: "skip", status: .skipped)
+            ])
         let feature = makeFeatureResult(
             name: "Login",
             scenarioResults: [s1, s2, s3]

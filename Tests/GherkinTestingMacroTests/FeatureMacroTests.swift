@@ -16,7 +16,7 @@ private var testMacros: [String: any Macro.Type] {
         "When": WhenMacro.self,
         "Then": ThenMacro.self,
         "Before": BeforeMacro.self,
-        "After": AfterMacro.self,
+        "After": AfterMacro.self
     ]
 }
 
@@ -32,32 +32,32 @@ struct FeatureMacroTests {
             }
             """,
             expandedSource: """
-            struct LoginFeature {
-            }
-
-            extension LoginFeature: GherkinFeature {
-            }
-
-            extension LoginFeature {
-                static var __stepDefinitions: [StepDefinition<Self>] {
-                    []
+                struct LoginFeature {
                 }
-            }
 
-            @Suite("\\(LoginFeature.self)")
-            struct LoginFeature__GherkinTests {
-                @Test("Feature: LoginFeature")
-                func feature_test() async throws {
-                    try await FeatureExecutor<LoginFeature>.run(
-                        source: .file("login.feature"),
-                        definitions: LoginFeature.__stepDefinitions,
-                        bundle: Bundle.module,
-                        configuration: LoginFeature.gherkinConfiguration,
-                        featureFactory: { LoginFeature() }
-                    )
+                extension LoginFeature: GherkinFeature {
                 }
-            }
-            """,
+
+                extension LoginFeature {
+                    static var __stepDefinitions: [StepDefinition<Self>] {
+                        []
+                    }
+                }
+
+                @Suite("\\(LoginFeature.self)")
+                struct LoginFeature__GherkinTests {
+                    @Test("Feature: LoginFeature")
+                    func feature_test() async throws {
+                        try await FeatureExecutor<LoginFeature>.run(
+                            source: .file("login.feature"),
+                            definitions: LoginFeature.__stepDefinitions,
+                            bundle: Bundle.module,
+                            configuration: LoginFeature.gherkinConfiguration,
+                            featureFactory: { LoginFeature() }
+                        )
+                    }
+                }
+                """,
             macros: testMacros
         )
     }
@@ -66,60 +66,60 @@ struct FeatureMacroTests {
     func featureInlineWithScenarios() {
         assertMacroExpansion(
             #"""
-            @Feature(source: .inline("Feature: Login\n  Scenario: Successful login\n    Given logged in\n  Scenario: Failed login\n    Given not logged in"))
+            @Feature(source: .inline("Feature: F\n  Scenario: A\n    Given x\n  Scenario: B\n    Given y"))
             struct LoginFeature {
-                @Given("logged in")
-                func loggedIn() {
+                @Given("x")
+                func stepX() {
                 }
-                @Given("not logged in")
-                func notLoggedIn() {
+                @Given("y")
+                func stepY() {
                 }
             }
             """#,
             expandedSource: #"""
-            struct LoginFeature {
-                @Given("logged in")
-                func loggedIn() {
-                }
-                @Given("not logged in")
-                func notLoggedIn() {
-                }
-            }
-
-            extension LoginFeature: GherkinFeature {
-            }
-
-            extension LoginFeature {
-                static var __stepDefinitions: [StepDefinition<Self>] {
-                    [__stepDef_loggedIn, __stepDef_notLoggedIn]
-                }
-            }
-
-            @Suite("\(LoginFeature.self)")
-            struct LoginFeature__GherkinTests {
-                @Test("Scenario: Successful login")
-                func scenario_Successful_login() async throws {
-                    try await FeatureExecutor<LoginFeature>.run(
-                        source: .inline("Feature: Login\n  Scenario: Successful login\n    Given logged in\n  Scenario: Failed login\n    Given not logged in"),
-                        definitions: LoginFeature.__stepDefinitions,
-                        configuration: LoginFeature.gherkinConfiguration,
-                        scenarioFilter: "Successful login",
-                        featureFactory: { LoginFeature() }
-                    )
+                struct LoginFeature {
+                    @Given("x")
+                    func stepX() {
+                    }
+                    @Given("y")
+                    func stepY() {
+                    }
                 }
 
-                @Test("Scenario: Failed login")
-                func scenario_Failed_login() async throws {
-                    try await FeatureExecutor<LoginFeature>.run(
-                        source: .inline("Feature: Login\n  Scenario: Successful login\n    Given logged in\n  Scenario: Failed login\n    Given not logged in"),
-                        definitions: LoginFeature.__stepDefinitions,
-                        configuration: LoginFeature.gherkinConfiguration,
-                        scenarioFilter: "Failed login",
-                        featureFactory: { LoginFeature() }
-                    )
+                extension LoginFeature: GherkinFeature {
                 }
-            }
-            """#,
+
+                extension LoginFeature {
+                    static var __stepDefinitions: [StepDefinition<Self>] {
+                        [__stepDef_stepX, __stepDef_stepY]
+                    }
+                }
+
+                @Suite("\(LoginFeature.self)")
+                struct LoginFeature__GherkinTests {
+                    @Test("Scenario: A")
+                    func scenario_A() async throws {
+                        try await FeatureExecutor<LoginFeature>.run(
+                            source: .inline("Feature: F\n  Scenario: A\n    Given x\n  Scenario: B\n    Given y"),
+                            definitions: LoginFeature.__stepDefinitions,
+                            configuration: LoginFeature.gherkinConfiguration,
+                            scenarioFilter: "A",
+                            featureFactory: { LoginFeature() }
+                        )
+                    }
+
+                    @Test("Scenario: B")
+                    func scenario_B() async throws {
+                        try await FeatureExecutor<LoginFeature>.run(
+                            source: .inline("Feature: F\n  Scenario: A\n    Given x\n  Scenario: B\n    Given y"),
+                            definitions: LoginFeature.__stepDefinitions,
+                            configuration: LoginFeature.gherkinConfiguration,
+                            scenarioFilter: "B",
+                            featureFactory: { LoginFeature() }
+                        )
+                    }
+                }
+                """#,
             macros: testMacros
         )
     }
@@ -142,48 +142,48 @@ struct FeatureMacroTests {
             }
             """#,
             expandedSource: #"""
-            struct HookedFeature {
-                @Before(.scenario)
-                static func setUp() {
+                struct HookedFeature {
+                    @Before(.scenario)
+                    static func setUp() {
+                    }
+                    @After(.scenario)
+                    static func tearDown() {
+                    }
+                    @Given("step")
+                    func step() {
+                    }
                 }
-                @After(.scenario)
-                static func tearDown() {
-                }
-                @Given("step")
-                func step() {
-                }
-            }
 
-            extension HookedFeature: GherkinFeature {
-            }
+                extension HookedFeature: GherkinFeature {
+                }
 
-            extension HookedFeature {
-                static var __stepDefinitions: [StepDefinition<Self>] {
-                    [__stepDef_step]
+                extension HookedFeature {
+                    static var __stepDefinitions: [StepDefinition<Self>] {
+                        [__stepDef_step]
+                    }
+                    static var __hooks: HookRegistry {
+                        var registry = HookRegistry()
+                        registry.addBefore(__hook_setUp)
+                        registry.addAfter(__hook_tearDown)
+                        return registry
+                    }
                 }
-                static var __hooks: HookRegistry {
-                    var registry = HookRegistry()
-                    registry.addBefore(__hook_setUp)
-                    registry.addAfter(__hook_tearDown)
-                    return registry
-                }
-            }
 
-            @Suite("\(HookedFeature.self)")
-            struct HookedFeature__GherkinTests {
-                @Test("Scenario: One")
-                func scenario_One() async throws {
-                    try await FeatureExecutor<HookedFeature>.run(
-                        source: .inline("Feature: Test\n  Scenario: One\n    Given step"),
-                        definitions: HookedFeature.__stepDefinitions,
-                        hooks: HookedFeature.__hooks,
-                        configuration: HookedFeature.gherkinConfiguration,
-                        scenarioFilter: "One",
-                        featureFactory: { HookedFeature() }
-                    )
+                @Suite("\(HookedFeature.self)")
+                struct HookedFeature__GherkinTests {
+                    @Test("Scenario: One")
+                    func scenario_One() async throws {
+                        try await FeatureExecutor<HookedFeature>.run(
+                            source: .inline("Feature: Test\n  Scenario: One\n    Given step"),
+                            definitions: HookedFeature.__stepDefinitions,
+                            hooks: HookedFeature.__hooks,
+                            configuration: HookedFeature.gherkinConfiguration,
+                            scenarioFilter: "One",
+                            featureFactory: { HookedFeature() }
+                        )
+                    }
                 }
-            }
-            """#,
+                """#,
             macros: testMacros
         )
     }
@@ -197,9 +197,9 @@ struct FeatureMacroTests {
             }
             """,
             expandedSource: """
-            class BadFeature {
-            }
-            """,
+                class BadFeature {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(message: "@Feature can only be applied to a struct", line: 1, column: 1)
             ],
@@ -216,9 +216,9 @@ struct FeatureMacroTests {
             }
             """,
             expandedSource: """
-            struct BadFeature {
-            }
-            """,
+                struct BadFeature {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "@Feature requires a 'source:' argument, e.g. @Feature(source: .inline(\"...\"))",

@@ -3,8 +3,8 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import GherkinTesting
+import Testing
 
 // MARK: - @Feature Demo: i18n with French Keywords
 
@@ -16,17 +16,19 @@ import GherkinTesting
 ///
 /// With i18n support in `extractScenarioNames`, French features now generate
 /// per-scenario tests (e.g. `scenario_Connexion_réussie()`).
-@Feature(source: .inline("""
-    # language: fr
-    @auth
-    Fonctionnalité: Authentification
-      Les utilisateurs peuvent se connecter.
+@Feature(
+    source: .inline(
+        """
+        # language: fr
+        @auth
+        Fonctionnalité: Authentification
+          Les utilisateurs peuvent se connecter.
 
-      Scénario: Connexion réussie
-        Soit l'application est lancée
-        Quand l'utilisateur entre "alice" et "secret123"
-        Alors il devrait voir le tableau de bord
-    """))
+          Scénario: Connexion réussie
+            Soit l'application est lancée
+            Quand l'utilisateur entre "alice" et "secret123"
+            Alors il devrait voir le tableau de bord
+        """))
 struct FrenchAuthFeature {
     let auth = MockAuthService()
 

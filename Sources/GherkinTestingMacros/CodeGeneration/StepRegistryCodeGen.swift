@@ -29,41 +29,29 @@ enum StepRegistryCodeGen {
         }
     }
 
+    /// Groups all parameters needed to generate a step definition.
+    struct StepSpec {
+        let funcName: String
+        let expression: String
+        let kind: StepKind
+        let paramCount: Int
+        let isAsync: Bool
+        let isThrows: Bool
+        let isMutating: Bool
+        let paramNames: [String]
+    }
+
     /// Generates a `static let __stepDef_<name>` declaration for a step definition.
     ///
-    /// - Parameters:
-    ///   - funcName: The name of the annotated function.
-    ///   - expression: The Cucumber expression string.
-    ///   - kind: The step keyword kind (given/when/then/and/but).
-    ///   - paramCount: The number of function parameters.
-    ///   - isAsync: Whether the function is async.
-    ///   - isThrows: Whether the function throws.
-    ///   - isMutating: Whether the function is mutating.
-    ///   - paramNames: The parameter external names.
+    /// - Parameter spec: The step definition specification.
     /// - Returns: A `DeclSyntax` for the static step definition property.
-    static func generateStepDefinition(
-        funcName: String,
-        expression: String,
-        kind: StepKind,
-        paramCount: Int,
-        isAsync: Bool,
-        isThrows: Bool,
-        isMutating: Bool,
-        paramNames: [String]
-    ) -> DeclSyntax {
-        let patternCode = generatePatternCode(expression: expression)
-        let handlerBody = generateHandlerBody(
-            funcName: funcName,
-            paramCount: paramCount,
-            isAsync: isAsync,
-            isThrows: isThrows,
-            isMutating: isMutating,
-            paramNames: paramNames
-        )
+    static func generateStepDefinition(spec: StepSpec) -> DeclSyntax {
+        let patternCode = generatePatternCode(expression: spec.expression)
+        let handlerBody = generateHandlerBody(spec: spec)
 
         return """
-            static let __stepDef_\(raw: funcName) = StepDefinition<Self>(
-                keywordType: \(raw: kind.keywordTypeLiteral),
+            static let __stepDef_\(raw: spec.funcName) = StepDefinition<Self>(
+                keywordType: \(raw: spec.kind.keywordTypeLiteral),
                 pattern: \(raw: patternCode),
                 sourceLocation: Location(line: 0, column: 0),
                 handler: { feature, args in \(raw: handlerBody) }
@@ -94,37 +82,24 @@ enum StepRegistryCodeGen {
 
     /// Generates the handler body that calls the annotated function.
     ///
-    /// - Parameters:
-    ///   - funcName: The function name.
-    ///   - paramCount: Number of parameters.
-    ///   - isAsync: Whether async.
-    ///   - isThrows: Whether throws.
-    ///   - isMutating: Whether mutating.
-    ///   - paramNames: Parameter external names.
+    /// - Parameter spec: The step definition specification.
     /// - Returns: A string of Swift code for the handler closure body.
-    static func generateHandlerBody(
-        funcName: String,
-        paramCount: Int,
-        isAsync: Bool,
-        isThrows: Bool,
-        isMutating: Bool,
-        paramNames: [String]
-    ) -> String {
-        let tryPrefix = isThrows ? "try " : ""
-        let awaitPrefix = isAsync ? "await " : ""
+    static func generateHandlerBody(spec: StepSpec) -> String {
+        let tryPrefix = spec.isThrows ? "try " : ""
+        let awaitPrefix = spec.isAsync ? "await " : ""
         let prefix = "\(tryPrefix)\(awaitPrefix)"
 
-        if paramCount == 0 {
-            return "\(prefix)feature.\(funcName)()"
+        if spec.paramCount == 0 {
+            return "\(prefix)feature.\(spec.funcName)()"
         }
 
-        let argList = (0..<paramCount).map { i in
-            let name = paramNames[i]
+        let argList = (0..<spec.paramCount).map { i in
+            let name = spec.paramNames[i]
             let label = name == "_" ? "" : "\(name): "
             return "\(label)args[\(i)]"
         }.joined(separator: ", ")
 
-        return "\(prefix)feature.\(funcName)(\(argList))"
+        return "\(prefix)feature.\(spec.funcName)(\(argList))"
     }
 
     /// Generates the `__stepDefinitions` static computed property.
@@ -134,7 +109,8 @@ enum StepRegistryCodeGen {
     /// - Parameter funcNames: The names of all step-annotated functions.
     /// - Returns: A `DeclSyntax` for the static property.
     static func generateStepDefinitionsProperty(funcNames: [String]) -> DeclSyntax {
-        let elements = funcNames
+        let elements =
+            funcNames
             .map { "__stepDef_\($0)" }
             .joined(separator: ", ")
         return """

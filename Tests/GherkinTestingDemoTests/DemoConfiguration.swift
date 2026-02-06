@@ -13,7 +13,7 @@ enum DemoConfiguration {
             reporters: [
                 CucumberJSONReporter(),
                 JUnitXMLReporter(),
-                HTMLReporter(),
+                HTMLReporter()
             ]
         )
     }

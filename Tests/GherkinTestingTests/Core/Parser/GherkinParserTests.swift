@@ -4,6 +4,7 @@
 // Copyright © 2026 Atelier Socle. MIT License.
 
 import Testing
+
 @testable import GherkinTesting
 
 @Suite("GherkinParser — Feature Tests")
@@ -12,14 +13,14 @@ struct ParserFeatureTests {
     @Test("Parse simple feature")
     func simpleFeature() throws {
         let source = """
-        Feature: Login
-          As a user I want to log in.
+            Feature: Login
+              As a user I want to log in.
 
-          Scenario: Valid login
-            Given valid credentials
-            When I log in
-            Then I see the dashboard
-        """
+              Scenario: Valid login
+                Given valid credentials
+                When I log in
+                Then I see the dashboard
+            """
         let doc = try GherkinParser().parse(source: source)
         let feature = try #require(doc.feature)
         #expect(feature.name == "Login")
@@ -33,11 +34,11 @@ struct ParserFeatureTests {
     @Test("Parse feature with tags")
     func featureWithTags() throws {
         let source = """
-        @smoke @login
-        Feature: Tagged feature
-          Scenario: S1
-            Given step
-        """
+            @smoke @login
+            Feature: Tagged feature
+              Scenario: S1
+                Given step
+            """
         let doc = try GherkinParser().parse(source: source)
         let feature = try #require(doc.feature)
         #expect(feature.tags.count == 2)
@@ -48,14 +49,14 @@ struct ParserFeatureTests {
     @Test("Parse feature with description")
     func featureWithDescription() throws {
         let source = """
-        Feature: Described
-          As a user
-          I want to do things
-          So that I can achieve goals
+            Feature: Described
+              As a user
+              I want to do things
+              So that I can achieve goals
 
-          Scenario: S1
-            Given step
-        """
+              Scenario: S1
+                Given step
+            """
         let doc = try GherkinParser().parse(source: source)
         let feature = try #require(doc.feature)
         let desc = try #require(feature.description)
@@ -73,9 +74,9 @@ struct ParserFeatureTests {
     @Test("Parse document with only comments")
     func onlyComments() throws {
         let source = """
-        # Comment 1
-        # Comment 2
-        """
+            # Comment 1
+            # Comment 2
+            """
         let doc = try GherkinParser().parse(source: source)
         #expect(doc.feature == nil)
         #expect(doc.comments.count == 2)
@@ -84,14 +85,14 @@ struct ParserFeatureTests {
     @Test("Parse feature with multiple scenarios")
     func multipleScenarios() throws {
         let source = """
-        Feature: Multi
-          Scenario: S1
-            Given step1
-          Scenario: S2
-            Given step2
-          Scenario: S3
-            Given step3
-        """
+            Feature: Multi
+              Scenario: S1
+                Given step1
+              Scenario: S2
+                Given step2
+              Scenario: S3
+                Given step3
+            """
         let doc = try GherkinParser().parse(source: source)
         let feature = try #require(doc.feature)
         #expect(feature.scenarios.count == 3)
@@ -107,15 +108,15 @@ struct ParserBackgroundTests {
     @Test("Parse feature with background")
     func featureWithBackground() throws {
         let source = """
-        Feature: BG test
-          Background:
-            Given the app is running
-            And the DB is clean
+            Feature: BG test
+              Background:
+                Given the app is running
+                And the DB is clean
 
-          Scenario: S1
-            When action
-            Then result
-        """
+              Scenario: S1
+                When action
+                Then result
+            """
         let doc = try GherkinParser().parse(source: source)
         let feature = try #require(doc.feature)
         let bg = try #require(feature.background)
@@ -127,12 +128,12 @@ struct ParserBackgroundTests {
     @Test("Background with name")
     func backgroundWithName() throws {
         let source = """
-        Feature: BG named
-          Background: Setup
-            Given setup step
-          Scenario: S1
-            When action
-        """
+            Feature: BG named
+              Background: Setup
+                Given setup step
+              Scenario: S1
+                When action
+            """
         let doc = try GherkinParser().parse(source: source)
         let bg = try #require(doc.feature?.background)
         #expect(bg.name == "Setup")
@@ -145,39 +146,39 @@ struct ParserStepTests {
     @Test("And resolves to Given type")
     func andResolvesToGiven() throws {
         let source = """
-        Feature: Step types
-          Scenario: S1
-            Given first
-            And second
-        """
+            Feature: Step types
+              Scenario: S1
+                Given first
+                And second
+            """
         let doc = try GherkinParser().parse(source: source)
         let steps = doc.feature?.scenarios[0].steps ?? []
         #expect(steps[0].keywordType == .context)
-        #expect(steps[1].keywordType == .context) // And inherits Given's type
+        #expect(steps[1].keywordType == .context)  // And inherits Given's type
     }
 
     @Test("But resolves to When type")
     func butResolvesToWhen() throws {
         let source = """
-        Feature: Step types
-          Scenario: S1
-            When action
-            But not this
-        """
+            Feature: Step types
+              Scenario: S1
+                When action
+                But not this
+            """
         let doc = try GherkinParser().parse(source: source)
         let steps = doc.feature?.scenarios[0].steps ?? []
         #expect(steps[0].keywordType == .action)
-        #expect(steps[1].keywordType == .action) // But inherits When's type
+        #expect(steps[1].keywordType == .action)  // But inherits When's type
     }
 
     @Test("And after Then resolves to outcome")
     func andAfterThen() throws {
         let source = """
-        Feature: Step types
-          Scenario: S1
-            Then result
-            And more result
-        """
+            Feature: Step types
+              Scenario: S1
+                Then result
+                And more result
+            """
         let doc = try GherkinParser().parse(source: source)
         let steps = doc.feature?.scenarios[0].steps ?? []
         #expect(steps[0].keywordType == .outcome)
@@ -187,30 +188,30 @@ struct ParserStepTests {
     @Test("Wildcard step resolves to unknown per spec")
     func wildcardStep() throws {
         let source = """
-        Feature: Wildcards
-          Scenario: S1
-            Given setup
-            * more setup
-            When action
-            * more action
-        """
+            Feature: Wildcards
+              Scenario: S1
+                Given setup
+                * more setup
+                When action
+                * more action
+            """
         let doc = try GherkinParser().parse(source: source)
         let steps = doc.feature?.scenarios[0].steps ?? []
         #expect(steps[0].keywordType == .context)
-        #expect(steps[1].keywordType == .unknown) // * is always .unknown per spec
+        #expect(steps[1].keywordType == .unknown)  // * is always .unknown per spec
         #expect(steps[2].keywordType == .action)
-        #expect(steps[3].keywordType == .unknown) // * is always .unknown per spec
+        #expect(steps[3].keywordType == .unknown)  // * is always .unknown per spec
     }
 
     @Test("Given When Then sequence")
     func givenWhenThenSequence() throws {
         let source = """
-        Feature: Full
-          Scenario: S1
-            Given precondition
-            When action
-            Then outcome
-        """
+            Feature: Full
+              Scenario: S1
+                Given precondition
+                When action
+                Then outcome
+            """
         let doc = try GherkinParser().parse(source: source)
         let steps = doc.feature?.scenarios[0].steps ?? []
         #expect(steps[0].keywordType == .context)
@@ -228,17 +229,17 @@ struct ParserScenarioOutlineTests {
     @Test("Parse scenario outline with examples")
     func scenarioOutline() throws {
         let source = """
-        Feature: Outline
-          Scenario Outline: Eating
-            Given there are <start> cucumbers
-            When I eat <eat> cucumbers
-            Then I should have <left> cucumbers
+            Feature: Outline
+              Scenario Outline: Eating
+                Given there are <start> cucumbers
+                When I eat <eat> cucumbers
+                Then I should have <left> cucumbers
 
-            Examples:
-              | start | eat | left |
-              |    12 |   5 |    7 |
-              |    20 |   5 |   15 |
-        """
+                Examples:
+                  | start | eat | left |
+                  |    12 |   5 |    7 |
+                  |    20 |   5 |   15 |
+            """
         let doc = try GherkinParser().parse(source: source)
         let scenario = try #require(doc.feature?.scenarios.first)
         #expect(scenario.keyword == "Scenario Outline")
@@ -253,19 +254,19 @@ struct ParserScenarioOutlineTests {
     @Test("Multiple examples blocks")
     func multipleExamples() throws {
         let source = """
-        Feature: Multi examples
-          Scenario Outline: Test
-            Given <value>
+            Feature: Multi examples
+              Scenario Outline: Test
+                Given <value>
 
-            Examples: First
-              | value |
-              | a     |
+                Examples: First
+                  | value |
+                  | a     |
 
-            Examples: Second
-              | value |
-              | b     |
-              | c     |
-        """
+                Examples: Second
+                  | value |
+                  | b     |
+                  | c     |
+            """
         let doc = try GherkinParser().parse(source: source)
         let scenario = try #require(doc.feature?.scenarios.first)
         #expect(scenario.examples.count == 2)
@@ -278,20 +279,20 @@ struct ParserScenarioOutlineTests {
     @Test("Tagged examples")
     func taggedExamples() throws {
         let source = """
-        Feature: Tagged examples
-          Scenario Outline: Test
-            Given <x>
+            Feature: Tagged examples
+              Scenario Outline: Test
+                Given <x>
 
-            @positive
-            Examples:
-              | x |
-              | 1 |
+                @positive
+                Examples:
+                  | x |
+                  | 1 |
 
-            @negative
-            Examples:
-              | x  |
-              | -1 |
-        """
+                @negative
+                Examples:
+                  | x  |
+                  | -1 |
+            """
         let doc = try GherkinParser().parse(source: source)
         let scenario = try #require(doc.feature?.scenarios.first)
         #expect(scenario.examples[0].tags.count == 1)
@@ -302,14 +303,14 @@ struct ParserScenarioOutlineTests {
     @Test("Examples with no name have nil name")
     func examplesNoName() throws {
         let source = """
-        Feature: Unnamed examples
-          Scenario Outline: Test
-            Given <x>
+            Feature: Unnamed examples
+              Scenario Outline: Test
+                Given <x>
 
-            Examples:
-              | x |
-              | 1 |
-        """
+                Examples:
+                  | x |
+                  | 1 |
+            """
         let doc = try GherkinParser().parse(source: source)
         let ex = try #require(doc.feature?.scenarios.first?.examples.first)
         #expect(ex.name == nil)
@@ -322,15 +323,15 @@ struct ParserRuleTests {
     @Test("Parse feature with rules")
     func featureWithRules() throws {
         let source = """
-        Feature: Rules
-          Rule: First rule
-            Scenario: R1S1
-              Given step
+            Feature: Rules
+              Rule: First rule
+                Scenario: R1S1
+                  Given step
 
-          Rule: Second rule
-            Scenario: R2S1
-              Given step
-        """
+              Rule: Second rule
+                Scenario: R2S1
+                  Given step
+            """
         let doc = try GherkinParser().parse(source: source)
         let feature = try #require(doc.feature)
         #expect(feature.rules.count == 2)
@@ -341,15 +342,15 @@ struct ParserRuleTests {
     @Test("Rule with background")
     func ruleWithBackground() throws {
         let source = """
-        Feature: Rules with BG
-          Rule: My rule
-            Background:
-              Given rule setup
+            Feature: Rules with BG
+              Rule: My rule
+                Background:
+                  Given rule setup
 
-            Scenario: S1
-              When action
-              Then result
-        """
+                Scenario: S1
+                  When action
+                  Then result
+            """
         let doc = try GherkinParser().parse(source: source)
         let rule = try #require(doc.feature?.rules.first)
         let bg = try #require(rule.background)
@@ -360,12 +361,12 @@ struct ParserRuleTests {
     @Test("Tagged rules")
     func taggedRules() throws {
         let source = """
-        Feature: Tagged rules
-          @billing
-          Rule: Billing
-            Scenario: S1
-              Given step
-        """
+            Feature: Tagged rules
+              @billing
+              Rule: Billing
+                Scenario: S1
+                  Given step
+            """
         let doc = try GherkinParser().parse(source: source)
         let rule = try #require(doc.feature?.rules.first)
         #expect(rule.tags.count == 1)
@@ -375,17 +376,17 @@ struct ParserRuleTests {
     @Test("Children preserve source order")
     func childrenOrder() throws {
         let source = """
-        Feature: Ordered
-          Background:
-            Given setup
+            Feature: Ordered
+              Background:
+                Given setup
 
-          Scenario: S1
-            Given step
+              Scenario: S1
+                Given step
 
-          Rule: R1
-            Scenario: RS1
-              Given step
-        """
+              Rule: R1
+                Scenario: RS1
+                  Given step
+            """
         let doc = try GherkinParser().parse(source: source)
         let feature = try #require(doc.feature)
         #expect(feature.children.count == 3)
@@ -401,17 +402,17 @@ struct ParserDataTableTests {
     @Test("Step with data table")
     func stepWithDataTable() throws {
         let source = """
-        Feature: Tables
-          Scenario: S1
-            Given these users:
-              | name  | email           |
-              | Alice | alice@test.com  |
-              | Bob   | bob@test.com    |
-        """
+            Feature: Tables
+              Scenario: S1
+                Given these users:
+                  | name  | email           |
+                  | Alice | alice@test.com  |
+                  | Bob   | bob@test.com    |
+            """
         let doc = try GherkinParser().parse(source: source)
         let step = try #require(doc.feature?.scenarios[0].steps.first)
         let table = try #require(step.dataTable)
-        #expect(table.rows.count == 3) // header + 2 data rows
+        #expect(table.rows.count == 3)  // header + 2 data rows
         #expect(table.rows[0].cells[0].value == "name")
         #expect(table.rows[1].cells[0].value == "Alice")
     }
@@ -423,14 +424,14 @@ struct ParserDocStringTests {
     @Test("Step with doc string")
     func stepWithDocString() throws {
         let source = """
-        Feature: DocStrings
-          Scenario: S1
-            Given the following text:
-              \"\"\"
-              Hello World
-              Second line
-              \"\"\"
-        """
+            Feature: DocStrings
+              Scenario: S1
+                Given the following text:
+                  \"\"\"
+                  Hello World
+                  Second line
+                  \"\"\"
+            """
         let doc = try GherkinParser().parse(source: source)
         let step = try #require(doc.feature?.scenarios[0].steps.first)
         let ds = try #require(step.docString)
@@ -443,193 +444,18 @@ struct ParserDocStringTests {
     @Test("Doc string with media type")
     func docStringMediaType() throws {
         let source = """
-        Feature: DocStrings
-          Scenario: S1
-            Given JSON payload:
-              ```json
-              {"key": "value"}
-              ```
-        """
+            Feature: DocStrings
+              Scenario: S1
+                Given JSON payload:
+                  ```json
+                  {"key": "value"}
+                  ```
+            """
         let doc = try GherkinParser().parse(source: source)
         let step = try #require(doc.feature?.scenarios[0].steps.first)
         let ds = try #require(step.docString)
         #expect(ds.delimiter == "```")
         #expect(ds.mediaType == "json")
         #expect(ds.content.contains("\"key\""))
-    }
-}
-
-@Suite("GherkinParser — Tag Tests")
-struct ParserTagTests {
-
-    @Test("Multiple tags on one line")
-    func multipleTagsOneLine() throws {
-        let source = """
-        @tag1 @tag2 @tag3
-        Feature: Tagged
-          Scenario: S1
-            Given step
-        """
-        let doc = try GherkinParser().parse(source: source)
-        let feature = try #require(doc.feature)
-        #expect(feature.tags.count == 3)
-    }
-
-    @Test("Scenario tags")
-    func scenarioTags() throws {
-        let source = """
-        Feature: F1
-          @smoke
-          Scenario: S1
-            Given step
-        """
-        let doc = try GherkinParser().parse(source: source)
-        let scenario = try #require(doc.feature?.scenarios.first)
-        #expect(scenario.tags.count == 1)
-        #expect(scenario.tags[0].name == "@smoke")
-    }
-}
-
-@Suite("GherkinParser — Comment Tests")
-struct ParserCommentTests {
-
-    @Test("Comments are preserved in document")
-    func commentsPreserved() throws {
-        let source = """
-        # File comment
-        Feature: F1
-          # Section comment
-          Scenario: S1
-            Given step
-        """
-        let doc = try GherkinParser().parse(source: source)
-        #expect(doc.comments.count >= 1)
-        #expect(doc.comments[0].text.contains("File comment"))
-    }
-
-    @Test("Language directive is excluded from comments")
-    func languageDirectiveNotInComments() throws {
-        let source = """
-        # language: fr
-        Fonctionnalité: Test
-          Scénario: S1
-            Soit un truc
-        """
-        let doc = try GherkinParser().parse(source: source)
-        // The # language: directive should NOT appear in comments
-        let hasLanguageComment = doc.comments.contains { $0.text.contains("language") }
-        #expect(!hasLanguageComment)
-    }
-}
-
-@Suite("GherkinParser — Edge Cases")
-struct ParserEdgeCaseTests {
-
-    @Test("Empty scenario name")
-    func emptyScenarioName() throws {
-        let source = """
-        Feature: Edge
-          Scenario:
-            Given step
-        """
-        let doc = try GherkinParser().parse(source: source)
-        let scenario = try #require(doc.feature?.scenarios.first)
-        #expect(scenario.name == "")
-    }
-
-    @Test("Unicode in step text")
-    func unicodeStepText() throws {
-        let source = """
-        Feature: Unicode
-          Scenario: Unicode test
-            Given café résumé naïve 日本語
-        """
-        let doc = try GherkinParser().parse(source: source)
-        let step = try #require(doc.feature?.scenarios[0].steps.first)
-        #expect(step.text.contains("café"))
-        #expect(step.text.contains("日本語"))
-    }
-
-    @Test("Feature with no scenarios")
-    func featureNoScenarios() throws {
-        let source = "Feature: Empty feature"
-        let doc = try GherkinParser().parse(source: source)
-        let feature = try #require(doc.feature)
-        #expect(feature.scenarios.isEmpty)
-        #expect(feature.rules.isEmpty)
-        #expect(feature.children.isEmpty)
-    }
-
-    @Test("Scenario with no steps")
-    func scenarioNoSteps() throws {
-        let source = """
-        Feature: Empty steps
-          Scenario: No steps
-        """
-        let doc = try GherkinParser().parse(source: source)
-        let scenario = try #require(doc.feature?.scenarios.first)
-        #expect(scenario.steps.isEmpty)
-    }
-
-    @Test("Mixed scenarios and rules preserve order in children")
-    func mixedScenariosAndRules() throws {
-        let source = """
-        Feature: Mixed
-          Scenario: Direct scenario
-            Given step
-
-          Rule: A rule
-            Scenario: Rule scenario
-              Given step
-        """
-        let doc = try GherkinParser().parse(source: source)
-        let feature = try #require(doc.feature)
-        #expect(feature.scenarios.count == 1)
-        #expect(feature.rules.count == 1)
-        #expect(feature.rules[0].scenarios.count == 1)
-        #expect(feature.children.count == 2)
-        if case .scenario = feature.children[0] {} else { Issue.record("Expected scenario at index 0") }
-        if case .rule = feature.children[1] {} else { Issue.record("Expected rule at index 1") }
-    }
-}
-
-@Suite("GherkinParser — i18n Tests")
-struct ParserI18nTests {
-
-    @Test("Parse French feature")
-    func frenchFeature() throws {
-        let source = """
-        # language: fr
-        Fonctionnalité: Authentification
-          Scénario: Connexion réussie
-            Soit un utilisateur enregistré
-            Quand il entre ses identifiants
-            Alors il voit le tableau de bord
-        """
-        let doc = try GherkinParser().parse(source: source)
-        let feature = try #require(doc.feature)
-        #expect(feature.name == "Authentification")
-        #expect(feature.language == "fr")
-        #expect(feature.keyword == "Fonctionnalité")
-        #expect(feature.scenarios.count == 1)
-        #expect(feature.scenarios[0].steps.count == 3)
-    }
-
-    @Test("Parse Japanese feature")
-    func japaneseFeature() throws {
-        let source = """
-        # language: ja
-        フィーチャ: ログイン機能
-          シナリオ: 正常なログイン
-            前提 ユーザーが登録されている
-            もし ユーザーがログインする
-            ならば ダッシュボードが表示される
-        """
-        let doc = try GherkinParser().parse(source: source)
-        let feature = try #require(doc.feature)
-        #expect(feature.name == "ログイン機能")
-        #expect(feature.language == "ja")
-        #expect(feature.scenarios.count == 1)
-        #expect(feature.scenarios[0].steps.count == 3)
     }
 }

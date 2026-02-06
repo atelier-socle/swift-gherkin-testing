@@ -3,8 +3,8 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import GherkinTesting
+import Testing
 
 // MARK: - @Feature Demo: Login with Background, Cucumber Expressions, Hooks
 
@@ -19,25 +19,27 @@ import GherkinTesting
 /// - Hook ordering via `order:` parameter
 /// - Async step handlers with `MockAuthService` actor
 /// - `#expect` assertions in step handlers
-@Feature(source: .inline("""
-    @auth @smoke
-    Feature: Login
-      Users can log in with valid credentials.
+@Feature(
+    source: .inline(
+        """
+        @auth @smoke
+        Feature: Login
+          Users can log in with valid credentials.
 
-      Background:
-        Given the app is launched
+          Background:
+            Given the app is launched
 
-      Scenario: Successful login
-        Given the user is on the login page
-        When they enter "alice" and "secret123"
-        Then they should see the dashboard
-        But they should not see the admin panel
+          Scenario: Successful login
+            Given the user is on the login page
+            When they enter "alice" and "secret123"
+            Then they should see the dashboard
+            But they should not see the admin panel
 
-      Scenario: Failed login with wrong password
-        Given the user is on the login page
-        When they enter "alice" and "wrong"
-        Then they should see an error message
-    """))
+          Scenario: Failed login with wrong password
+            Given the user is on the login page
+            When they enter "alice" and "wrong"
+            Then they should see an error message
+        """))
 struct LoginFeature {
     let auth = MockAuthService()
 

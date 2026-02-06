@@ -77,7 +77,7 @@ extension Optional: ExampleRepresentable where Wrapped: ExampleRepresentable {
     /// - Parameter cellValue: The raw cell value string.
     /// - Returns: `.some(value)` if conversion succeeds, `.some(nil)` for empty strings,
     ///   or `nil` if conversion of a non-empty string fails.
-    public static func fromExample(_ cellValue: String) -> Optional<Wrapped>? {
+    public static func fromExample(_ cellValue: String) -> Wrapped?? {
         if cellValue.isEmpty {
             return .some(nil)
         }

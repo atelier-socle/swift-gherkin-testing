@@ -19,7 +19,7 @@ private var testMacros: [String: any Macro.Type] {
         "But": ButMacro.self,
         "Before": BeforeMacro.self,
         "After": AfterMacro.self,
-        "StepLibrary": StepLibraryMacro.self,
+        "StepLibrary": StepLibraryMacro.self
     ]
 }
 
@@ -34,8 +34,8 @@ struct DiagnosticTests {
             var x = 42
             """,
             expandedSource: """
-            var x = 42
-            """,
+                var x = 42
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "Step macros (@Given, @When, @Then, @And, @But) can only be applied to functions",
@@ -56,9 +56,9 @@ struct DiagnosticTests {
             }
             """,
             expandedSource: """
-            func foo() {
-            }
-            """,
+                func foo() {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "Step expression must be a string literal",
@@ -79,9 +79,9 @@ struct DiagnosticTests {
             }
             """,
             expandedSource: """
-            func enter(one: String) {
-            }
-            """,
+                func enter(one: String) {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "Number of function parameters must match the number of capture groups in the expression",
@@ -102,9 +102,9 @@ struct DiagnosticTests {
             }
             """,
             expandedSource: """
-            enum BadFeature {
-            }
-            """,
+                enum BadFeature {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "@Feature can only be applied to a struct",
@@ -125,9 +125,9 @@ struct DiagnosticTests {
             }
             """,
             expandedSource: """
-            func setUp() {
-            }
-            """,
+                func setUp() {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "@Before/@After hooks must be applied to static functions",
@@ -148,9 +148,9 @@ struct DiagnosticTests {
             }
             """,
             expandedSource: """
-            func tearDown() {
-            }
-            """,
+                func tearDown() {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "@Before/@After hooks must be applied to static functions",
@@ -171,9 +171,9 @@ struct DiagnosticTests {
             }
             """,
             expandedSource: """
-            enum BadLibrary {
-            }
-            """,
+                enum BadLibrary {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "@StepLibrary can only be applied to a struct",
@@ -194,9 +194,9 @@ struct DiagnosticTests {
             }
             """,
             expandedSource: """
-            func foo() {
-            }
-            """,
+                func foo() {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "Step expression must not be empty",
@@ -217,9 +217,9 @@ struct DiagnosticTests {
             }
             """,
             expandedSource: """
-            struct NotAFunction {
-            }
-            """,
+                struct NotAFunction {
+                }
+                """,
             diagnostics: [
                 DiagnosticSpec(
                     message: "Step macros (@Given, @When, @Then, @And, @But) can only be applied to functions",

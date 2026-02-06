@@ -15,7 +15,7 @@ private var testMacros: [String: any Macro.Type] {
         "When": WhenMacro.self,
         "Then": ThenMacro.self,
         "And": AndMacro.self,
-        "But": ButMacro.self,
+        "But": ButMacro.self
     ]
 }
 
@@ -33,16 +33,16 @@ struct StepMacroTests {
             }
             """,
             expandedSource: """
-            func onLoginPage() {
-            }
+                func onLoginPage() {
+                }
 
-            static let __stepDef_onLoginPage = StepDefinition<Self>(
-                keywordType: .context,
-                pattern: .exact("the user is logged in"),
-                sourceLocation: Location(line: 0, column: 0),
-                handler: { _ feature, args in feature.onLoginPage() }
-            )
-            """,
+                static let __stepDef_onLoginPage = StepDefinition<Self>(
+                    keywordType: .context,
+                    pattern: .exact("the user is logged in"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { _ feature, args in feature.onLoginPage() }
+                )
+                """,
             macros: testMacros
         )
     }
@@ -56,16 +56,16 @@ struct StepMacroTests {
             }
             """,
             expandedSource: """
-            func enterValue(value: String) {
-            }
+                func enterValue(value: String) {
+                }
 
-            static let __stepDef_enterValue = StepDefinition<Self>(
-                keywordType: .context,
-                pattern: .cucumberExpression("the user enters {string}"),
-                sourceLocation: Location(line: 0, column: 0),
-                handler: { _ feature, args in feature.enterValue(value: args[0]) }
-            )
-            """,
+                static let __stepDef_enterValue = StepDefinition<Self>(
+                    keywordType: .context,
+                    pattern: .cucumberExpression("the user enters {string}"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { _ feature, args in feature.enterValue(value: args[0]) }
+                )
+                """,
             macros: testMacros
         )
     }
@@ -79,16 +79,16 @@ struct StepMacroTests {
             }
             """,
             expandedSource: """
-            func items(count: String) {
-            }
+                func items(count: String) {
+                }
 
-            static let __stepDef_items = StepDefinition<Self>(
-                keywordType: .context,
-                pattern: .cucumberExpression("there are {int} items"),
-                sourceLocation: Location(line: 0, column: 0),
-                handler: { _ feature, args in feature.items(count: args[0]) }
-            )
-            """,
+                static let __stepDef_items = StepDefinition<Self>(
+                    keywordType: .context,
+                    pattern: .cucumberExpression("there are {int} items"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { _ feature, args in feature.items(count: args[0]) }
+                )
+                """,
             macros: testMacros
         )
     }
@@ -102,16 +102,16 @@ struct StepMacroTests {
             }
             """,
             expandedSource: """
-            func setupDB() async throws {
-            }
+                func setupDB() async throws {
+                }
 
-            static let __stepDef_setupDB = StepDefinition<Self>(
-                keywordType: .context,
-                pattern: .exact("the database is ready"),
-                sourceLocation: Location(line: 0, column: 0),
-                handler: { _ feature, args in try await feature.setupDB() }
-            )
-            """,
+                static let __stepDef_setupDB = StepDefinition<Self>(
+                    keywordType: .context,
+                    pattern: .exact("the database is ready"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { _ feature, args in try await feature.setupDB() }
+                )
+                """,
             macros: testMacros
         )
     }
@@ -125,16 +125,16 @@ struct StepMacroTests {
             }
             """,
             expandedSource: """
-            mutating func resetCount() {
-            }
+                mutating func resetCount() {
+                }
 
-            static let __stepDef_resetCount = StepDefinition<Self>(
-                keywordType: .context,
-                pattern: .exact("the count is zero"),
-                sourceLocation: Location(line: 0, column: 0),
-                handler: { feature, args in feature.resetCount() }
-            )
-            """,
+                static let __stepDef_resetCount = StepDefinition<Self>(
+                    keywordType: .context,
+                    pattern: .exact("the count is zero"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { feature, args in feature.resetCount() }
+                )
+                """,
             macros: testMacros
         )
     }
@@ -150,16 +150,16 @@ struct StepMacroTests {
             }
             """,
             expandedSource: """
-            func clickLogin() {
-            }
+                func clickLogin() {
+                }
 
-            static let __stepDef_clickLogin = StepDefinition<Self>(
-                keywordType: .action,
-                pattern: .exact("the user clicks login"),
-                sourceLocation: Location(line: 0, column: 0),
-                handler: { _ feature, args in feature.clickLogin() }
-            )
-            """,
+                static let __stepDef_clickLogin = StepDefinition<Self>(
+                    keywordType: .action,
+                    pattern: .exact("the user clicks login"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { _ feature, args in feature.clickLogin() }
+                )
+                """,
             macros: testMacros
         )
     }
@@ -173,16 +173,16 @@ struct StepMacroTests {
             }
             """,
             expandedSource: """
-            func checkDashboard() {
-            }
+                func checkDashboard() {
+                }
 
-            static let __stepDef_checkDashboard = StepDefinition<Self>(
-                keywordType: .outcome,
-                pattern: .exact("the dashboard is visible"),
-                sourceLocation: Location(line: 0, column: 0),
-                handler: { _ feature, args in feature.checkDashboard() }
-            )
-            """,
+                static let __stepDef_checkDashboard = StepDefinition<Self>(
+                    keywordType: .outcome,
+                    pattern: .exact("the dashboard is visible"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { _ feature, args in feature.checkDashboard() }
+                )
+                """,
             macros: testMacros
         )
     }
@@ -196,16 +196,16 @@ struct StepMacroTests {
             }
             """,
             expandedSource: """
-            func emptyCart() {
-            }
+                func emptyCart() {
+                }
 
-            static let __stepDef_emptyCart = StepDefinition<Self>(
-                keywordType: .conjunction,
-                pattern: .exact("the cart is empty"),
-                sourceLocation: Location(line: 0, column: 0),
-                handler: { _ feature, args in feature.emptyCart() }
-            )
-            """,
+                static let __stepDef_emptyCart = StepDefinition<Self>(
+                    keywordType: .conjunction,
+                    pattern: .exact("the cart is empty"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { _ feature, args in feature.emptyCart() }
+                )
+                """,
             macros: testMacros
         )
     }
@@ -219,16 +219,16 @@ struct StepMacroTests {
             }
             """,
             expandedSource: """
-            func notAdmin() {
-            }
+                func notAdmin() {
+                }
 
-            static let __stepDef_notAdmin = StepDefinition<Self>(
-                keywordType: .conjunction,
-                pattern: .exact("the user is not admin"),
-                sourceLocation: Location(line: 0, column: 0),
-                handler: { _ feature, args in feature.notAdmin() }
-            )
-            """,
+                static let __stepDef_notAdmin = StepDefinition<Self>(
+                    keywordType: .conjunction,
+                    pattern: .exact("the user is not admin"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { _ feature, args in feature.notAdmin() }
+                )
+                """,
             macros: testMacros
         )
     }
@@ -244,16 +244,16 @@ struct StepMacroTests {
             }
             """,
             expandedSource: """
-            func enterCredentials(username: String, password: String) {
-            }
+                func enterCredentials(username: String, password: String) {
+                }
 
-            static let __stepDef_enterCredentials = StepDefinition<Self>(
-                keywordType: .action,
-                pattern: .cucumberExpression("they enter {string} and {string}"),
-                sourceLocation: Location(line: 0, column: 0),
-                handler: { _ feature, args in feature.enterCredentials(username: args[0], password: args[1]) }
-            )
-            """,
+                static let __stepDef_enterCredentials = StepDefinition<Self>(
+                    keywordType: .action,
+                    pattern: .cucumberExpression("they enter {string} and {string}"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { _ feature, args in feature.enterCredentials(username: args[0], password: args[1]) }
+                )
+                """,
             macros: testMacros
         )
     }
@@ -267,16 +267,16 @@ struct StepMacroTests {
             }
             """,
             expandedSource: """
-            func setItems(_ count: String) {
-            }
+                func setItems(_ count: String) {
+                }
 
-            static let __stepDef_setItems = StepDefinition<Self>(
-                keywordType: .context,
-                pattern: .cucumberExpression("there are {int} items"),
-                sourceLocation: Location(line: 0, column: 0),
-                handler: { _ feature, args in feature.setItems(args[0]) }
-            )
-            """,
+                static let __stepDef_setItems = StepDefinition<Self>(
+                    keywordType: .context,
+                    pattern: .cucumberExpression("there are {int} items"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { _ feature, args in feature.setItems(args[0]) }
+                )
+                """,
             macros: testMacros
         )
     }

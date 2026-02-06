@@ -24,6 +24,6 @@ struct GherkinTestingMacrosPlugin: CompilerPlugin {
         ButMacro.self,
         BeforeMacro.self,
         AfterMacro.self,
-        StepLibraryMacro.self,
+        StepLibraryMacro.self
     ]
 }

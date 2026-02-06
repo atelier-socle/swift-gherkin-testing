@@ -3,8 +3,9 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
-import Testing
 import Foundation
+import Testing
+
 @testable import GherkinTesting
 
 /// A minimal feature for reporter integration tests.
@@ -82,10 +83,12 @@ struct ReporterIntegrationTests {
         let definitions = [noopDefinition("step A"), noopDefinition("step B")]
         let runner = TestRunner(definitions: definitions, configuration: config)
 
-        let pickle = makePickle(name: "Login Scenario", steps: [
-            makeStep("step A", id: "1"),
-            makeStep("step B", id: "2"),
-        ])
+        let pickle = makePickle(
+            name: "Login Scenario",
+            steps: [
+                makeStep("step A", id: "1"),
+                makeStep("step B", id: "2")
+            ])
 
         _ = try await runner.run(
             pickles: [pickle],
@@ -95,15 +98,16 @@ struct ReporterIntegrationTests {
         )
 
         let events = await tracker.events
-        #expect(events == [
-            "featureStarted:Login Feature",
-            "scenarioStarted:Login Scenario",
-            "stepFinished:step A",
-            "stepFinished:step B",
-            "scenarioFinished:Login Scenario",
-            "featureFinished:Login Feature",
-            "testRunFinished:1",
-        ])
+        #expect(
+            events == [
+                "featureStarted:Login Feature",
+                "scenarioStarted:Login Scenario",
+                "stepFinished:step A",
+                "stepFinished:step B",
+                "scenarioFinished:Login Scenario",
+                "featureFinished:Login Feature",
+                "testRunFinished:1"
+            ])
     }
 
     @Test("TestRunner sends events for multiple scenarios")
@@ -167,10 +171,12 @@ struct ReporterIntegrationTests {
         let definitions = [noopDefinition("login"), noopDefinition("see dashboard")]
         let runner = TestRunner(definitions: definitions, configuration: config)
 
-        let pickle = makePickle(name: "Login", steps: [
-            makeStep("login", id: "1"),
-            makeStep("see dashboard", id: "2"),
-        ])
+        let pickle = makePickle(
+            name: "Login",
+            steps: [
+                makeStep("login", id: "1"),
+                makeStep("see dashboard", id: "2")
+            ])
 
         _ = try await runner.run(
             pickles: [pickle],
@@ -282,7 +288,8 @@ struct ReporterIntegrationTests {
 
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("gherkin-test-\(ProcessInfo.processInfo.globallyUniqueString)")
-        let fileURL = tempDir
+        let fileURL =
+            tempDir
             .appendingPathComponent("nested/report.json")
 
         try await reporter.writeReport(to: fileURL)

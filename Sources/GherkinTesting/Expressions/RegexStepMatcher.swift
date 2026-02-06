@@ -3,6 +3,13 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
+/// A candidate match found during step matching.
+private struct MatchCandidate<F: GherkinFeature> {
+    let definition: StepDefinition<F>
+    let arguments: [String]
+    let priority: Int
+}
+
 /// A pre-compiled pattern for fast step matching without re-compilation.
 private enum CompiledPattern<F: GherkinFeature>: Sendable {
     /// Exact string match — compare directly.
@@ -92,60 +99,76 @@ public struct RegexStepMatcher<F: GherkinFeature>: Sendable {
     /// - Throws: ``StepMatchError/undefined(stepText:)`` if no definition matches,
     ///   ``StepMatchError/ambiguous(stepText:matchDescriptions:)`` if multiple match.
     public func match(_ step: PickleStep) throws -> StepMatch<F> {
-        var matches: [(definition: StepDefinition<F>, arguments: [String], priority: Int)] = []
+        var candidates: [MatchCandidate<F>] = []
 
         for (index, compiled) in compiledPatterns.enumerated() {
-            let definition = definitions[index]
-
-            switch compiled {
-            case .exact(let pattern):
-                if step.text == pattern {
-                    matches.append((definition, [], 0))
-                }
-
-            case .cucumberExpression(let expression):
-                if let cucumberMatch = try expression.match(step.text) {
-                    matches.append((definition, cucumberMatch.rawArguments, 1))
-                }
-
-            case .regex(let compiledRegex):
-                if let result = try? compiledRegex.regex.wholeMatch(in: step.text) {
-                    let captures = extractCaptures(from: result)
-                    matches.append((definition, captures, 2))
-                }
+            if let candidate = try tryMatch(compiled, step: step, definition: definitions[index]) {
+                candidates.append(candidate)
             }
         }
 
-        switch matches.count {
-        case 0:
-            throw StepMatchError.undefined(stepText: step.text)
-        case 1:
-            let (definition, arguments, _) = matches[0]
-            return StepMatch(
-                stepDefinition: definition,
-                arguments: arguments,
-                matchLocation: definition.sourceLocation
-            )
-        default:
-            // If we have matches at different priority levels, take the highest (lowest number)
-            let bestPriority = matches.min(by: { $0.priority < $1.priority })?.priority ?? 0
-            let bestMatches = matches.filter { $0.priority == bestPriority }
+        return try selectBestMatch(from: candidates, stepText: step.text)
+    }
 
-            if bestMatches.count == 1 {
-                let (definition, arguments, _) = bestMatches[0]
-                return StepMatch(
-                    stepDefinition: definition,
-                    arguments: arguments,
-                    matchLocation: definition.sourceLocation
-                )
+    /// Attempts to match a single pre-compiled pattern against a step.
+    ///
+    /// - Parameters:
+    ///   - compiled: The pre-compiled pattern.
+    ///   - step: The pickle step to match.
+    ///   - definition: The step definition associated with this pattern.
+    /// - Returns: A ``MatchCandidate`` if the pattern matches, `nil` otherwise.
+    private func tryMatch(
+        _ compiled: CompiledPattern<F>,
+        step: PickleStep,
+        definition: StepDefinition<F>
+    ) throws -> MatchCandidate<F>? {
+        switch compiled {
+        case .exact(let pattern):
+            return step.text == pattern ? MatchCandidate(definition: definition, arguments: [], priority: 0) : nil
+        case .cucumberExpression(let expression):
+            if let cucumberMatch = try expression.match(step.text) {
+                return MatchCandidate(definition: definition, arguments: cucumberMatch.rawArguments, priority: 1)
             }
+            return nil
+        case .regex(let compiledRegex):
+            if let result = try? compiledRegex.regex.wholeMatch(in: step.text) {
+                return MatchCandidate(definition: definition, arguments: extractCaptures(from: result), priority: 2)
+            }
+            return nil
+        }
+    }
 
+    /// Selects the best match from a list of candidates using priority-based resolution.
+    ///
+    /// - Parameters:
+    ///   - candidates: All matching candidates.
+    ///   - stepText: The original step text for error reporting.
+    /// - Returns: A ``StepMatch`` for the best candidate.
+    /// - Throws: ``StepMatchError`` if no match or ambiguous.
+    private func selectBestMatch(from candidates: [MatchCandidate<F>], stepText: String) throws -> StepMatch<F> {
+        guard !candidates.isEmpty else {
+            throw StepMatchError.undefined(stepText: stepText)
+        }
+
+        guard let bestPriority = candidates.min(by: { $0.priority < $1.priority })?.priority else {
+            throw StepMatchError.undefined(stepText: stepText)
+        }
+        let bestMatches = candidates.filter { $0.priority == bestPriority }
+
+        guard bestMatches.count == 1 else {
             let descriptions = bestMatches.map { match in
                 let loc = match.definition.sourceLocation
                 return "\(match.definition.patternDescription) (line \(loc.line))"
             }
-            throw StepMatchError.ambiguous(stepText: step.text, matchDescriptions: descriptions)
+            throw StepMatchError.ambiguous(stepText: stepText, matchDescriptions: descriptions)
         }
+
+        let winner = bestMatches[0]
+        return StepMatch(
+            stepDefinition: winner.definition,
+            arguments: winner.arguments,
+            matchLocation: winner.definition.sourceLocation
+        )
     }
 
     /// Extracts capture group strings from a regex match output.

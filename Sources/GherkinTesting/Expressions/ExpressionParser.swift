@@ -108,20 +108,16 @@ public struct ExpressionParser: Sendable {
         var index = 0
         var textBuffer = ""
         // Tracks alternation state: nil means no alternation in progress
-        var alternationParts: [String]? = nil
+        var alternationParts: [String]?
 
         while index < chars.count {
             let char = chars[index]
 
             // Handle escape sequences: \{ \} \( \) \/ \\
-            if char == "\\" && index + 1 < chars.count {
-                let next = chars[index + 1]
-                if next == "{" || next == "}" || next == "(" || next == ")"
-                    || next == "/" || next == "\\" {
-                    textBuffer.append(next)
-                    index += 2
-                    continue
-                }
+            let escapeAdvance = handleEscapeSequence(chars, at: index, buffer: &textBuffer)
+            if escapeAdvance > 0 {
+                index += escapeAdvance
+                continue
             }
 
             switch char {
@@ -198,13 +194,13 @@ public struct ExpressionParser: Sendable {
 
             // Split shared prefix/suffix from alternation parts so that
             // "I eat/drink a " becomes text("I ") + alternation(["eat","drink"]) + text(" a ")
-            let (prefix, alts, suffix) = extractAlternationBoundaries(parts)
-            if !prefix.isEmpty {
-                tokens.append(.text(prefix))
+            let result = extractAlternationBoundaries(parts)
+            if !result.prefix.isEmpty {
+                tokens.append(.text(result.prefix))
             }
-            tokens.append(.alternation(alts))
-            if !suffix.isEmpty {
-                tokens.append(.text(suffix))
+            tokens.append(.alternation(result.alternatives))
+            if !result.suffix.isEmpty {
+                tokens.append(.text(result.suffix))
             }
 
             alternation = nil
@@ -212,6 +208,13 @@ public struct ExpressionParser: Sendable {
             tokens.append(.text(buffer))
         }
         buffer = ""
+    }
+
+    /// The result of extracting alternation boundaries.
+    private struct AlternationResult {
+        let prefix: String
+        let alternatives: [String]
+        let suffix: String
     }
 
     /// Extracts the common prefix and suffix from alternation parts.
@@ -222,12 +225,12 @@ public struct ExpressionParser: Sendable {
     /// - The alternation words: `["eat", "drink"]`
     ///
     /// - Parameter parts: The raw alternation segments.
-    /// - Returns: A tuple of (prefix, alternatives, suffix).
+    /// - Returns: An ``AlternationResult`` with prefix, alternatives, and suffix.
     private func extractAlternationBoundaries(
         _ parts: [String]
-    ) -> (prefix: String, alternatives: [String], suffix: String) {
+    ) -> AlternationResult {
         guard parts.count >= 2 else {
-            return ("", parts, "")
+            return AlternationResult(prefix: "", alternatives: parts, suffix: "")
         }
 
         let first = parts[0]
@@ -263,7 +266,7 @@ public struct ExpressionParser: Sendable {
         }
         alternatives.append(lastAlternative)
 
-        return (prefix, alternatives, suffix)
+        return AlternationResult(prefix: prefix, alternatives: alternatives, suffix: suffix)
     }
 
     // MARK: - Compilation
@@ -311,6 +314,24 @@ public struct ExpressionParser: Sendable {
     }
 
     // MARK: - Private Helpers
+
+    /// Checks for an escape sequence at the given index and appends the escaped character.
+    ///
+    /// - Parameters:
+    ///   - chars: The character array.
+    ///   - index: The current position.
+    ///   - buffer: The text buffer to append escaped characters to.
+    /// - Returns: The number of characters consumed (2 if escape handled, 0 otherwise).
+    private func handleEscapeSequence(_ chars: [Character], at index: Int, buffer: inout String) -> Int {
+        guard chars[index] == "\\" && index + 1 < chars.count else { return 0 }
+        let next = chars[index + 1]
+        let escapable: Set<Character> = ["{", "}", "(", ")", "/", "\\"]
+        if escapable.contains(next) {
+            buffer.append(next)
+            return 2
+        }
+        return 0
+    }
 
     /// Finds the index of a closing delimiter, respecting nesting.
     private func findClosing(
