@@ -197,54 +197,149 @@ enum SyntaxHelpers {
 
     // MARK: - Cucumber Expressions
 
-    /// Converts a Cucumber expression to a regex pattern string.
+    /// The detected type of a step expression.
     ///
-    /// Handles the standard Cucumber expression placeholders:
-    /// - `{int}` → `(-?\d+)`
-    /// - `{float}` → `(-?\d+\.\d+)`
-    /// - `{string}` → `"([^"]*)"`
-    /// - `{word}` → `(\S+)`
-    /// - `{}` → `(.*)`
-    ///
-    /// If the expression contains no placeholders, returns `nil` (use exact match).
-    ///
-    /// - Parameter expression: A Cucumber expression string.
-    /// - Returns: A regex pattern string, or `nil` if no placeholders are found.
-    static func cucumberExpressionToRegex(_ expression: String) -> String? {
-        let placeholders: [(String, String)] = [
-            ("{int}", #"(-?\d+)"#),
-            ("{float}", #"(-?\d+\.\d+)"#),
-            ("{string}", #""([^"]*)""#),
-            ("{word}", #"(\S+)"#),
-            ("{}", #"(.*)"#),
-        ]
+    /// Used by ``StepRegistryCodeGen`` to generate the correct ``StepPattern`` case.
+    enum ExpressionKind {
+        /// An exact string match (no placeholders, no regex metacharacters).
+        case exact
 
-        var result = expression
-        var hasPlaceholder = false
+        /// A Cucumber expression with parameter placeholders, optional text, or alternation.
+        case cucumberExpression
 
-        for (placeholder, regex) in placeholders {
-            if containsSubstring(result, placeholder) {
-                hasPlaceholder = true
-                result = replaceAll(in: result, placeholder, with: regex)
+        /// A raw regular expression pattern.
+        case regex
+    }
+
+    /// Detects whether an expression is exact, a Cucumber expression, or a regex.
+    ///
+    /// Detection rules:
+    /// - If pattern starts with `^` or contains `\d`, `[`, `]` → regex
+    /// - If pattern contains `{...}`, `(...)`, or unescaped `/` → Cucumber expression
+    /// - Otherwise → exact string match
+    ///
+    /// - Parameter expression: The expression string.
+    /// - Returns: The detected expression kind.
+    static func detectExpressionKind(_ expression: String) -> ExpressionKind {
+        // Regex indicators: starts with ^, ends with $, contains \d, [, ]
+        if expression.hasPrefix("^") || expression.hasSuffix("$") {
+            return .regex
+        }
+        let regexIndicators = [#"\d"#, #"\s"#, #"\w"#, #"\b"#, "[", "]"]
+        for indicator in regexIndicators {
+            if containsSubstring(expression, indicator) {
+                return .regex
             }
         }
 
-        guard hasPlaceholder else { return nil }
-        return "^\(result)$"
+        // Cucumber expression indicators: {param}, (optional), alternation /
+        if containsSubstring(expression, "{") && containsSubstring(expression, "}") {
+            return .cucumberExpression
+        }
+        if containsCucumberOptional(expression) {
+            return .cucumberExpression
+        }
+        if containsUnescapedSlash(expression) {
+            return .cucumberExpression
+        }
+
+        return .exact
+    }
+
+    /// Checks if the expression contains unescaped parentheses (Cucumber optional text).
+    private static func containsCucumberOptional(_ expression: String) -> Bool {
+        let chars = Array(expression)
+        for i in 0..<chars.count {
+            if chars[i] == "(" {
+                // Check it's not escaped
+                if i == 0 || chars[i - 1] != "\\" {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    /// Checks if the expression contains unescaped `/` (Cucumber alternation).
+    private static func containsUnescapedSlash(_ expression: String) -> Bool {
+        let chars = Array(expression)
+        for i in 0..<chars.count {
+            if chars[i] == "/" {
+                if i == 0 || chars[i - 1] != "\\" {
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     /// Counts the number of capture groups in a Cucumber expression.
     ///
+    /// Counts `{...}` parameter placeholders (including `{}`).
+    ///
     /// - Parameter expression: A Cucumber expression string.
-    /// - Returns: The number of capture groups (placeholders).
+    /// - Returns: The number of capture groups.
     static func captureGroupCount(in expression: String) -> Int {
-        let placeholders = ["{int}", "{float}", "{string}", "{word}", "{}"]
+        let kind = detectExpressionKind(expression)
+        switch kind {
+        case .exact:
+            return 0
+        case .cucumberExpression:
+            return countCucumberParameters(in: expression)
+        case .regex:
+            return countRegexCaptureGroups(in: expression)
+        }
+    }
+
+    /// Counts `{...}` parameter placeholders in a Cucumber expression.
+    private static func countCucumberParameters(in expression: String) -> Int {
         var count = 0
-        for placeholder in placeholders {
-            var searchStart = expression.startIndex
-            while let range = findSubstring(in: expression, placeholder, from: searchStart) {
-                count += 1
-                searchStart = range.upperBound
+        let chars = Array(expression)
+        var i = 0
+        while i < chars.count {
+            if chars[i] == "\\" && i + 1 < chars.count {
+                i += 2
+                continue
+            }
+            if chars[i] == "{" {
+                // Find matching }
+                var j = i + 1
+                while j < chars.count && chars[j] != "}" {
+                    j += 1
+                }
+                if j < chars.count {
+                    count += 1
+                    i = j + 1
+                } else {
+                    i += 1
+                }
+            } else {
+                i += 1
+            }
+        }
+        return count
+    }
+
+    /// Counts capture groups `(...)` in a regex pattern, excluding non-capturing `(?:...)`.
+    private static func countRegexCaptureGroups(in pattern: String) -> Int {
+        var count = 0
+        let chars = Array(pattern)
+        var i = 0
+        while i < chars.count {
+            if chars[i] == "\\" && i + 1 < chars.count {
+                i += 2
+                continue
+            }
+            if chars[i] == "(" {
+                // Check for non-capturing group (?:
+                if i + 2 < chars.count && chars[i + 1] == "?" && chars[i + 2] == ":" {
+                    i += 1
+                } else {
+                    count += 1
+                    i += 1
+                }
+            } else {
+                i += 1
             }
         }
         return count

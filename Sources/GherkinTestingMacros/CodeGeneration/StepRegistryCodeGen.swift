@@ -73,18 +73,22 @@ enum StepRegistryCodeGen {
 
     /// Generates the `StepPattern` code for an expression.
     ///
-    /// If the expression contains Cucumber placeholders, converts to regex.
-    /// Otherwise uses exact matching.
+    /// Detects the expression type (exact, Cucumber expression, or regex)
+    /// and generates the appropriate `StepPattern` case.
     ///
-    /// - Parameter expression: The Cucumber expression string.
+    /// - Parameter expression: The step expression string.
     /// - Returns: A string of Swift code for the pattern.
     static func generatePatternCode(expression: String) -> String {
-        if let regex = SyntaxHelpers.cucumberExpressionToRegex(expression) {
-            let escaped = SyntaxHelpers.escapeForStringLiteral(regex)
-            return ".regex(\"\(escaped)\")"
-        } else {
-            let escaped = SyntaxHelpers.escapeForStringLiteral(expression)
+        let kind = SyntaxHelpers.detectExpressionKind(expression)
+        let escaped = SyntaxHelpers.escapeForStringLiteral(expression)
+
+        switch kind {
+        case .exact:
             return ".exact(\"\(escaped)\")"
+        case .cucumberExpression:
+            return ".cucumberExpression(\"\(escaped)\")"
+        case .regex:
+            return ".regex(\"\(escaped)\")"
         }
     }
 

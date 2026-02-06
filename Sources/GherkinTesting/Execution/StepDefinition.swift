@@ -5,18 +5,24 @@
 
 /// The pattern used to match a step definition against a pickle step's text.
 ///
-/// Step patterns can be either exact string matches (fastest) or regular
-/// expression patterns with capture groups for argument extraction.
-/// The regex is compiled on demand during matching in ``StepExecutor``.
+/// Step patterns can be exact string matches (fastest), Cucumber expressions
+/// with typed parameters, or raw regular expression patterns.
 public enum StepPattern: Sendable, Equatable, Hashable {
     /// An exact string match. The pickle step text must equal this string exactly.
     ///
     /// - Parameter pattern: The exact text to match.
     case exact(String)
 
+    /// A Cucumber expression pattern (e.g. `"I have {int} cucumber(s)"`).
+    ///
+    /// Compiled to regex at match time via ``CucumberExpression``.
+    /// Supports `{int}`, `{float}`, `{string}`, `{word}`, `{}`, optional `()`, alternation `/`.
+    /// - Parameter source: The Cucumber expression source string.
+    case cucumberExpression(String)
+
     /// A regular expression pattern source string.
     ///
-    /// The regex is compiled from this source at match time by ``StepExecutor``.
+    /// The regex is compiled from this source at match time by ``RegexStepMatcher``.
     /// - Parameter source: The regular expression pattern string.
     case regex(String)
 
@@ -25,6 +31,8 @@ public enum StepPattern: Sendable, Equatable, Hashable {
         switch self {
         case .exact(let string):
             return string
+        case .cucumberExpression(let source):
+            return source
         case .regex(let source):
             return "/\(source)/"
         }

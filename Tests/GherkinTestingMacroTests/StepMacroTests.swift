@@ -47,7 +47,7 @@ struct StepMacroTests {
         )
     }
 
-    @Test("@Given with {string} placeholder generates regex pattern")
+    @Test("@Given with {string} placeholder generates cucumber expression pattern")
     func givenStringPlaceholder() {
         assertMacroExpansion(
             """
@@ -61,7 +61,7 @@ struct StepMacroTests {
 
             static let __stepDef_enterValue = StepDefinition<Self>(
                 keywordType: .context,
-                pattern: .regex("^the user enters \\"([^\\"]*)\\"$"),
+                pattern: .cucumberExpression("the user enters {string}"),
                 sourceLocation: Location(line: 0, column: 0),
                 handler: { _ feature, args in feature.enterValue(value: args[0]) }
             )
@@ -70,7 +70,7 @@ struct StepMacroTests {
         )
     }
 
-    @Test("@Given with {int} placeholder generates regex pattern")
+    @Test("@Given with {int} placeholder generates cucumber expression pattern")
     func givenIntPlaceholder() {
         assertMacroExpansion(
             """
@@ -84,7 +84,7 @@ struct StepMacroTests {
 
             static let __stepDef_items = StepDefinition<Self>(
                 keywordType: .context,
-                pattern: .regex("^there are (-?\\\\d+) items$"),
+                pattern: .cucumberExpression("there are {int} items"),
                 sourceLocation: Location(line: 0, column: 0),
                 handler: { _ feature, args in feature.items(count: args[0]) }
             )
@@ -249,7 +249,7 @@ struct StepMacroTests {
 
             static let __stepDef_enterCredentials = StepDefinition<Self>(
                 keywordType: .action,
-                pattern: .regex("^they enter \\"([^\\"]*)\\" and \\"([^\\"]*)\\"$"),
+                pattern: .cucumberExpression("they enter {string} and {string}"),
                 sourceLocation: Location(line: 0, column: 0),
                 handler: { _ feature, args in feature.enterCredentials(username: args[0], password: args[1]) }
             )
@@ -272,7 +272,7 @@ struct StepMacroTests {
 
             static let __stepDef_setItems = StepDefinition<Self>(
                 keywordType: .context,
-                pattern: .regex("^there are (-?\\\\d+) items$"),
+                pattern: .cucumberExpression("there are {int} items"),
                 sourceLocation: Location(line: 0, column: 0),
                 handler: { _ feature, args in feature.setItems(args[0]) }
             )

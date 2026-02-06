@@ -187,20 +187,16 @@ struct StepExecutorTests {
         }
     }
 
-    @Test("ambiguous between exact and regex match")
-    func ambiguousExactAndRegex() throws {
-        let def1 = exactDefinition("the user clicks submit")
-        let def2 = regexDefinition("^the user clicks (.+)$")
+    @Test("exact match takes priority over regex match")
+    func exactPriorityOverRegex() throws {
+        let def1 = exactDefinition("the user clicks submit", line: 1)
+        let def2 = regexDefinition("^the user clicks (.+)$", line: 2)
         let executor = StepExecutor(definitions: [def1, def2])
         let step = pickleStep("the user clicks submit")
 
-        #expect {
-            try executor.match(step)
-        } throws: { error in
-            guard let matchError = error as? StepMatchError else { return false }
-            if case .ambiguous = matchError { return true }
-            return false
-        }
+        let match = try executor.match(step)
+        #expect(match.matchLocation == Location(line: 1))
+        #expect(match.arguments.isEmpty)
     }
 
     // MARK: - Execution
