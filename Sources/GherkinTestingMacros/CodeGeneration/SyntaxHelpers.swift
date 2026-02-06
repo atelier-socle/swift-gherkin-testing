@@ -409,14 +409,91 @@ enum SyntaxHelpers {
 
     /// Extracts scenario names from inline Gherkin source by simple line scanning.
     ///
-    /// Looks for lines starting with "Scenario:" or "Scenario Outline:" (trimmed)
-    /// and extracts the name portion. This is a lightweight approach that avoids
-    /// needing the full parser at compile time.
+    /// Looks for lines starting with scenario keywords (trimmed) across the top 15
+    /// Gherkin languages. Outline/template variants are checked first to avoid
+    /// prefix conflicts with basic scenario keywords.
+    ///
+    /// The macro plugin cannot import `LanguageRegistry`, so the keywords are
+    /// hardcoded here for the most common languages.
     ///
     /// - Parameter source: The Gherkin source text.
     /// - Returns: An array of scenario names found.
     static func extractScenarioNames(from source: String) -> [String] {
-        let prefixes = ["Scenario Outline:", "Scenario Template:", "Scenario:", "Example:"]
+        // Outline/template variants MUST come before basic scenario keywords
+        // (e.g. "Scenario Outline:" before "Scenario:") to avoid prefix conflicts.
+        // Top 15 languages: en, fr, de, es, pt, it, ja, zh-CN, zh-TW, ko, ru, ar, nl, pl, sv, tr, hi
+        let prefixes = [
+            // English
+            "Scenario Outline:", "Scenario Template:",
+            // French
+            "Plan du scénario:", "Plan du Scénario:",
+            // German
+            "Szenariogrundriss:", "Szenarien:",
+            // Spanish
+            "Esquema del escenario:",
+            // Portuguese
+            "Esquema do Cenário:", "Esquema do Cenario:",
+            "Delineação do Cenário:", "Delineacao do Cenario:",
+            // Italian
+            "Schema dello scenario:",
+            // Japanese
+            "シナリオアウトライン:", "シナリオテンプレート:", "シナリオテンプレ:",
+            // Chinese Simplified
+            "场景大纲:", "剧本大纲:",
+            // Chinese Traditional
+            "場景大綱:", "劇本大綱:",
+            // Korean
+            "시나리오 개요:",
+            // Russian
+            "Структура сценария:", "Шаблон сценария:",
+            // Arabic
+            "سيناريو مخطط:",
+            // Dutch
+            "Abstract Scenario:",
+            // Polish
+            "Szablon scenariusza:",
+            // Swedish
+            "Abstrakt Scenario:", "Scenariomall:",
+            // Turkish
+            "Senaryo taslağı:",
+            // Hindi
+            "परिदृश्य रूपरेखा:",
+            // --- Basic scenario keywords (after outlines) ---
+            // English
+            "Scenario:", "Example:",
+            // French
+            "Scénario:", "Exemple:",
+            // German
+            "Szenario:", "Beispiel:",
+            // Spanish
+            "Escenario:", "Ejemplo:",
+            // Portuguese
+            "Cenário:", "Cenario:", "Exemplo:",
+            // Italian
+            "Scenario:", "Esempio:",
+            // Japanese
+            "シナリオ:",
+            // Chinese Simplified
+            "场景:", "剧本:",
+            // Chinese Traditional
+            "場景:", "劇本:",
+            // Korean
+            "시나리오:",
+            // Russian
+            "Сценарий:", "Пример:",
+            // Arabic
+            "سيناريو:", "مثال:",
+            // Dutch
+            "Scenario:", "Voorbeeld:",
+            // Polish
+            "Scenariusz:", "Przykład:",
+            // Swedish
+            "Scenario:",
+            // Turkish
+            "Senaryo:", "Örnek:",
+            // Hindi
+            "परिदृश्य:",
+        ]
         var names: [String] = []
 
         for line in source.split(separator: "\n", omittingEmptySubsequences: false) {

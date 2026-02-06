@@ -65,5 +65,15 @@ let package = Package(
             ],
             path: "Tests/GherkinTestingMacroTests"
         ),
+
+        // MARK: - Demo / Integration Tests
+        .testTarget(
+            name: "GherkinTestingDemoTests",
+            dependencies: ["GherkinTesting"],
+            path: "Tests/GherkinTestingDemoTests",
+            resources: [
+                .copy("Fixtures"),
+            ]
+        ),
     ]
 )

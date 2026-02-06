@@ -269,6 +269,31 @@ struct ReporterIntegrationTests {
         #expect(htmlText.contains("Multi Reporter Feature"))
     }
 
+    @Test("writeReport(to:) writes report to disk and creates directories")
+    func writeReportToDisk() async throws {
+        let reporter = CucumberJSONReporter()
+        let pickleStep = PickleStep(id: "s1", text: "login", argument: nil, astNodeIds: [])
+        let step = StepResult(step: pickleStep, status: .passed, duration: .milliseconds(10), location: Location(line: 1))
+        let scenario = ScenarioResult(name: "S1", stepResults: [step], tags: [])
+        let feature = FeatureResult(name: "F1", scenarioResults: [scenario], tags: [])
+        let result = TestRunResult(featureResults: [feature], duration: .seconds(1))
+
+        await reporter.testRunFinished(result)
+
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("gherkin-test-\(ProcessInfo.processInfo.globallyUniqueString)")
+        let fileURL = tempDir
+            .appendingPathComponent("nested/report.json")
+
+        try await reporter.writeReport(to: fileURL)
+
+        let data = try Data(contentsOf: fileURL)
+        let json = try #require(String(data: data, encoding: .utf8))
+        #expect(json.contains("\"name\" : \"F1\""))
+
+        try FileManager.default.removeItem(at: tempDir)
+    }
+
     @Test("empty test run produces valid reports from all reporters")
     func emptyRunReports() async throws {
         let jsonReporter = CucumberJSONReporter()

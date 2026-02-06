@@ -15,13 +15,15 @@ private var testMacros: [String: any Macro.Type] {
         "Given": GivenMacro.self,
         "When": WhenMacro.self,
         "Then": ThenMacro.self,
+        "Before": BeforeMacro.self,
+        "After": AfterMacro.self,
     ]
 }
 
 @Suite("Feature Macro Expansion Tests")
 struct FeatureMacroTests {
 
-    @Test("@Feature with .file() generates single test method")
+    @Test("@Feature with .file() generates single test method with Bundle.module")
     func featureFileSource() {
         assertMacroExpansion(
             """
@@ -49,6 +51,7 @@ struct FeatureMacroTests {
                     try await FeatureExecutor<LoginFeature>.run(
                         source: .file("login.feature"),
                         definitions: LoginFeature.__stepDefinitions,
+                        bundle: Bundle.module,
                         featureFactory: { LoginFeature() }
                     )
                 }
@@ -110,6 +113,69 @@ struct FeatureMacroTests {
                         definitions: LoginFeature.__stepDefinitions,
                         scenarioFilter: "Failed login",
                         featureFactory: { LoginFeature() }
+                    )
+                }
+            }
+            """#,
+            macros: testMacros
+        )
+    }
+
+    @Test("@Feature with hooks generates __hooks property and passes to executor")
+    func featureWithHooks() {
+        assertMacroExpansion(
+            #"""
+            @Feature(source: .inline("Feature: Test\n  Scenario: One\n    Given step"))
+            struct HookedFeature {
+                @Before(.scenario)
+                static func setUp() {
+                }
+                @After(.scenario)
+                static func tearDown() {
+                }
+                @Given("step")
+                func step() {
+                }
+            }
+            """#,
+            expandedSource: #"""
+            struct HookedFeature {
+                @Before(.scenario)
+                static func setUp() {
+                }
+                @After(.scenario)
+                static func tearDown() {
+                }
+                @Given("step")
+                func step() {
+                }
+            }
+
+            extension HookedFeature: GherkinFeature {
+            }
+
+            extension HookedFeature {
+                static var __stepDefinitions: [StepDefinition<Self>] {
+                    [__stepDef_step]
+                }
+                static var __hooks: HookRegistry {
+                    var registry = HookRegistry()
+                    registry.addBefore(__hook_setUp)
+                    registry.addAfter(__hook_tearDown)
+                    return registry
+                }
+            }
+
+            @Suite("\(HookedFeature.self)")
+            struct HookedFeature__GherkinTests {
+                @Test("Scenario: One")
+                func scenario_One() async throws {
+                    try await FeatureExecutor<HookedFeature>.run(
+                        source: .inline("Feature: Test\n  Scenario: One\n    Given step"),
+                        definitions: HookedFeature.__stepDefinitions,
+                        hooks: HookedFeature.__hooks,
+                        scenarioFilter: "One",
+                        featureFactory: { HookedFeature() }
                     )
                 }
             }

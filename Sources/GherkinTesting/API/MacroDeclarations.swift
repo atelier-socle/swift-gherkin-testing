@@ -34,8 +34,13 @@
 ///     mutating func seeDashboard() { }
 /// }
 /// ```
-@attached(peer, names: arbitrary)
-public macro Feature(source: FeatureSource) = #externalMacro(
+@attached(extension, conformances: GherkinFeature)
+@attached(member, names: named(__stepDefinitions), named(__hooks))
+@attached(peer, names: suffixed(__GherkinTests))
+public macro Feature(
+    source: FeatureSource,
+    stepLibraries: [any StepLibrary.Type] = []
+) = #externalMacro(
     module: "GherkinTestingMacros",
     type: "FeatureMacro"
 )
@@ -54,7 +59,7 @@ public macro Feature(source: FeatureSource) = #externalMacro(
 /// @Given("there are {int} items in the cart")
 /// mutating func itemsInCart(count: String) { }
 /// ```
-@attached(peer, names: arbitrary)
+@attached(peer, names: prefixed(__stepDef_))
 public macro Given(_ expression: String) = #externalMacro(
     module: "GherkinTestingMacros",
     type: "GivenMacro"
@@ -66,7 +71,7 @@ public macro Given(_ expression: String) = #externalMacro(
 /// @When("the user clicks the login button")
 /// mutating func clickLogin() { }
 /// ```
-@attached(peer, names: arbitrary)
+@attached(peer, names: prefixed(__stepDef_))
 public macro When(_ expression: String) = #externalMacro(
     module: "GherkinTestingMacros",
     type: "WhenMacro"
@@ -78,7 +83,7 @@ public macro When(_ expression: String) = #externalMacro(
 /// @Then("the user should see the dashboard")
 /// mutating func seeDashboard() { }
 /// ```
-@attached(peer, names: arbitrary)
+@attached(peer, names: prefixed(__stepDef_))
 public macro Then(_ expression: String) = #externalMacro(
     module: "GherkinTestingMacros",
     type: "ThenMacro"
@@ -90,7 +95,7 @@ public macro Then(_ expression: String) = #externalMacro(
 /// @And("the cart is empty")
 /// mutating func cartEmpty() { }
 /// ```
-@attached(peer, names: arbitrary)
+@attached(peer, names: prefixed(__stepDef_))
 public macro And(_ expression: String) = #externalMacro(
     module: "GherkinTestingMacros",
     type: "AndMacro"
@@ -102,7 +107,7 @@ public macro And(_ expression: String) = #externalMacro(
 /// @But("the user is not an admin")
 /// mutating func notAdmin() { }
 /// ```
-@attached(peer, names: arbitrary)
+@attached(peer, names: prefixed(__stepDef_))
 public macro But(_ expression: String) = #externalMacro(
     module: "GherkinTestingMacros",
     type: "ButMacro"
@@ -121,7 +126,7 @@ public macro But(_ expression: String) = #externalMacro(
 /// @Before(.feature, tags: "@smoke")
 /// static func setupSmoke() async throws { }
 /// ```
-@attached(peer, names: arbitrary)
+@attached(peer, names: prefixed(__hook_))
 public macro Before(_ scope: HookScope = .scenario, tags: String? = nil) = #externalMacro(
     module: "GherkinTestingMacros",
     type: "BeforeMacro"
@@ -136,7 +141,7 @@ public macro Before(_ scope: HookScope = .scenario, tags: String? = nil) = #exte
 /// @After(.scenario)
 /// static func tearDown() async throws { }
 /// ```
-@attached(peer, names: arbitrary)
+@attached(peer, names: prefixed(__hook_))
 public macro After(_ scope: HookScope = .scenario, tags: String? = nil) = #externalMacro(
     module: "GherkinTestingMacros",
     type: "AfterMacro"

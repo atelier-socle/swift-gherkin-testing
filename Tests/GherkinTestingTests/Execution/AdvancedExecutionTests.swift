@@ -712,3 +712,50 @@ struct DryRunEnhancedTests {
         #expect(result.allSuggestions[1].suggestedExpression == "user has {float} balance")
     }
 }
+
+// MARK: - FeatureExecutionError Tests
+
+@Suite("FeatureExecutionError")
+struct FeatureExecutionErrorTests {
+
+    @Test("errorDescription joins multiple failures")
+    func errorDescription() {
+        let error = FeatureExecutionError(failures: ["Step failed: X", "Step undefined: Y"])
+        let desc = error.errorDescription ?? ""
+        #expect(desc.contains("Step failed: X"))
+        #expect(desc.contains("Step undefined: Y"))
+        #expect(desc.contains("Feature execution failed:"))
+    }
+
+    @Test("empty failures still produces valid description")
+    func emptyFailures() {
+        let error = FeatureExecutionError(failures: [])
+        let desc = error.errorDescription
+        #expect(desc == "Feature execution failed:\n")
+    }
+
+    @Test("single failure description")
+    func singleFailure() {
+        let error = FeatureExecutionError(failures: ["assertion failed"])
+        let desc = error.errorDescription ?? ""
+        #expect(desc.contains("  - assertion failed"))
+    }
+}
+
+// MARK: - ReporterError Tests
+
+@Suite("ReporterError")
+struct ReporterErrorTests {
+
+    @Test("encodingFailed is an Error")
+    func isError() {
+        let error: any Error = ReporterError.encodingFailed
+        #expect(error is ReporterError)
+    }
+
+    @Test("encodingFailed is Sendable")
+    func isSendable() {
+        let error: any Sendable = ReporterError.encodingFailed
+        #expect(error is ReporterError)
+    }
+}

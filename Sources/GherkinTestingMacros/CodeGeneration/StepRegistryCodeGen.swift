@@ -66,7 +66,7 @@ enum StepRegistryCodeGen {
                 keywordType: \(raw: kind.keywordTypeLiteral),
                 pattern: \(raw: patternCode),
                 sourceLocation: Location(line: 0, column: 0),
-                handler: { \(raw: isMutating ? "" : "_ ")feature, args in \(raw: handlerBody) }
+                handler: { feature, args in \(raw: handlerBody) }
             )
             """
     }

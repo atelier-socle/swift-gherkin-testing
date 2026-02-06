@@ -20,4 +20,4 @@
 ///     mutating func clickLogout() { ... }
 /// }
 /// ```
-public protocol StepLibrary: Sendable {}
+public protocol StepLibrary: GherkinFeature {}

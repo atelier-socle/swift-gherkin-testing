@@ -101,6 +101,8 @@ public struct FeatureExecutor<F: GherkinFeature>: Sendable {
     ///   - source: The Gherkin source (inline string or file path).
     ///   - definitions: The step definitions to match against.
     ///   - hooks: Optional lifecycle hooks. Defaults to empty.
+    ///   - bundle: Optional bundle for resolving `.file()` paths. When `nil`,
+    ///     falls back to `Bundle.main`. Macro-generated code passes `Bundle.module`.
     ///   - configuration: Optional execution configuration. Defaults to `.default`.
     ///   - scenarioFilter: Optional scenario name filter. When set, only scenarios
     ///     whose name matches this string are executed.
@@ -115,6 +117,7 @@ public struct FeatureExecutor<F: GherkinFeature>: Sendable {
         source: FeatureSource,
         definitions: [StepDefinition<F>],
         hooks: HookRegistry = HookRegistry(),
+        bundle: Bundle? = nil,
         configuration: GherkinConfiguration = .default,
         scenarioFilter: String? = nil,
         fileID: String = #fileID,
@@ -129,7 +132,7 @@ public struct FeatureExecutor<F: GherkinFeature>: Sendable {
         case .inline(let text):
             gherkinSource = text
         case .file(let path):
-            gherkinSource = try loadFile(at: path)
+            gherkinSource = try loadFile(at: path, bundle: bundle)
         }
 
         // Parse
@@ -235,17 +238,20 @@ public struct FeatureExecutor<F: GherkinFeature>: Sendable {
 
     /// Loads a `.feature` file from disk.
     ///
-    /// Resolves the path relative to the main bundle if not absolute.
+    /// Resolves the path relative to the given bundle (or `Bundle.main` as fallback)
+    /// if not absolute.
     ///
-    /// - Parameter path: The file path.
+    /// - Parameters:
+    ///   - path: The file path.
+    ///   - bundle: The bundle to search for relative paths. Falls back to `Bundle.main`.
     /// - Returns: The file contents as a string.
     /// - Throws: If the file cannot be read.
-    private static func loadFile(at path: String) throws -> String {
+    private static func loadFile(at path: String, bundle: Bundle?) throws -> String {
         let url: URL
         if path.hasPrefix("/") {
             url = URL(fileURLWithPath: path)
-        } else if let bundlePath = Bundle.main.path(forResource: path, ofType: nil) {
-            url = URL(fileURLWithPath: bundlePath)
+        } else if let resolvedPath = (bundle ?? Bundle.main).path(forResource: path, ofType: nil) {
+            url = URL(fileURLWithPath: resolvedPath)
         } else {
             url = URL(fileURLWithPath: path)
         }

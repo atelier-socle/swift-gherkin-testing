@@ -98,4 +98,30 @@ public struct StepDefinition<F: GherkinFeature>: Sendable {
     public var patternDescription: String {
         pattern.description
     }
+
+    /// Creates a new step definition retyped for a different feature type.
+    ///
+    /// Used by `@Feature(stepLibraries:)` to bridge step definitions from a
+    /// ``StepLibrary`` into the feature's own `[StepDefinition<FeatureType>]`.
+    /// The library handler is called with a fresh library instance created by `factory`.
+    ///
+    /// - Parameters:
+    ///   - type: The target feature type metatype.
+    ///   - factory: A closure that creates a fresh instance of the original library type.
+    /// - Returns: A `StepDefinition` typed to `T` that delegates to the original handler.
+    public func retyped<T: GherkinFeature>(
+        for type: T.Type,
+        using factory: @escaping @Sendable () -> F
+    ) -> StepDefinition<T> {
+        let originalHandler = self.handler
+        return StepDefinition<T>(
+            keywordType: keywordType,
+            pattern: pattern,
+            sourceLocation: sourceLocation,
+            handler: { _, args in
+                var instance = factory()
+                try await originalHandler(&instance, args)
+            }
+        )
+    }
 }

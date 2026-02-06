@@ -67,3 +67,20 @@ public protocol GherkinReporter: Sendable {
     /// - Throws: If report generation fails.
     func generateReport() async throws -> Data
 }
+
+// MARK: - Convenience
+
+extension GherkinReporter {
+    /// Generates the report and writes it to the given file URL.
+    ///
+    /// Creates any intermediate directories if they don't exist.
+    ///
+    /// - Parameter url: The file URL to write the report to.
+    /// - Throws: If report generation or file writing fails.
+    public func writeReport(to url: URL) async throws {
+        let data = try await generateReport()
+        let directory = url.deletingLastPathComponent()
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try data.write(to: url)
+    }
+}
