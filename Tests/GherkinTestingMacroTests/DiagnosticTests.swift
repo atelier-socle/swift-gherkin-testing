@@ -9,17 +9,19 @@ import Testing
 
 @testable import GherkinTestingMacros
 
-private let testMacros: [String: any Macro.Type] = [
-    "Feature": FeatureMacro.self,
-    "Given": GivenMacro.self,
-    "When": WhenMacro.self,
-    "Then": ThenMacro.self,
-    "And": AndMacro.self,
-    "But": ButMacro.self,
-    "Before": BeforeMacro.self,
-    "After": AfterMacro.self,
-    "StepLibrary": StepLibraryMacro.self,
-]
+private var testMacros: [String: any Macro.Type] {
+    [
+        "Feature": FeatureMacro.self,
+        "Given": GivenMacro.self,
+        "When": WhenMacro.self,
+        "Then": ThenMacro.self,
+        "And": AndMacro.self,
+        "But": ButMacro.self,
+        "Before": BeforeMacro.self,
+        "After": AfterMacro.self,
+        "StepLibrary": StepLibraryMacro.self,
+    ]
+}
 
 @Suite("Diagnostic Tests")
 struct DiagnosticTests {

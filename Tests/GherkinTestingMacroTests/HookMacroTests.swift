@@ -9,10 +9,12 @@ import Testing
 
 @testable import GherkinTestingMacros
 
-private let testMacros: [String: any Macro.Type] = [
-    "Before": BeforeMacro.self,
-    "After": AfterMacro.self,
-]
+private var testMacros: [String: any Macro.Type] {
+    [
+        "Before": BeforeMacro.self,
+        "After": AfterMacro.self,
+    ]
+}
 
 @Suite("Hook Macro Expansion Tests")
 struct HookMacroTests {

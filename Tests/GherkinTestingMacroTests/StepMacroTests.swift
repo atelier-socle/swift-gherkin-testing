@@ -9,13 +9,15 @@ import Testing
 
 @testable import GherkinTestingMacros
 
-private let testMacros: [String: any Macro.Type] = [
-    "Given": GivenMacro.self,
-    "When": WhenMacro.self,
-    "Then": ThenMacro.self,
-    "And": AndMacro.self,
-    "But": ButMacro.self,
-]
+private var testMacros: [String: any Macro.Type] {
+    [
+        "Given": GivenMacro.self,
+        "When": WhenMacro.self,
+        "Then": ThenMacro.self,
+        "And": AndMacro.self,
+        "But": ButMacro.self,
+    ]
+}
 
 @Suite("Step Macro Expansion Tests")
 struct StepMacroTests {
