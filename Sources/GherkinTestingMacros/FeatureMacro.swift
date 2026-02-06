@@ -100,6 +100,7 @@ extension FeatureMacro: PeerMacro {
         let suiteName = "\(typeName)__GherkinTests"
         let hasHooks = !collectHookInfo(from: structDecl).isEmpty
         let hooksArg = hasHooks ? "\n                        hooks: \(typeName).__hooks," : ""
+        let configArg = "\n                        configuration: \(typeName).gherkinConfiguration,"
 
         switch memberName {
         case "inline":
@@ -114,7 +115,7 @@ extension FeatureMacro: PeerMacro {
                         func feature_test() async throws {
                             try await FeatureExecutor<\(raw: typeName)>.run(
                                 source: .inline(\(raw: escapedSource)),
-                                definitions: \(raw: typeName).__stepDefinitions,\(raw: hooksArg)
+                                definitions: \(raw: typeName).__stepDefinitions,\(raw: hooksArg)\(raw: configArg)
                                 featureFactory: { \(raw: typeName)() }
                             )
                         }
@@ -131,7 +132,7 @@ extension FeatureMacro: PeerMacro {
                             func \(methodName)() async throws {
                                 try await FeatureExecutor<\(typeName)>.run(
                                     source: .inline(\(escapedSource)),
-                                    definitions: \(typeName).__stepDefinitions,\(hooksArg)
+                                    definitions: \(typeName).__stepDefinitions,\(hooksArg)\(configArg)
                                     scenarioFilter: "\(escapedName)",
                                     featureFactory: { \(typeName)() }
                                 )
@@ -158,7 +159,7 @@ extension FeatureMacro: PeerMacro {
                         try await FeatureExecutor<\(raw: typeName)>.run(
                             source: .file("\(raw: escapedPath)"),
                             definitions: \(raw: typeName).__stepDefinitions,\(raw: hooksArg)
-                            bundle: Bundle.module,
+                            bundle: Bundle.module,\(raw: configArg)
                             featureFactory: { \(raw: typeName)() }
                         )
                     }

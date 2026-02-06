@@ -111,8 +111,10 @@ public struct FeatureExecutor<F: GherkinFeature>: Sendable {
     ///   - line: The caller's line number (captured automatically).
     ///   - column: The caller's column number (captured automatically).
     ///   - featureFactory: A closure that creates a fresh feature instance.
+    /// - Returns: The ``TestRunResult`` containing all execution results.
     /// - Throws: ``ParserError`` if the source is malformed,
     ///   or any error from step execution.
+    @discardableResult
     public static func run(
         source: FeatureSource,
         definitions: [StepDefinition<F>],
@@ -125,7 +127,7 @@ public struct FeatureExecutor<F: GherkinFeature>: Sendable {
         line: Int = #line,
         column: Int = #column,
         featureFactory: @Sendable () -> F
-    ) async throws {
+    ) async throws -> TestRunResult {
         let gherkinSource: String
 
         switch source {
@@ -171,11 +173,14 @@ public struct FeatureExecutor<F: GherkinFeature>: Sendable {
         reportIssues(
             from: result,
             source: source,
+            dryRun: configuration.dryRun,
             callerFileID: fileID,
             callerFilePath: filePath,
             callerLine: line,
             callerColumn: column
         )
+
+        return result
     }
 
     /// Reports step failures, undefined steps, and ambiguous steps to Swift Testing.
@@ -183,9 +188,13 @@ public struct FeatureExecutor<F: GherkinFeature>: Sendable {
     /// Each issue is recorded with a `SourceLocation` pointing to the step's
     /// location in the `.feature` file (for `.file()` sources) or the caller's
     /// Swift source location (for `.inline()` sources).
+    ///
+    /// In dry-run mode, undefined and ambiguous steps are not reported as issues
+    /// since dry-run is used for discovery, not failure detection.
     private static func reportIssues(
         from result: TestRunResult,
         source: FeatureSource,
+        dryRun: Bool,
         callerFileID: String,
         callerFilePath: String,
         callerLine: Int,
@@ -213,21 +222,25 @@ public struct FeatureExecutor<F: GherkinFeature>: Sendable {
                             sourceLocation: loc
                         )
                     case .undefined:
-                        Issue.record(
-                            Testing.Comment(
-                                rawValue: "Undefined step in \(scenarioResult.name): "
-                                + "\(stepResult.step.text)"
-                            ),
-                            sourceLocation: loc
-                        )
+                        if !dryRun {
+                            Issue.record(
+                                Testing.Comment(
+                                    rawValue: "Undefined step in \(scenarioResult.name): "
+                                    + "\(stepResult.step.text)"
+                                ),
+                                sourceLocation: loc
+                            )
+                        }
                     case .ambiguous:
-                        Issue.record(
-                            Testing.Comment(
-                                rawValue: "Ambiguous step in \(scenarioResult.name): "
-                                + "\(stepResult.step.text)"
-                            ),
-                            sourceLocation: loc
-                        )
+                        if !dryRun {
+                            Issue.record(
+                                Testing.Comment(
+                                    rawValue: "Ambiguous step in \(scenarioResult.name): "
+                                    + "\(stepResult.step.text)"
+                                ),
+                                sourceLocation: loc
+                            )
+                        }
                     default:
                         break
                     }

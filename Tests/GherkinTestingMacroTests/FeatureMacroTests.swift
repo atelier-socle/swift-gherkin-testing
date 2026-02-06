@@ -52,6 +52,7 @@ struct FeatureMacroTests {
                         source: .file("login.feature"),
                         definitions: LoginFeature.__stepDefinitions,
                         bundle: Bundle.module,
+                        configuration: LoginFeature.gherkinConfiguration,
                         featureFactory: { LoginFeature() }
                     )
                 }
@@ -101,6 +102,7 @@ struct FeatureMacroTests {
                     try await FeatureExecutor<LoginFeature>.run(
                         source: .inline("Feature: Login\n  Scenario: Successful login\n    Given logged in\n  Scenario: Failed login\n    Given not logged in"),
                         definitions: LoginFeature.__stepDefinitions,
+                        configuration: LoginFeature.gherkinConfiguration,
                         scenarioFilter: "Successful login",
                         featureFactory: { LoginFeature() }
                     )
@@ -111,6 +113,7 @@ struct FeatureMacroTests {
                     try await FeatureExecutor<LoginFeature>.run(
                         source: .inline("Feature: Login\n  Scenario: Successful login\n    Given logged in\n  Scenario: Failed login\n    Given not logged in"),
                         definitions: LoginFeature.__stepDefinitions,
+                        configuration: LoginFeature.gherkinConfiguration,
                         scenarioFilter: "Failed login",
                         featureFactory: { LoginFeature() }
                     )
@@ -174,6 +177,7 @@ struct FeatureMacroTests {
                         source: .inline("Feature: Test\n  Scenario: One\n    Given step"),
                         definitions: HookedFeature.__stepDefinitions,
                         hooks: HookedFeature.__hooks,
+                        configuration: HookedFeature.gherkinConfiguration,
                         scenarioFilter: "One",
                         featureFactory: { HookedFeature() }
                     )
