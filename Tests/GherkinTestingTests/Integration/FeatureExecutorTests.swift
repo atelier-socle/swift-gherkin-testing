@@ -3,6 +3,7 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
+import Foundation
 import Testing
 
 @testable import GherkinTesting
@@ -318,4 +319,95 @@ struct FeatureExecutorTests {
         )
         #expect(FeatureExecutor<StubFeature>.extractStepLine(from: step) == nil)
     }
+
 }
+
+@Suite("FeatureExecutor — Issue Reporting & Edge Cases")
+struct FeatureExecutorIssueTests {
+
+    @Test("run with undefined steps in non-dryRun mode reports issues")
+    func runUndefinedStepsNonDryRun() async throws {
+        let gherkin = """
+            Feature: Undef
+              Scenario: Missing
+                Given this step is undefined
+            """
+        await withKnownIssue {
+            _ = try await FeatureExecutor<StubFeature>.run(
+                source: .inline(gherkin),
+                definitions: [],
+                featureFactory: { StubFeature() }
+            )
+        }
+    }
+
+    @Test("run with ambiguous steps reports issues")
+    func runAmbiguousSteps() async throws {
+        let gherkin = """
+            Feature: Ambig
+              Scenario: Duplicate
+                Given ambiguous step
+            """
+        let defs: [StepDefinition<StubFeature>] = [
+            StepDefinition(
+                keywordType: .context,
+                pattern: .regex("ambiguous.*"),
+                sourceLocation: Location(line: 1),
+                handler: { _, _ in }
+            ),
+            StepDefinition(
+                keywordType: .context,
+                pattern: .regex("ambiguous step"),
+                sourceLocation: Location(line: 2),
+                handler: { _, _ in }
+            )
+        ]
+        await withKnownIssue {
+            _ = try await FeatureExecutor<StubFeature>.run(
+                source: .inline(gherkin),
+                definitions: defs,
+                featureFactory: { StubFeature() }
+            )
+        }
+    }
+
+    @Test("run with failed step reports issue")
+    func runFailedStep() async throws {
+        let gherkin = """
+            Feature: Fail
+              Scenario: Error
+                Given this step will fail
+            """
+        let defs: [StepDefinition<StubFeature>] = [
+            StepDefinition(
+                keywordType: .context,
+                pattern: .exact("this step will fail"),
+                sourceLocation: Location(line: 1),
+                handler: { _, _ in throw StubError() }
+            )
+        ]
+        await withKnownIssue {
+            _ = try await FeatureExecutor<StubFeature>.run(
+                source: .inline(gherkin),
+                definitions: defs,
+                featureFactory: { StubFeature() }
+            )
+        }
+    }
+
+    // MARK: - loadFile edge case
+
+    @Test("run with file source and relative path not in bundle falls back to plain path")
+    func runFileSourceRelativeNotInBundle() async throws {
+        await #expect(throws: Error.self) {
+            _ = try await FeatureExecutor<StubFeature>.run(
+                source: .file("nonexistent-relative.feature"),
+                definitions: [],
+                bundle: Bundle.main,
+                featureFactory: { StubFeature() }
+            )
+        }
+    }
+}
+
+private struct StubError: Error {}

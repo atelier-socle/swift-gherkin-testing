@@ -129,7 +129,10 @@ struct HookMacroTests {
         )
     }
 
-    // MARK: - Additional Coverage Tests
+}
+
+@Suite("Hook Macro — Additional Coverage")
+struct HookMacroCoverageTests {
 
     @Test("@Before with step scope")
     func beforeStepScope() {
@@ -259,6 +262,98 @@ struct HookMacroTests {
                     scope: .feature,
                     tagFilter: nil,
                     handler: { try throwingSetup() }
+                )
+                """,
+            macros: testMacros
+        )
+    }
+
+    // MARK: - Additional Coverage: extractScope/extractOrder/extractTagFilter edge cases
+
+    @Test("@Before with scope as labeled argument")
+    func beforeLabeledScope() {
+        assertMacroExpansion(
+            """
+            @Before(scope: .feature)
+            static func labeled() {
+            }
+            """,
+            expandedSource: """
+                static func labeled() {
+                }
+
+                static let __hook_labeled = Hook(
+                    scope: .feature,
+                    tagFilter: nil,
+                    handler: { labeled() }
+                )
+                """,
+            macros: testMacros
+        )
+    }
+
+    @Test("@After with all three parameters")
+    func afterAllParams() {
+        assertMacroExpansion(
+            """
+            @After(.scenario, order: 10, tags: "@critical")
+            static func fullHook() async throws {
+            }
+            """,
+            expandedSource: """
+                static func fullHook() async throws {
+                }
+
+                static let __hook_fullHook = Hook(
+                    scope: .scenario,
+                    order: 10,
+                    tagFilter: try? TagFilter("@critical"),
+                    handler: { try await fullHook() }
+                )
+                """,
+            macros: testMacros
+        )
+    }
+
+    @Test("@Before with invalid scope emits diagnostic")
+    func beforeInvalidScope() {
+        assertMacroExpansion(
+            """
+            @Before(.invalid)
+            static func badHook() {
+            }
+            """,
+            expandedSource: """
+                static func badHook() {
+                }
+                """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: "Hook scope must be .feature, .scenario, or .step",
+                    line: 1,
+                    column: 1
+                )
+            ],
+            macros: testMacros
+        )
+    }
+
+    @Test("@Before with non-member-access scope uses default scenario")
+    func beforeNonMemberAccessScope() {
+        assertMacroExpansion(
+            #"""
+            @Before("not a scope")
+            static func weirdHook() {
+            }
+            """#,
+            expandedSource: """
+                static func weirdHook() {
+                }
+
+                static let __hook_weirdHook = Hook(
+                    scope: .scenario,
+                    tagFilter: nil,
+                    handler: { weirdHook() }
                 )
                 """,
             macros: testMacros

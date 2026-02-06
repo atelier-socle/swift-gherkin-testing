@@ -34,26 +34,35 @@ public enum LanguageRegistry: Sendable {
     /// The default language used when no `# language:` header is present.
     public static let defaultLanguage: GherkinLanguage = {
         guard let english = languages["en"] else {
-            // This should never happen since gherkin-languages.json always includes "en"
-            return GherkinLanguage(
-                code: "en",
-                name: "English",
-                native: "English",
-                feature: ["Feature", "Business Need", "Ability"],
-                rule: ["Rule"],
-                background: ["Background"],
-                scenario: ["Example", "Scenario"],
-                scenarioOutline: ["Scenario Outline", "Scenario Template"],
-                examples: ["Examples", "Scenarios"],
-                given: ["* ", "Given "],
-                when: ["* ", "When "],
-                then: ["* ", "Then "],
-                and: ["* ", "And "],
-                but: ["* ", "But "]
-            )
+            return makeDefaultEnglish()
         }
         return english
     }()
+
+    /// Creates the hardcoded English fallback language.
+    ///
+    /// Used when `gherkin-languages.json` cannot be loaded or does not contain `"en"`.
+    /// This should never happen in normal usage since the JSON always includes English.
+    ///
+    /// - Returns: A ``GherkinLanguage`` for English with all standard keywords.
+    static func makeDefaultEnglish() -> GherkinLanguage {
+        GherkinLanguage(
+            code: "en",
+            name: "English",
+            native: "English",
+            feature: ["Feature", "Business Need", "Ability"],
+            rule: ["Rule"],
+            background: ["Background"],
+            scenario: ["Example", "Scenario"],
+            scenarioOutline: ["Scenario Outline", "Scenario Template"],
+            examples: ["Examples", "Scenarios"],
+            given: ["* ", "Given "],
+            when: ["* ", "When "],
+            then: ["* ", "Then "],
+            and: ["* ", "And "],
+            but: ["* ", "But "]
+        )
+    }
 
     /// All supported language codes.
     ///
@@ -62,12 +71,22 @@ public enum LanguageRegistry: Sendable {
         Array(languages.keys).sorted()
     }
 
-    // MARK: - Private
+    // MARK: - Internal Loading
 
     private static func loadLanguages() -> [String: GherkinLanguage] {
-        guard let url = Bundle.module.url(forResource: "gherkin-languages", withExtension: "json") else {
-            return [:]
-        }
+        let url = Bundle.module.url(forResource: "gherkin-languages", withExtension: "json")
+        return loadLanguages(from: url)
+    }
+
+    /// Loads languages from a URL, returning empty on any failure.
+    ///
+    /// This is the testable entry point for the loading pipeline. Accepts an optional
+    /// URL so callers (and tests) can simulate missing/corrupt resource scenarios.
+    ///
+    /// - Parameter url: The URL to read JSON from. Returns `[:]` when `nil`.
+    /// - Returns: A dictionary of language code to ``GherkinLanguage``.
+    static func loadLanguages(from url: URL?) -> [String: GherkinLanguage] {
+        guard let url else { return [:] }
 
         guard let data = try? Data(contentsOf: url) else {
             return [:]
@@ -77,6 +96,17 @@ public enum LanguageRegistry: Sendable {
             return [:]
         }
 
+        return parseLanguages(from: json)
+    }
+
+    /// Parses language entries from a raw JSON dictionary.
+    ///
+    /// Each top-level key is a language code (e.g. `"en"`, `"fr"`) mapping to a dictionary
+    /// of keyword arrays. Missing or mistyped fields fall back to the code string or empty arrays.
+    ///
+    /// - Parameter json: The raw JSON dictionary from `gherkin-languages.json`.
+    /// - Returns: A dictionary of language code to ``GherkinLanguage``.
+    static func parseLanguages(from json: [String: Any]) -> [String: GherkinLanguage] {
         var result: [String: GherkinLanguage] = [:]
         result.reserveCapacity(json.count)
 

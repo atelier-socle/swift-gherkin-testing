@@ -367,4 +367,27 @@ struct FeatureMacroCoverageTests {
             macros: testMacros
         )
     }
+
+    @Test("@Feature with .inline() source with non-extractable string literal emits diagnostic")
+    func featureInlineNonExtractableString() {
+        assertMacroExpansion(
+            #"""
+            @Feature(source: .inline("hello \(world)"))
+            struct BadFeature {
+            }
+            """#,
+            expandedSource: """
+                struct BadFeature {
+                }
+                """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: "@Feature 'source:' must be .inline(\"...\") or .file(\"...\")",
+                    line: 1,
+                    column: 17
+                )
+            ],
+            macros: testMacros
+        )
+    }
 }

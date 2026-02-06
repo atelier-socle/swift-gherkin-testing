@@ -412,7 +412,10 @@ enum SyntaxHelpers {
     static func extractScenarioNames(from source: String) -> [String] {
         var names: [String] = []
 
-        for line in source.split(separator: "\n", omittingEmptySubsequences: false) {
+        // Normalize escaped newlines from string literal syntax (where \n is two chars)
+        let normalized = replaceAll(in: source, "\\n", with: "\n")
+
+        for line in normalized.split(separator: "\n", omittingEmptySubsequences: false) {
             let trimmed = trimWhitespace(line)
             for prefix in ScenarioKeywords.allPrefixes where trimmed.hasPrefix(prefix) {
                 let name = trimWhitespace(String(trimmed.dropFirst(prefix.count)))

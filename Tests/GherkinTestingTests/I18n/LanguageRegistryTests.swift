@@ -3,6 +3,7 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
+import Foundation
 import Testing
 
 @testable import GherkinTesting
@@ -178,6 +179,154 @@ struct LanguageRegistryTests {
     func languagesCount() {
         let count = LanguageRegistry.languages.count
         #expect(count >= 70)
+    }
+
+    // MARK: - parseLanguages fallback coverage
+
+    @Test("parseLanguages with missing name field falls back to code")
+    func parseLanguagesMissingName() {
+        let json: [String: Any] = [
+            "xx": ["native": "Test", "feature": ["F"]] as [String: Any]
+        ]
+        let result = LanguageRegistry.parseLanguages(from: json)
+        let lang = result["xx"]
+        #expect(lang?.name == "xx")
+    }
+
+    @Test("parseLanguages with missing native field falls back to code")
+    func parseLanguagesMissingNative() {
+        let json: [String: Any] = [
+            "yy": ["name": "Test"] as [String: Any]
+        ]
+        let result = LanguageRegistry.parseLanguages(from: json)
+        let lang = result["yy"]
+        #expect(lang?.native == "yy")
+    }
+
+    @Test("parseLanguages with missing keyword arrays falls back to empty")
+    func parseLanguagesMissingKeywords() {
+        let json: [String: Any] = [
+            "zz": ["name": "Test", "native": "Test"] as [String: Any]
+        ]
+        let result = LanguageRegistry.parseLanguages(from: json)
+        let lang = result["zz"]
+        #expect(lang?.feature == [])
+        #expect(lang?.rule == [])
+        #expect(lang?.background == [])
+        #expect(lang?.scenario == [])
+        #expect(lang?.scenarioOutline == [])
+        #expect(lang?.examples == [])
+        #expect(lang?.given == [])
+        #expect(lang?.when == [])
+        #expect(lang?.then == [])
+        #expect(lang?.and == [])
+        #expect(lang?.but == [])
+    }
+
+    @Test("parseLanguages skips non-dictionary values")
+    func parseLanguagesSkipsInvalid() {
+        let json: [String: Any] = [
+            "good": ["name": "Good", "native": "Good", "feature": ["F"]] as [String: Any],
+            "bad": "not a dictionary",
+            "also_bad": 42
+        ]
+        let result = LanguageRegistry.parseLanguages(from: json)
+        #expect(result.count == 1)
+        #expect(result["good"] != nil)
+        #expect(result["bad"] == nil)
+        #expect(result["also_bad"] == nil)
+    }
+
+    @Test("parseLanguages with empty JSON returns empty")
+    func parseLanguagesEmpty() {
+        let result = LanguageRegistry.parseLanguages(from: [:])
+        #expect(result.isEmpty)
+    }
+
+    @Test("parseLanguages with wrongly typed fields falls back")
+    func parseLanguagesWrongTypes() {
+        let json: [String: Any] = [
+            "tt": [
+                "name": 42,
+                "native": ["array"],
+                "feature": "not an array",
+                "given": 99
+            ] as [String: Any]
+        ]
+        let result = LanguageRegistry.parseLanguages(from: json)
+        let lang = result["tt"]
+        #expect(lang?.name == "tt")
+        #expect(lang?.native == "tt")
+        #expect(lang?.feature == [])
+        #expect(lang?.given == [])
+    }
+
+    // MARK: - loadLanguages(from:) coverage
+
+    @Test("loadLanguages from nil URL returns empty")
+    func loadLanguagesNilURL() {
+        let result = LanguageRegistry.loadLanguages(from: nil)
+        #expect(result.isEmpty)
+    }
+
+    @Test("loadLanguages from non-existent URL returns empty")
+    func loadLanguagesNonExistentURL() {
+        let url = URL(fileURLWithPath: "/nonexistent/path/to/languages.json")
+        let result = LanguageRegistry.loadLanguages(from: url)
+        #expect(result.isEmpty)
+    }
+
+    @Test("loadLanguages from non-JSON file returns empty")
+    func loadLanguagesInvalidJSON() throws {
+        let tmpDir = FileManager.default.temporaryDirectory
+        let tmpFile = tmpDir.appendingPathComponent("not-json-\(UUID().uuidString).txt")
+        try "this is not json".write(to: tmpFile, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: tmpFile) }
+
+        let result = LanguageRegistry.loadLanguages(from: tmpFile)
+        #expect(result.isEmpty)
+    }
+
+    @Test("loadLanguages from valid JSON URL returns languages")
+    func loadLanguagesValidJSON() throws {
+        let tmpDir = FileManager.default.temporaryDirectory
+        let tmpFile = tmpDir.appendingPathComponent("test-langs-\(UUID().uuidString).json")
+        let jsonStr = """
+            {"test": {"name": "Test", "native": "Test", "feature": ["Feature"]}}
+            """
+        try jsonStr.write(to: tmpFile, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: tmpFile) }
+
+        let result = LanguageRegistry.loadLanguages(from: tmpFile)
+        #expect(result.count == 1)
+        #expect(result["test"]?.name == "Test")
+    }
+
+    // MARK: - makeDefaultEnglish coverage
+
+    @Test("makeDefaultEnglish returns correct fallback language")
+    func makeDefaultEnglishFallback() {
+        let english = LanguageRegistry.makeDefaultEnglish()
+        #expect(english.code == "en")
+        #expect(english.name == "English")
+        #expect(english.native == "English")
+        #expect(english.feature.contains("Feature"))
+        #expect(english.feature.contains("Business Need"))
+        #expect(english.feature.contains("Ability"))
+        #expect(english.rule.contains("Rule"))
+        #expect(english.background.contains("Background"))
+        #expect(english.scenario.contains("Scenario"))
+        #expect(english.scenario.contains("Example"))
+        #expect(english.scenarioOutline.contains("Scenario Outline"))
+        #expect(english.scenarioOutline.contains("Scenario Template"))
+        #expect(english.examples.contains("Examples"))
+        #expect(english.examples.contains("Scenarios"))
+        #expect(english.given.contains("Given "))
+        #expect(english.given.contains("* "))
+        #expect(english.when.contains("When "))
+        #expect(english.then.contains("Then "))
+        #expect(english.and.contains("And "))
+        #expect(english.but.contains("But "))
     }
 }
 

@@ -3,6 +3,7 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
+import SwiftDiagnostics
 import SwiftSyntaxMacros
 import SwiftSyntaxMacrosTestSupport
 import Testing
@@ -322,6 +323,38 @@ struct DiagnosticErrorTests {
             ],
             macros: testMacros
         )
+    }
+}
+
+// MARK: - GherkinDiagnostic Direct Tests
+
+@Suite("GherkinDiagnostic — Direct Coverage")
+struct GherkinDiagnosticDirectTests {
+
+    @Test("diagnosticID is unique for each case and consistent")
+    func diagnosticIDAllCases() {
+        let cases: [GherkinDiagnostic] = [
+            .featureMissingSource, .featureInvalidSource, .featureRequiresStruct,
+            .stepExpressionNotStringLiteral, .stepRequiresFunction, .stepExpressionEmpty,
+            .stepParameterCountMismatch, .hookRequiresStaticFunction, .hookRequiresFunction,
+            .hookInvalidScope, .stepLibraryRequiresStruct
+        ]
+        var ids = Set<SwiftDiagnostics.MessageID>()
+        for diagnostic in cases {
+            let msgID = diagnostic.diagnosticID
+            ids.insert(msgID)
+            // Verify consistent: calling twice returns same ID
+            #expect(diagnostic.diagnosticID == msgID)
+        }
+        // All IDs should be unique
+        #expect(ids.count == cases.count)
+    }
+
+    @Test("hookInvalidScope message is correct")
+    func hookInvalidScopeMessage() {
+        let diagnostic = GherkinDiagnostic.hookInvalidScope
+        #expect(diagnostic.message == "Hook scope must be .feature, .scenario, or .step")
+        #expect(diagnostic.severity == .error)
     }
 }
 
