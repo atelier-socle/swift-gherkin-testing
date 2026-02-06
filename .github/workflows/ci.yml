@@ -41,13 +41,13 @@ jobs:
       matrix:
         include:
           - platform: iOS
-            destination: "platform=iOS Simulator,name=iPhone 16,OS=latest"
+            destination: "generic/platform=iOS Simulator"
           - platform: tvOS
-            destination: "platform=tvOS Simulator,name=Apple TV,OS=latest"
+            destination: "generic/platform=tvOS Simulator"
           - platform: watchOS
-            destination: "platform=watchOS Simulator,name=Apple Watch Series 10,OS=latest"
+            destination: "generic/platform=watchOS Simulator"
           - platform: visionOS
-            destination: "platform=visionOS Simulator,name=Apple Vision Pro,OS=latest"
+            destination: "generic/platform=visionOS Simulator"
           - platform: Mac Catalyst
             destination: "platform=macOS,variant=Mac Catalyst"
     steps:
