@@ -71,6 +71,9 @@ enum HookMacroBase {
         // Parse optional tag filter
         let tagFilterExpr = extractTagFilter(from: node)
 
+        // Parse optional order
+        let order = extractOrder(from: node) ?? 0
+
         let tryPrefix = isThrows ? "try " : ""
         let awaitPrefix = isAsync ? "await " : ""
         let callPrefix = "\(tryPrefix)\(awaitPrefix)"
@@ -86,6 +89,7 @@ enum HookMacroBase {
         let decl: DeclSyntax = """
             static let __hook_\(raw: funcName) = Hook(
                 scope: .\(raw: scope),
+                order: \(raw: order),
                 tagFilter: \(raw: tagFilterCode),
                 handler: { \(raw: callPrefix)\(raw: funcName)() }
             )
@@ -107,6 +111,32 @@ enum HookMacroBase {
             if arg.label == nil || arg.label?.text == "scope" {
                 if let memberAccess = arg.expression.as(MemberAccessExprSyntax.self) {
                     return memberAccess.declName.baseName.text
+                }
+            }
+        }
+
+        return nil
+    }
+
+    /// Extracts the order value from the macro arguments.
+    ///
+    /// Looks for an 'order:' labeled argument.
+    private static func extractOrder(from node: AttributeSyntax) -> Int? {
+        guard let arguments = node.arguments?.as(LabeledExprListSyntax.self) else {
+            return nil
+        }
+
+        for arg in arguments {
+            if arg.label?.text == "order" {
+                if let intLiteral = arg.expression.as(IntegerLiteralExprSyntax.self) {
+                    return Int(intLiteral.literal.text)
+                }
+                // Handle negative: PrefixOperatorExprSyntax("-") wrapping IntegerLiteralExprSyntax
+                if let prefix = arg.expression.as(PrefixOperatorExprSyntax.self),
+                   prefix.operator.text == "-",
+                   let intLiteral = prefix.expression.as(IntegerLiteralExprSyntax.self),
+                   let value = Int(intLiteral.literal.text) {
+                    return -value
                 }
             }
         }

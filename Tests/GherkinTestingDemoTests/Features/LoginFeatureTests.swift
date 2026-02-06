@@ -10,13 +10,15 @@ import GherkinTesting
 
 /// End-to-end demo: Login feature using @Feature macro with realistic handlers.
 ///
-/// The @Feature macro generates:
-/// - `extension LoginFeature: GherkinFeature {}` (protocol conformance)
-/// - `static var __stepDefinitions` (inside struct, collects all @Given/@When/@Then)
-/// - `static var __hooks` (collects @Before/@After, passed to FeatureExecutor)
-/// - `LoginFeature__GherkinTests` @Suite with per-scenario @Test methods
-///
-/// Step handlers use `MockAuthService` actor for realistic async state management.
+/// Demonstrates:
+/// - Background steps
+/// - Cucumber expressions (`{string}`)
+/// - `@But` step macro
+/// - `@Before`/`@After` at all scopes: `.feature`, `.scenario`, `.step`
+/// - `@Before` with `tags:` parameter for conditional hooks
+/// - Hook ordering via `order:` parameter
+/// - Async step handlers with `MockAuthService` actor
+/// - `#expect` assertions in step handlers
 @Feature(source: .inline("""
     @auth @smoke
     Feature: Login
@@ -29,6 +31,7 @@ import GherkinTesting
         Given the user is on the login page
         When they enter "alice" and "secret123"
         Then they should see the dashboard
+        But they should not see the admin panel
 
       Scenario: Failed login with wrong password
         Given the user is on the login page
@@ -38,15 +41,51 @@ import GherkinTesting
 struct LoginFeature {
     let auth = MockAuthService()
 
-    // MARK: - Hooks (wired to FeatureExecutor via __hooks)
+    // MARK: - Feature-level Hooks
 
-    @Before(.scenario)
+    @Before(.feature)
+    static func featureSetUp() async throws {
+        await Task.yield()
+    }
+
+    @After(.feature)
+    static func featureTearDown() async throws {
+        await Task.yield()
+    }
+
+    // MARK: - Scenario-level Hooks (with ordering)
+
+    @Before(.scenario, order: 10)
     static func setUp() async throws {
+        await Task.yield()
+    }
+
+    @Before(.scenario, order: 20)
+    static func lateSetUp() async throws {
         await Task.yield()
     }
 
     @After(.scenario)
     static func tearDown() async throws {
+        await Task.yield()
+    }
+
+    // MARK: - Conditional Hook (tags)
+
+    @Before(.scenario, tags: "@smoke")
+    static func smokeSetUp() async throws {
+        await Task.yield()
+    }
+
+    // MARK: - Step-level Hooks
+
+    @Before(.step)
+    static func stepSetUp() async throws {
+        await Task.yield()
+    }
+
+    @After(.step)
+    static func stepTearDown() async throws {
         await Task.yield()
     }
 
@@ -81,5 +120,11 @@ struct LoginFeature {
     func seeError() async throws {
         let error = await auth.lastError
         #expect(error == "Invalid username or password")
+    }
+
+    @But("they should not see the admin panel")
+    func noAdminPanel() async throws {
+        let page = await auth.currentPage
+        #expect(page != "admin")
     }
 }

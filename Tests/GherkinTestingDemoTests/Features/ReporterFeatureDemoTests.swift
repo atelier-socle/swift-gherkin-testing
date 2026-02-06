@@ -7,13 +7,13 @@ import Testing
 import Foundation
 import GherkinTesting
 
-// MARK: - @Feature with Reporters: JSON + HTML generation via gherkinConfiguration
+// MARK: - @Feature with Reporters: JSON + JUnit XML + HTML via CompositeReporter
 
 /// Demonstrates how a real developer integrates reporters with `@Feature`.
 ///
 /// The `@Feature` struct overrides ``GherkinFeature/gherkinConfiguration``
-/// to attach `CucumberJSONReporter` and `HTMLReporter`. The generated
-/// `@Test` methods automatically use this configuration during execution.
+/// to attach a `CompositeReporter` wrapping all three reporter types
+/// (`CucumberJSONReporter`, `JUnitXMLReporter`, `HTMLReporter`).
 ///
 /// A separate verification test then calls `FeatureExecutor.run()` with
 /// fresh reporter instances to validate report output, since the auto-generated
@@ -37,12 +37,17 @@ import GherkinTesting
 struct ReporterLoginFeature {
     let auth = MockAuthService()
 
-    // MARK: - Configuration with reporters
+    // MARK: - Configuration with CompositeReporter wrapping all 3 formats
 
-    /// Reporters attached via `gherkinConfiguration`.
-    /// The generated @Test methods automatically use this configuration.
+    /// CompositeReporter dispatches events to JSON, JUnit XML, and HTML reporters.
     static var gherkinConfiguration: GherkinConfiguration {
-        GherkinConfiguration(reporters: [CucumberJSONReporter(), HTMLReporter()])
+        GherkinConfiguration(reporters: [
+            CompositeReporter(reporters: [
+                CucumberJSONReporter(),
+                JUnitXMLReporter(),
+                HTMLReporter(),
+            ])
+        ])
     }
 
     // MARK: - Step Definitions
@@ -79,21 +84,21 @@ struct ReporterLoginFeature {
     }
 }
 
-// MARK: - Verification: Reporter output is valid
+// MARK: - Verification: All 3 reporter formats + CompositeReporter + writeReport
 
-/// Verifies that reporters produce valid JSON and HTML output after
-/// executing a `@Feature` via `FeatureExecutor.run()`.
-///
-/// This test creates fresh reporter instances, runs the same feature source
-/// with `LoginFeature.__stepDefinitions`, and inspects the generated reports.
+/// Verifies that all three reporter formats produce valid output via CompositeReporter
+/// and that `writeReport(to:)` writes files to disk.
 @Suite("Demo: @Feature with Reporters")
 struct ReporterFeatureVerificationTests {
 
-    @Test("Generates non-empty JSON + HTML reports from @Feature execution")
-    func jsonAndHtmlReports() async throws {
+    @Test("Generates JSON, JUnit XML, and HTML reports via CompositeReporter")
+    func allReportFormats() async throws {
         let jsonReporter = CucumberJSONReporter()
+        let xmlReporter = JUnitXMLReporter()
         let htmlReporter = HTMLReporter()
-        let config = GherkinConfiguration(reporters: [jsonReporter, htmlReporter])
+        let composite = CompositeReporter(reporters: [jsonReporter, xmlReporter, htmlReporter])
+
+        let config = GherkinConfiguration(reporters: [composite])
 
         try await FeatureExecutor<ReporterLoginFeature>.run(
             source: .inline("""
@@ -117,12 +122,19 @@ struct ReporterFeatureVerificationTests {
             featureFactory: { ReporterLoginFeature() }
         )
 
-        // Verify JSON report
+        // Verify Cucumber JSON report
         let jsonData = try await jsonReporter.generateReport()
         #expect(jsonData.count > 0, "JSON report should not be empty")
         let json = try #require(String(data: jsonData, encoding: .utf8))
         #expect(json.contains("\"name\" : \"Login with Reporters\""))
         #expect(json.contains("\"status\" : \"passed\""))
+
+        // Verify JUnit XML report
+        let xmlData = try await xmlReporter.generateReport()
+        #expect(xmlData.count > 0, "JUnit XML report should not be empty")
+        let xml = try #require(String(data: xmlData, encoding: .utf8))
+        #expect(xml.contains("<testsuites>"))
+        #expect(xml.contains("Feature: Login with Reporters"))
 
         // Verify HTML report
         let htmlData = try await htmlReporter.generateReport()
@@ -131,19 +143,23 @@ struct ReporterFeatureVerificationTests {
         #expect(html.contains("<!DOCTYPE html>"))
         #expect(html.contains("Login with Reporters"))
 
-        // Write both to temp dir and verify files exist
+        // Write all reports to temp dir via writeReport(to:)
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("gherkin-reporter-feature-\(ProcessInfo.processInfo.globallyUniqueString)")
 
         let jsonURL = tempDir.appendingPathComponent("cucumber.json")
+        let xmlURL = tempDir.appendingPathComponent("junit.xml")
         let htmlURL = tempDir.appendingPathComponent("report.html")
 
         try await jsonReporter.writeReport(to: jsonURL)
+        try await xmlReporter.writeReport(to: xmlURL)
         try await htmlReporter.writeReport(to: htmlURL)
 
         let jsonFile = try Data(contentsOf: jsonURL)
+        let xmlFile = try Data(contentsOf: xmlURL)
         let htmlFile = try Data(contentsOf: htmlURL)
         #expect(jsonFile.count > 0, "Written JSON file should not be empty")
+        #expect(xmlFile.count > 0, "Written XML file should not be empty")
         #expect(htmlFile.count > 0, "Written HTML file should not be empty")
 
         try FileManager.default.removeItem(at: tempDir)

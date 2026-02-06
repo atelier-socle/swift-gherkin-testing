@@ -127,7 +127,7 @@ public macro But(_ expression: String) = #externalMacro(
 /// static func setupSmoke() async throws { }
 /// ```
 @attached(peer, names: prefixed(__hook_))
-public macro Before(_ scope: HookScope = .scenario, tags: String? = nil) = #externalMacro(
+public macro Before(_ scope: HookScope = .scenario, tags: String? = nil, order: Int = 0) = #externalMacro(
     module: "GherkinTestingMacros",
     type: "BeforeMacro"
 )
@@ -142,7 +142,7 @@ public macro Before(_ scope: HookScope = .scenario, tags: String? = nil) = #exte
 /// static func tearDown() async throws { }
 /// ```
 @attached(peer, names: prefixed(__hook_))
-public macro After(_ scope: HookScope = .scenario, tags: String? = nil) = #externalMacro(
+public macro After(_ scope: HookScope = .scenario, tags: String? = nil, order: Int = 0) = #externalMacro(
     module: "GherkinTestingMacros",
     type: "AfterMacro"
 )

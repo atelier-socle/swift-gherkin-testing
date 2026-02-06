@@ -6,16 +6,19 @@
 import Testing
 import GherkinTesting
 
-// MARK: - @Feature Demo: Registration with Scenario Outline + Examples
+// MARK: - @Feature Demo: Registration with Scenario Outline, Data Table, Typed Params
 
-/// End-to-end demo: Registration feature with Scenario Outline expansion.
+/// End-to-end demo: Registration feature with Scenario Outline expansion,
+/// Data Tables, and typed parameter extraction via `{int}` and `{float}`.
 ///
-/// The macro generates two @Test methods:
-/// - `scenario_Successful_registration()` — runs the regular scenario
-/// - `scenario_Invalid_registration()` — runs all 3 expanded outline pickles
-///
-/// Cucumber expressions `{word}` and `{string}` are used for placeholder matching.
-/// Handlers use `MockAuthService` for realistic validation flow.
+/// Demonstrates:
+/// - Scenario Outline with Examples table (placeholder substitution)
+/// - Data Tables attached to steps
+/// - `{int}` Cucumber expression with Int extraction
+/// - `{float}` Cucumber expression with Double extraction
+/// - `{word}` and `{string}` Cucumber expressions
+/// - `@And` step macro
+/// - `#expect` assertions with typed values
 @Feature(source: .inline("""
     @auth
     Feature: Registration
@@ -38,6 +41,18 @@ import GherkinTesting
           | email    |       | Email is required        |
           | password | 123   | Password is too short    |
           | username | a     | Username is too short    |
+
+      Scenario: Validation rules summary
+        Given the following validation rules:
+          | field    | minLength | required |
+          | email    | 0         | true     |
+          | password | 6         | false    |
+          | username | 2         | false    |
+        Then there are 3 rules loaded
+
+      Scenario: Password strength scoring
+        Given a password "secure456"
+        Then the password strength is 8.5 out of 10
     """))
 struct RegistrationFeature {
     let auth = MockAuthService()
@@ -89,5 +104,33 @@ struct RegistrationFeature {
     func seeValidationError(error: String) async throws {
         let lastError = await auth.lastError
         #expect(lastError == error)
+    }
+
+    // MARK: - Data Table + {int} demo
+
+    @Given("the following validation rules:")
+    func validationRules() async throws {
+        await Task.yield()
+    }
+
+    @Then("there are {int} rules loaded")
+    func rulesLoaded(count: String) async throws {
+        let value = try #require(Int(count))
+        #expect(value == 3)
+    }
+
+    // MARK: - {float} demo
+
+    @Given("a password {string}")
+    func aPassword(password: String) async throws {
+        #expect(!password.isEmpty)
+    }
+
+    @Then("the password strength is {float} out of {int}")
+    func passwordStrength(score: String, maxScore: String) async throws {
+        let scoreValue = try #require(Double(score))
+        let maxValue = try #require(Int(maxScore))
+        #expect(scoreValue > 0.0)
+        #expect(maxValue == 10)
     }
 }
