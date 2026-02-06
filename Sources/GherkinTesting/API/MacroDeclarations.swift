@@ -3,6 +3,8 @@
 //
 // Copyright © 2026 Atelier Socle. MIT License.
 
+import Foundation
+
 // MARK: - Feature Macro
 
 /// Declares a Gherkin feature from a `.feature` source.
@@ -39,6 +41,7 @@
 @attached(peer, names: suffixed(__GherkinTests))
 public macro Feature(
     source: FeatureSource,
+    bundle: Bundle? = nil,
     stepLibraries: [any StepLibrary.Type] = []
 ) =
     #externalMacro(

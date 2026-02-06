@@ -322,6 +322,123 @@ struct FeatureMacroCoverageTests {
         )
     }
 
+    @Test("@Feature with .file() and bundle: .main generates Bundle.main")
+    func featureFileBundleMain() {
+        assertMacroExpansion(
+            """
+            @Feature(source: .file("login.feature"), bundle: .main)
+            struct LoginFeature {
+            }
+            """,
+            expandedSource: """
+                struct LoginFeature {
+                }
+
+                extension LoginFeature: GherkinFeature {
+                }
+
+                extension LoginFeature {
+                    static var __stepDefinitions: [StepDefinition<Self>] {
+                        []
+                    }
+                }
+
+                @Suite("\\(LoginFeature.self)")
+                struct LoginFeature__GherkinTests {
+                    @Test("Feature: LoginFeature")
+                    func feature_test() async throws {
+                        try await FeatureExecutor<LoginFeature>.run(
+                            source: .file("login.feature"),
+                            definitions: LoginFeature.__stepDefinitions,
+                            bundle: Bundle.main,
+                            configuration: LoginFeature.gherkinConfiguration,
+                            featureFactory: { LoginFeature() }
+                        )
+                    }
+                }
+                """,
+            macros: testMacros
+        )
+    }
+
+    @Test("@Feature with .file() and no bundle generates Bundle.module")
+    func featureFileDefaultBundle() {
+        assertMacroExpansion(
+            """
+            @Feature(source: .file("login.feature"))
+            struct LoginFeature {
+            }
+            """,
+            expandedSource: """
+                struct LoginFeature {
+                }
+
+                extension LoginFeature: GherkinFeature {
+                }
+
+                extension LoginFeature {
+                    static var __stepDefinitions: [StepDefinition<Self>] {
+                        []
+                    }
+                }
+
+                @Suite("\\(LoginFeature.self)")
+                struct LoginFeature__GherkinTests {
+                    @Test("Feature: LoginFeature")
+                    func feature_test() async throws {
+                        try await FeatureExecutor<LoginFeature>.run(
+                            source: .file("login.feature"),
+                            definitions: LoginFeature.__stepDefinitions,
+                            bundle: Bundle.module,
+                            configuration: LoginFeature.gherkinConfiguration,
+                            featureFactory: { LoginFeature() }
+                        )
+                    }
+                }
+                """,
+            macros: testMacros
+        )
+    }
+
+    @Test("@Feature with .file() and bundle: .module generates Bundle.module")
+    func featureFileBundleModule() {
+        assertMacroExpansion(
+            """
+            @Feature(source: .file("x.feature"), bundle: .module)
+            struct XFeature {
+            }
+            """,
+            expandedSource: """
+                struct XFeature {
+                }
+
+                extension XFeature: GherkinFeature {
+                }
+
+                extension XFeature {
+                    static var __stepDefinitions: [StepDefinition<Self>] {
+                        []
+                    }
+                }
+
+                @Suite("\\(XFeature.self)")
+                struct XFeature__GherkinTests {
+                    @Test("Feature: XFeature")
+                    func feature_test() async throws {
+                        try await FeatureExecutor<XFeature>.run(
+                            source: .file("x.feature"),
+                            definitions: XFeature.__stepDefinitions,
+                            bundle: .module,
+                            configuration: XFeature.gherkinConfiguration,
+                            featureFactory: { XFeature() }
+                        )
+                    }
+                }
+                """,
+            macros: testMacros
+        )
+    }
+
     @Test("@Feature with invalid source type emits diagnostic")
     func featureInvalidSourceType() {
         assertMacroExpansion(

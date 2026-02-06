@@ -166,7 +166,14 @@ struct LoginFeature { }
 Load features from your test bundle resources with `.file()`:
 
 ```swift
+// SPM test targets (default — uses Bundle.module)
 @Feature(source: .file("Features/login.feature"))
+struct LoginFeature {
+    // step definitions...
+}
+
+// Xcode project targets (uses Bundle.main)
+@Feature(source: .file("Features/login.feature"), bundle: .main)
 struct LoginFeature {
     // step definitions...
 }
@@ -181,8 +188,6 @@ Add `.feature` files to your test target resources in `Package.swift`:
     resources: [.copy("Features")]
 )
 ```
-
-By default, `.file()` loads from `Bundle.module` (SPM test targets). Xcode project targets using `Bundle.main` will be supported via an optional `bundle:` parameter.
 
 ### Hooks
 

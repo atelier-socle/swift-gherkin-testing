@@ -102,6 +102,7 @@ extension FeatureMacro: PeerMacro {
         let hasHooks = !collectHookInfo(from: structDecl).isEmpty
         let hooksArg = hasHooks ? "\n                        hooks: \(typeName).__hooks," : ""
         let configArg = "\n                        configuration: \(typeName).gherkinConfiguration,"
+        let bundleExpr = extractBundleArgument(from: node)
 
         switch memberName {
         case "inline":
@@ -112,7 +113,7 @@ extension FeatureMacro: PeerMacro {
         case "file":
             return generateFileSuite(
                 typeName: typeName, suiteName: suiteName, stringValue: stringValue,
-                hooksArg: hooksArg, configArg: configArg
+                hooksArg: hooksArg, configArg: configArg, bundleExpr: bundleExpr
             )
         default:
             context.diagnose(
@@ -243,6 +244,22 @@ extension FeatureMacro {
             """
     }
 
+    /// Extracts the `bundle:` argument from the @Feature attribute, if present.
+    ///
+    /// Returns the raw source text of the expression (e.g. `.main`, `myBundle`),
+    /// or `nil` if the parameter was not provided or was explicitly `nil`.
+    static func extractBundleArgument(from node: AttributeSyntax) -> String? {
+        guard let arguments = node.arguments?.as(LabeledExprListSyntax.self),
+            let bundleArg = arguments.first(where: { $0.label?.text == "bundle" })
+        else {
+            return nil
+        }
+        if bundleArg.expression.is(NilLiteralExprSyntax.self) {
+            return nil
+        }
+        return bundleArg.expression.trimmedDescription
+    }
+
     /// Extracts step library type names from the @Feature attribute.
     ///
     /// Parses `stepLibraries: [AuthSteps.self, NavSteps.self]` → `["AuthSteps", "NavSteps"]`.
@@ -356,9 +373,11 @@ extension FeatureMacro {
         suiteName: String,
         stringValue: String,
         hooksArg: String,
-        configArg: String
+        configArg: String,
+        bundleExpr: String? = nil
     ) -> [DeclSyntax] {
         let escapedPath = SyntaxHelpers.escapeForStringLiteral(stringValue)
+        let bundleValue = bundleExpr ?? "Bundle.module"
         let suiteDecl: DeclSyntax = """
             @Suite("\(raw: typeName)")
             struct \(raw: suiteName) {
@@ -367,7 +386,7 @@ extension FeatureMacro {
                     try await FeatureExecutor<\(raw: typeName)>.run(
                         source: .file("\(raw: escapedPath)"),
                         definitions: \(raw: typeName).__stepDefinitions,\(raw: hooksArg)
-                        bundle: Bundle.module,\(raw: configArg)
+                        bundle: \(raw: bundleValue),\(raw: configArg)
                         featureFactory: { \(raw: typeName)() }
                     )
                 }
