@@ -1,3 +1,3 @@
 # Badges
 
-[![codecov](https://codecov.io/gh/atelier-socle/swift-gherkin-testing/graph/badge.svg?token=CODECOV_TOKEN)](https://codecov.io/gh/atelier-socle/swift-gherkin-testing)
+[![codecov](https://codecov.io/github/atelier-socle/swift-gherkin-testing/graph/badge.svg?token=TF5WTJ38CA)](https://codecov.io/github/atelier-socle/swift-gherkin-testing)
