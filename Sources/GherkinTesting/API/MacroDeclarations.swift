@@ -42,6 +42,7 @@ import Foundation
 public macro Feature(
     source: FeatureSource,
     bundle: Bundle? = nil,
+    reports: [ReportFormat] = [],
     stepLibraries: [any StepLibrary.Type] = []
 ) =
     #externalMacro(

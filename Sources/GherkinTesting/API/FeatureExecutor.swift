@@ -137,6 +137,9 @@ public struct FeatureExecutor<F: GherkinFeature>: Sendable {
     ///   - filePath: The caller's file path (captured automatically).
     ///   - line: The caller's line number (captured automatically).
     ///   - column: The caller's column number (captured automatically).
+    ///   - reports: Report formats to auto-write after execution. Each format
+    ///     produces a file at either a default path (`/tmp/swift-gherkin-testing/reports/`)
+    ///     or a custom path. Defaults to empty (no reports written).
     ///   - featureFactory: A closure that creates a fresh feature instance.
     /// - Returns: The ``TestRunResult`` containing all execution results.
     /// - Throws: ``ParserError`` if the source is malformed,
@@ -153,6 +156,7 @@ public struct FeatureExecutor<F: GherkinFeature>: Sendable {
         filePath: String = #filePath,
         line: Int = #line,
         column: Int = #column,
+        reports: [ReportFormat] = [],
         featureFactory: @Sendable () -> F
     ) async throws -> TestRunResult {
         let gherkinSource: String
@@ -181,11 +185,15 @@ public struct FeatureExecutor<F: GherkinFeature>: Sendable {
         let featureName = document.feature?.name ?? "Unknown Feature"
         let featureTags = document.feature?.tags.map(\.name) ?? []
 
+        // Create report writers from reports: parameter (before runner.run)
+        var effectiveConfig = configuration
+        let reportOutputs = buildReportOutputs(from: reports, config: &effectiveConfig)
+
         // Run
         let runner = TestRunner<F>(
             definitions: definitions,
             hooks: hooks,
-            configuration: configuration
+            configuration: effectiveConfig
         )
 
         let feature = featureFactory()
@@ -200,7 +208,65 @@ public struct FeatureExecutor<F: GherkinFeature>: Sendable {
         let caller = CallerLocation(fileID: fileID, filePath: filePath, line: line, column: column)
         reportIssues(from: result, source: source, dryRun: configuration.dryRun, caller: caller)
 
+        // Write report files (failures silently ignored — must not break the test)
+        await writeReportOutputs(reportOutputs)
+
         return result
+    }
+
+    /// Creates reporter instances from ``ReportFormat`` values and appends them to the configuration.
+    ///
+    /// - Parameters:
+    ///   - reports: The report formats to create.
+    ///   - config: The configuration to append reporters to (mutated in place).
+    /// - Returns: An array of (reporter, outputPath) pairs for writing after execution.
+    private static func buildReportOutputs(
+        from reports: [ReportFormat],
+        config: inout GherkinConfiguration
+    ) -> [(reporter: any GherkinReporter, path: String)] {
+        guard !reports.isEmpty else { return [] }
+        let structName = String(describing: F.self)
+        let defaultDir = "/tmp/swift-gherkin-testing/reports"
+        var outputs: [(reporter: any GherkinReporter, path: String)] = []
+        for format in reports {
+            let reporter: any GherkinReporter
+            let path: String
+            switch format.kind {
+            case .html:
+                reporter = HTMLReporter()
+                path = format.customPath ?? "\(defaultDir)/\(structName).html"
+            case .json:
+                reporter = CucumberJSONReporter()
+                path = format.customPath ?? "\(defaultDir)/\(structName).json"
+            case .junitXML:
+                reporter = JUnitXMLReporter()
+                path = format.customPath ?? "\(defaultDir)/\(structName).xml"
+            }
+            outputs.append((reporter, path))
+            config.reporters.append(reporter)
+        }
+        return outputs
+    }
+
+    /// Writes report files to disk. Failures are silently ignored.
+    ///
+    /// - Parameter outputs: The (reporter, path) pairs to write.
+    private static func writeReportOutputs(
+        _ outputs: [(reporter: any GherkinReporter, path: String)]
+    ) async {
+        for (reporter, path) in outputs {
+            let url = URL(fileURLWithPath: path)
+            do {
+                try FileManager.default.createDirectory(
+                    at: url.deletingLastPathComponent(),
+                    withIntermediateDirectories: true
+                )
+                try await reporter.writeReport(to: url)
+                print("📊 Report written: \(path)")
+            } catch {
+                // Write failures must not break the test.
+            }
+        }
     }
 
     /// Reports step failures, undefined steps, and ambiguous steps to Swift Testing.

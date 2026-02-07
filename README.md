@@ -209,22 +209,26 @@ struct MyFeature {
 
 ### Reporters
 
-Generate test reports in Cucumber JSON, JUnit XML, or standalone HTML. Use `CompositeReporter` for multiple formats at once.
+Generate test reports in Cucumber JSON, JUnit XML, or standalone HTML automatically after each feature execution.
 
 ```swift
-@Feature(source: .inline("..."))
-struct ReportedFeature {
-    static var gherkinConfiguration: GherkinConfiguration {
-        GherkinConfiguration(reporters: [
-            CompositeReporter(reporters: [
-                CucumberJSONReporter(),
-                JUnitXMLReporter(),
-                HTMLReporter()
-            ])
-        ])
-    }
-}
+// HTML and JUnit XML reports (written to /tmp/swift-gherkin-testing/reports/)
+@Feature(source: .file("login.feature"), reports: [.html, .junitXML])
+struct LoginFeature { ... }
+
+// All formats at once
+@Feature(source: .inline("..."), reports: ReportFormat.all)
+struct FullReportFeature { ... }
+
+// Custom output paths for CI
+@Feature(source: .file("login.feature"), reports: [
+    .html("reports/login.html"),
+    .junitXML("reports/login.xml")
+])
+struct CIFeature { ... }
 ```
+
+For advanced control (custom reporter instances, programmatic access), use `GherkinConfiguration` with reporter instances directly via `gherkinConfiguration`.
 
 ### Dry-Run Mode
 

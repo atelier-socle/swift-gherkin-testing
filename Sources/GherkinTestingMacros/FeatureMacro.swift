@@ -103,17 +103,20 @@ extension FeatureMacro: PeerMacro {
         let hooksArg = hasHooks ? "\n                        hooks: \(typeName).__hooks," : ""
         let configArg = "\n                        configuration: \(typeName).gherkinConfiguration,"
         let bundleExpr = extractBundleArgument(from: node)
+        let reportsExpr = extractReportsArgument(from: node)
+        let reportsArg = reportsExpr.map { "\n                        reports: \($0)," } ?? ""
 
         switch memberName {
         case "inline":
             return generateInlineSuite(
                 typeName: typeName, suiteName: suiteName, stringValue: stringValue,
-                hooksArg: hooksArg, configArg: configArg
+                hooksArg: hooksArg, configArg: configArg, reportsArg: reportsArg
             )
         case "file":
             return generateFileSuite(
                 typeName: typeName, suiteName: suiteName, stringValue: stringValue,
-                hooksArg: hooksArg, configArg: configArg, bundleExpr: bundleExpr
+                hooksArg: hooksArg, configArg: configArg, reportsArg: reportsArg,
+                bundleExpr: bundleExpr
             )
         default:
             context.diagnose(
@@ -260,6 +263,23 @@ extension FeatureMacro {
         return bundleArg.expression.trimmedDescription
     }
 
+    /// Extracts the `reports:` argument from the @Feature attribute, if present.
+    ///
+    /// Returns the raw source text of the expression (e.g. `[.html, .junitXML]`),
+    /// or `nil` if the parameter was not provided or is an empty array literal.
+    static func extractReportsArgument(from node: AttributeSyntax) -> String? {
+        guard let arguments = node.arguments?.as(LabeledExprListSyntax.self),
+            let reportsArg = arguments.first(where: { $0.label?.text == "reports" })
+        else {
+            return nil
+        }
+        // Skip empty array literals: `reports: []`
+        if let arrayExpr = reportsArg.expression.as(ArrayExprSyntax.self) {
+            if arrayExpr.elements.isEmpty { return nil }
+        }
+        return reportsArg.expression.trimmedDescription
+    }
+
     /// Extracts step library type names from the @Feature attribute.
     ///
     /// Parses `stepLibraries: [AuthSteps.self, NavSteps.self]` → `["AuthSteps", "NavSteps"]`.
@@ -318,7 +338,8 @@ extension FeatureMacro {
         suiteName: String,
         stringValue: String,
         hooksArg: String,
-        configArg: String
+        configArg: String,
+        reportsArg: String = ""
     ) -> [DeclSyntax] {
         let scenarioNames = SyntaxHelpers.extractScenarioNames(from: stringValue)
         let escapedSource = escapeMultilineString(stringValue)
@@ -331,7 +352,7 @@ extension FeatureMacro {
                     func feature_test() async throws {
                         try await FeatureExecutor<\(raw: typeName)>.run(
                             source: .inline(\(raw: escapedSource)),
-                            definitions: \(raw: typeName).__stepDefinitions,\(raw: hooksArg)\(raw: configArg)
+                            definitions: \(raw: typeName).__stepDefinitions,\(raw: hooksArg)\(raw: configArg)\(raw: reportsArg)
                             featureFactory: { \(raw: typeName)() }
                         )
                     }
@@ -351,7 +372,7 @@ extension FeatureMacro {
                         try await FeatureExecutor<\(typeName)>.run(
                             source: .inline(\(escapedSource)),
                             definitions: \(typeName).__stepDefinitions,\(hooksArg)\(configArg)
-                            scenarioFilter: "\(escapedName)",
+                            scenarioFilter: "\(escapedName)",\(reportsArg)
                             featureFactory: { \(typeName)() }
                         )
                     }
@@ -374,6 +395,7 @@ extension FeatureMacro {
         stringValue: String,
         hooksArg: String,
         configArg: String,
+        reportsArg: String = "",
         bundleExpr: String? = nil
     ) -> [DeclSyntax] {
         let escapedPath = SyntaxHelpers.escapeForStringLiteral(stringValue)
@@ -386,7 +408,7 @@ extension FeatureMacro {
                     try await FeatureExecutor<\(raw: typeName)>.run(
                         source: .file("\(raw: escapedPath)"),
                         definitions: \(raw: typeName).__stepDefinitions,\(raw: hooksArg)
-                        bundle: \(raw: bundleValue),\(raw: configArg)
+                        bundle: \(raw: bundleValue),\(raw: configArg)\(raw: reportsArg)
                         featureFactory: { \(raw: typeName)() }
                     )
                 }

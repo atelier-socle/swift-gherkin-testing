@@ -410,4 +410,97 @@ struct FeatureExecutorIssueTests {
     }
 }
 
+// MARK: - ReportFormat auto-write
+
+@Suite("FeatureExecutor — Report Auto-Write")
+struct FeatureExecutorReportTests {
+
+    private static let passingDefs: [StepDefinition<StubFeature>] = [
+        StepDefinition(
+            keywordType: .context,
+            pattern: .exact("passing step"),
+            sourceLocation: Location(line: 1),
+            handler: { _, _ in }
+        )
+    ]
+
+    private static let gherkin = """
+        Feature: ReportTest
+          Scenario: OK
+            Given passing step
+        """
+
+    @Test("reports: [.html] writes HTML file with custom path")
+    func reportsAutoWriteHTML() async throws {
+        let dir = "/tmp/swift-gherkin-testing/test-html"
+        let path = "\(dir)/report.html"
+        try? FileManager.default.removeItem(atPath: dir)
+
+        _ = try await FeatureExecutor<StubFeature>.run(
+            source: .inline(Self.gherkin),
+            definitions: Self.passingDefs,
+            reports: [.html(path)],
+            featureFactory: { StubFeature() }
+        )
+
+        #expect(FileManager.default.fileExists(atPath: path), "HTML report should exist")
+        try? FileManager.default.removeItem(atPath: dir)
+    }
+
+    @Test("reports: [.json] writes JSON file with custom path")
+    func reportsAutoWriteJSON() async throws {
+        let dir = "/tmp/swift-gherkin-testing/test-json"
+        let path = "\(dir)/report.json"
+        try? FileManager.default.removeItem(atPath: dir)
+
+        _ = try await FeatureExecutor<StubFeature>.run(
+            source: .inline(Self.gherkin),
+            definitions: Self.passingDefs,
+            reports: [.json(path)],
+            featureFactory: { StubFeature() }
+        )
+
+        #expect(FileManager.default.fileExists(atPath: path), "JSON report should exist")
+        try? FileManager.default.removeItem(atPath: dir)
+    }
+
+    @Test("reports: all three formats writes all files")
+    func reportsAutoWriteAllFormats() async throws {
+        let dir = "/tmp/swift-gherkin-testing/test-all"
+        let htmlPath = "\(dir)/r.html"
+        let jsonPath = "\(dir)/r.json"
+        let xmlPath = "\(dir)/r.xml"
+        try? FileManager.default.removeItem(atPath: dir)
+
+        _ = try await FeatureExecutor<StubFeature>.run(
+            source: .inline(Self.gherkin),
+            definitions: Self.passingDefs,
+            reports: [.html(htmlPath), .json(jsonPath), .junitXML(xmlPath)],
+            featureFactory: { StubFeature() }
+        )
+
+        #expect(FileManager.default.fileExists(atPath: htmlPath), "HTML report should exist")
+        #expect(FileManager.default.fileExists(atPath: jsonPath), "JSON report should exist")
+        #expect(FileManager.default.fileExists(atPath: xmlPath), "XML report should exist")
+        try? FileManager.default.removeItem(atPath: dir)
+    }
+
+    @Test("reports: empty array writes no files (backward compat)")
+    func reportsEmptyNoFiles() async throws {
+        let dir = "/tmp/swift-gherkin-testing/test-empty"
+        let path = "\(dir)/should-not-exist.html"
+        try? FileManager.default.removeItem(atPath: dir)
+
+        _ = try await FeatureExecutor<StubFeature>.run(
+            source: .inline(Self.gherkin),
+            definitions: Self.passingDefs,
+            reports: [],
+            featureFactory: { StubFeature() }
+        )
+
+        #expect(!FileManager.default.fileExists(atPath: path), "No report should be written")
+        try? FileManager.default.removeItem(atPath: dir)
+    }
+}
+
 private struct StubError: Error {}
