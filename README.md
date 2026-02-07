@@ -7,6 +7,8 @@ A native BDD testing framework for Swift. Parse and execute Gherkin `.feature` f
 [![Swift 6.2](https://img.shields.io/badge/Swift-6.2-orange.svg)](https://swift.org)
 [![Platforms](https://img.shields.io/badge/Platforms-macOS%20|%20iOS%20|%20tvOS%20|%20watchOS%20|%20visionOS-blue.svg)]()
 
+![swift-gherkin-testing](./assets/banner.png)
+
 ## Overview
 
 swift-gherkin-testing integrates Gherkin BDD specifications directly into Swift Testing. Write `.feature` files or inline Gherkin, define step handlers with `@Given`/`@When`/`@Then` macros, and the framework generates native `@Suite`/`@Test` methods at compile time. Zero external runtime dependencies — only SwiftSyntax in the compiler plugin.
