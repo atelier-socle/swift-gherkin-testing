@@ -501,6 +501,67 @@ struct FeatureExecutorReportTests {
         #expect(!FileManager.default.fileExists(atPath: path), "No report should be written")
         try? FileManager.default.removeItem(atPath: dir)
     }
+
+    @Test("reports: [.html] default path writes to /tmp/.../StubFeature.html")
+    func reportsDefaultPathHTML() async throws {
+        let defaultPath = "/tmp/swift-gherkin-testing/reports/StubFeature.html"
+        try? FileManager.default.removeItem(atPath: defaultPath)
+
+        _ = try await FeatureExecutor<StubFeature>.run(
+            source: .inline(Self.gherkin),
+            definitions: Self.passingDefs,
+            reports: [.html],
+            featureFactory: { StubFeature() }
+        )
+
+        #expect(FileManager.default.fileExists(atPath: defaultPath), "HTML default path should exist")
+        try? FileManager.default.removeItem(atPath: defaultPath)
+    }
+
+    @Test("reports: [.json] default path writes to /tmp/.../StubFeature.json")
+    func reportsDefaultPathJSON() async throws {
+        let defaultPath = "/tmp/swift-gherkin-testing/reports/StubFeature.json"
+        try? FileManager.default.removeItem(atPath: defaultPath)
+
+        _ = try await FeatureExecutor<StubFeature>.run(
+            source: .inline(Self.gherkin),
+            definitions: Self.passingDefs,
+            reports: [.json],
+            featureFactory: { StubFeature() }
+        )
+
+        #expect(FileManager.default.fileExists(atPath: defaultPath), "JSON default path should exist")
+        try? FileManager.default.removeItem(atPath: defaultPath)
+    }
+
+    @Test("reports: [.junitXML] default path writes to /tmp/.../StubFeature.xml")
+    func reportsDefaultPathXML() async throws {
+        let defaultPath = "/tmp/swift-gherkin-testing/reports/StubFeature.xml"
+        try? FileManager.default.removeItem(atPath: defaultPath)
+
+        _ = try await FeatureExecutor<StubFeature>.run(
+            source: .inline(Self.gherkin),
+            definitions: Self.passingDefs,
+            reports: [.junitXML],
+            featureFactory: { StubFeature() }
+        )
+
+        #expect(FileManager.default.fileExists(atPath: defaultPath), "XML default path should exist")
+        try? FileManager.default.removeItem(atPath: defaultPath)
+    }
+
+    @Test("reports: write to invalid path does not throw")
+    func reportsInvalidPathNoThrow() async throws {
+        // /dev/null/impossible is not a valid directory — createDirectory will fail
+        _ = try await FeatureExecutor<StubFeature>.run(
+            source: .inline(Self.gherkin),
+            definitions: Self.passingDefs,
+            reports: [.html("/dev/null/impossible/report.html")],
+            featureFactory: { StubFeature() }
+        )
+        // If we reach here, the write error was silently caught — test passes
+        #expect(Bool(true))
+    }
 }
 
 private struct StubError: Error {}
