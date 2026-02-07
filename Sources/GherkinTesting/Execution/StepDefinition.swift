@@ -53,7 +53,7 @@ public enum StepPattern: Sendable, Equatable, Hashable {
 ///     keywordType: .context,
 ///     pattern: .exact("the user is logged in"),
 ///     sourceLocation: Location(line: 10, column: 5),
-///     handler: { feature, args in
+///     handler: { feature, args, _ in
 ///         feature.loggedIn = true
 ///     }
 /// )
@@ -73,7 +73,8 @@ public struct StepDefinition<F: GherkinFeature>: Sendable {
     /// - Parameters:
     ///   - feature: A mutable reference to the feature instance for state mutation.
     ///   - arguments: The captured arguments from pattern matching (strings).
-    public let handler: @Sendable (inout F, [String]) async throws -> Void
+    ///   - stepArgument: The step's DataTable or DocString argument, if present.
+    public let handler: @Sendable (inout F, [String], StepArgument?) async throws -> Void
 
     /// Creates a new step definition.
     ///
@@ -86,7 +87,7 @@ public struct StepDefinition<F: GherkinFeature>: Sendable {
         keywordType: StepKeywordType? = nil,
         pattern: StepPattern,
         sourceLocation: Location,
-        handler: @escaping @Sendable (inout F, [String]) async throws -> Void
+        handler: @escaping @Sendable (inout F, [String], StepArgument?) async throws -> Void
     ) {
         self.keywordType = keywordType
         self.pattern = pattern
@@ -118,9 +119,9 @@ public struct StepDefinition<F: GherkinFeature>: Sendable {
             keywordType: keywordType,
             pattern: pattern,
             sourceLocation: sourceLocation,
-            handler: { _, args in
+            handler: { _, args, stepArg in
                 var instance = factory()
-                try await originalHandler(&instance, args)
+                try await originalHandler(&instance, args, stepArg)
             }
         )
     }

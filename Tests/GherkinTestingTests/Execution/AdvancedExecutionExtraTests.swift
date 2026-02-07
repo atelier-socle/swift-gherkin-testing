@@ -54,7 +54,7 @@ private func noopDef(_ pattern: String) -> StepDefinition<AdvFeature> {
     StepDefinition(
         pattern: .exact(pattern),
         sourceLocation: Location(line: 1),
-        handler: { _, _ in }
+        handler: { _, _, _ in }
     )
 }
 

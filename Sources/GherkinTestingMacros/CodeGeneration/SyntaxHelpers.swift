@@ -399,6 +399,18 @@ enum SyntaxHelpers {
         decl.modifiers.contains { $0.name.text == "static" }
     }
 
+    /// Extracts the type name of the last parameter in a function declaration.
+    ///
+    /// Returns the trimmed type name string (e.g. `"DataTable"`, `"String"`),
+    /// or `nil` if there are no parameters or no type annotation.
+    ///
+    /// - Parameter decl: A function declaration.
+    /// - Returns: The type name of the last parameter, or `nil`.
+    static func lastParameterTypeName(from decl: FunctionDeclSyntax) -> String? {
+        guard let lastParam = decl.signature.parameterClause.parameters.last else { return nil }
+        return trimWhitespace(lastParam.type.trimmedDescription)
+    }
+
     // MARK: - Gherkin Source Scanning
 
     /// Extracts scenario names from inline Gherkin source by simple line scanning.

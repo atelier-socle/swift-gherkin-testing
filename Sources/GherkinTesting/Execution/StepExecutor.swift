@@ -74,7 +74,7 @@ public struct StepExecutor<F: GherkinFeature>: Sendable {
     ///   or any error thrown by the step handler during execution.
     public func execute(_ step: PickleStep, on feature: inout F) async throws {
         let stepMatch = try match(step)
-        try await stepMatch.stepDefinition.handler(&feature, stepMatch.arguments)
+        try await stepMatch.stepDefinition.handler(&feature, stepMatch.arguments, stepMatch.stepArgument)
     }
 
     /// Extracts capture group strings from a regex match output.

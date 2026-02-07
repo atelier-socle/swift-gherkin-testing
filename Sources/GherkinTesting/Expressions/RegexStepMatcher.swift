@@ -107,7 +107,8 @@ public struct RegexStepMatcher<F: GherkinFeature>: Sendable {
             }
         }
 
-        return try selectBestMatch(from: candidates, stepText: step.text)
+        let stepArgument = StepArgument(from: step.argument)
+        return try selectBestMatch(from: candidates, stepText: step.text, stepArgument: stepArgument)
     }
 
     /// Attempts to match a single pre-compiled pattern against a step.
@@ -145,7 +146,11 @@ public struct RegexStepMatcher<F: GherkinFeature>: Sendable {
     ///   - stepText: The original step text for error reporting.
     /// - Returns: A ``StepMatch`` for the best candidate.
     /// - Throws: ``StepMatchError`` if no match or ambiguous.
-    private func selectBestMatch(from candidates: [MatchCandidate<F>], stepText: String) throws -> StepMatch<F> {
+    private func selectBestMatch(
+        from candidates: [MatchCandidate<F>],
+        stepText: String,
+        stepArgument: StepArgument? = nil
+    ) throws -> StepMatch<F> {
         guard !candidates.isEmpty else {
             throw StepMatchError.undefined(stepText: stepText)
         }
@@ -167,7 +172,8 @@ public struct RegexStepMatcher<F: GherkinFeature>: Sendable {
         return StepMatch(
             stepDefinition: winner.definition,
             arguments: winner.arguments,
-            matchLocation: winner.definition.sourceLocation
+            matchLocation: winner.definition.sourceLocation,
+            stepArgument: stepArgument
         )
     }
 

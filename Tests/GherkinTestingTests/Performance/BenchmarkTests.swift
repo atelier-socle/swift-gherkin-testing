@@ -174,7 +174,7 @@ struct BenchmarkTests {
             StepDefinition(
                 pattern: .exact("step \(i)"),
                 sourceLocation: Location(line: i + 1),
-                handler: { _, _ in }
+                handler: { _, _, _ in }
             )
         }
         let matcher = RegexStepMatcher<BenchmarkFeature>(definitions: definitions)
@@ -202,17 +202,17 @@ struct BenchmarkTests {
             StepDefinition(
                 pattern: .cucumberExpression("I have {int} cucumber(s)"),
                 sourceLocation: Location(line: 1),
-                handler: { _, _ in }
+                handler: { _, _, _ in }
             ),
             StepDefinition(
                 pattern: .cucumberExpression("the price is {float} dollars"),
                 sourceLocation: Location(line: 2),
-                handler: { _, _ in }
+                handler: { _, _, _ in }
             ),
             StepDefinition(
                 pattern: .cucumberExpression("the user {string} is logged in"),
                 sourceLocation: Location(line: 3),
-                handler: { _, _ in }
+                handler: { _, _, _ in }
             )
         ]
         let matcher = RegexStepMatcher<BenchmarkFeature>(definitions: definitions)
@@ -245,12 +245,12 @@ struct BenchmarkTests {
             StepDefinition(
                 pattern: .regex("^I have (\\d+) items$"),
                 sourceLocation: Location(line: 1),
-                handler: { _, _ in }
+                handler: { _, _, _ in }
             ),
             StepDefinition(
                 pattern: .regex("^the (\\w+) is (\\w+)$"),
                 sourceLocation: Location(line: 2),
-                handler: { _, _ in }
+                handler: { _, _, _ in }
             )
         ]
         let matcher = RegexStepMatcher<BenchmarkFeature>(definitions: definitions)

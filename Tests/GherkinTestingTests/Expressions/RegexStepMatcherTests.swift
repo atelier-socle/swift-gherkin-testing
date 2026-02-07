@@ -25,7 +25,7 @@ private func exactDef(
     StepDefinition(
         pattern: .exact(pattern),
         sourceLocation: Location(line: line),
-        handler: { _, _ in }
+        handler: { _, _, _ in }
     )
 }
 
@@ -37,7 +37,7 @@ private func cucumberDef(
     StepDefinition(
         pattern: .cucumberExpression(expression),
         sourceLocation: Location(line: line),
-        handler: { _, _ in }
+        handler: { _, _, _ in }
     )
 }
 
@@ -49,7 +49,7 @@ private func regexDef(
     StepDefinition(
         pattern: .regex(pattern),
         sourceLocation: Location(line: line),
-        handler: { _, _ in }
+        handler: { _, _, _ in }
     )
 }
 

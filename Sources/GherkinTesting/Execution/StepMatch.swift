@@ -31,15 +31,25 @@ public struct StepMatch<F: GherkinFeature>: Sendable {
     /// The source location of the matched step definition.
     public let matchLocation: Location
 
+    /// The step argument (DataTable or DocString) from the pickle step, if present.
+    public let stepArgument: StepArgument?
+
     /// Creates a new step match result.
     ///
     /// - Parameters:
     ///   - stepDefinition: The matched step definition.
     ///   - arguments: The captured argument strings.
     ///   - matchLocation: The source location of the definition.
-    public init(stepDefinition: StepDefinition<F>, arguments: [String], matchLocation: Location) {
+    ///   - stepArgument: The step argument from the pickle step.
+    public init(
+        stepDefinition: StepDefinition<F>,
+        arguments: [String],
+        matchLocation: Location,
+        stepArgument: StepArgument? = nil
+    ) {
         self.stepDefinition = stepDefinition
         self.arguments = arguments
         self.matchLocation = matchLocation
+        self.stepArgument = stepArgument
     }
 }

@@ -40,7 +40,7 @@ struct StepMacroTests {
                     keywordType: .context,
                     pattern: .exact("the user is logged in"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args in feature.onLoginPage() }
+                    handler: { _ feature, args, stepArg in feature.onLoginPage() }
                 )
                 """,
             macros: testMacros
@@ -63,7 +63,7 @@ struct StepMacroTests {
                     keywordType: .context,
                     pattern: .cucumberExpression("the user enters {string}"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args in feature.enterValue(value: args[0]) }
+                    handler: { _ feature, args, stepArg in feature.enterValue(value: args[0]) }
                 )
                 """,
             macros: testMacros
@@ -86,7 +86,7 @@ struct StepMacroTests {
                     keywordType: .context,
                     pattern: .cucumberExpression("there are {int} items"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args in feature.items(count: args[0]) }
+                    handler: { _ feature, args, stepArg in feature.items(count: args[0]) }
                 )
                 """,
             macros: testMacros
@@ -109,7 +109,7 @@ struct StepMacroTests {
                     keywordType: .context,
                     pattern: .exact("the database is ready"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args in try await feature.setupDB() }
+                    handler: { _ feature, args, stepArg in try await feature.setupDB() }
                 )
                 """,
             macros: testMacros
@@ -132,7 +132,7 @@ struct StepMacroTests {
                     keywordType: .context,
                     pattern: .exact("the count is zero"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { feature, args in feature.resetCount() }
+                    handler: { feature, args, stepArg in feature.resetCount() }
                 )
                 """,
             macros: testMacros
@@ -157,7 +157,7 @@ struct StepMacroTests {
                     keywordType: .action,
                     pattern: .exact("the user clicks login"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args in feature.clickLogin() }
+                    handler: { _ feature, args, stepArg in feature.clickLogin() }
                 )
                 """,
             macros: testMacros
@@ -180,7 +180,7 @@ struct StepMacroTests {
                     keywordType: .outcome,
                     pattern: .exact("the dashboard is visible"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args in feature.checkDashboard() }
+                    handler: { _ feature, args, stepArg in feature.checkDashboard() }
                 )
                 """,
             macros: testMacros
@@ -203,7 +203,7 @@ struct StepMacroTests {
                     keywordType: .conjunction,
                     pattern: .exact("the cart is empty"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args in feature.emptyCart() }
+                    handler: { _ feature, args, stepArg in feature.emptyCart() }
                 )
                 """,
             macros: testMacros
@@ -226,7 +226,7 @@ struct StepMacroTests {
                     keywordType: .conjunction,
                     pattern: .exact("the user is not admin"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args in feature.notAdmin() }
+                    handler: { _ feature, args, stepArg in feature.notAdmin() }
                 )
                 """,
             macros: testMacros
@@ -251,7 +251,7 @@ struct StepMacroTests {
                     keywordType: .action,
                     pattern: .cucumberExpression("they enter {string} and {string}"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args in feature.enterCredentials(username: args[0], password: args[1]) }
+                    handler: { _ feature, args, stepArg in feature.enterCredentials(username: args[0], password: args[1]) }
                 )
                 """,
             macros: testMacros
@@ -274,7 +274,129 @@ struct StepMacroTests {
                     keywordType: .context,
                     pattern: .cucumberExpression("there are {int} items"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args in feature.setItems(args[0]) }
+                    handler: { _ feature, args, stepArg in feature.setItems(args[0]) }
+                )
+                """,
+            macros: testMacros
+        )
+    }
+
+}
+
+// MARK: - DataTable and DocString Parameters
+
+@Suite("Step Macro — DataTable & DocString Parameters")
+struct StepMacroStepArgTests {
+
+    @Test("@Given with DataTable parameter generates stepArg extraction")
+    func givenWithDataTable() {
+        assertMacroExpansion(
+            """
+            @Given("the following users exist")
+            func usersExist(table: DataTable) {
+            }
+            """,
+            expandedSource: """
+                func usersExist(table: DataTable) {
+                }
+
+                static let __stepDef_usersExist = StepDefinition<Self>(
+                    keywordType: .context,
+                    pattern: .exact("the following users exist"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { _ feature, args, stepArg in feature.usersExist(table: stepArg?.dataTable ?? .empty) }
+                )
+                """,
+            macros: testMacros
+        )
+    }
+
+    @Test("@When with DocString parameter generates stepArg extraction")
+    func whenWithDocString() {
+        assertMacroExpansion(
+            """
+            @When("the API receives the payload")
+            func apiPayload(body: String) {
+            }
+            """,
+            expandedSource: """
+                func apiPayload(body: String) {
+                }
+
+                static let __stepDef_apiPayload = StepDefinition<Self>(
+                    keywordType: .action,
+                    pattern: .exact("the API receives the payload"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { _ feature, args, stepArg in feature.apiPayload(body: stepArg?.docString ?? "") }
+                )
+                """,
+            macros: testMacros
+        )
+    }
+
+    @Test("@Given with {int} capture and trailing DataTable generates mixed args")
+    func givenMixedCaptureAndDataTable() {
+        assertMacroExpansion(
+            """
+            @Given("I have {int} items with details")
+            func itemsWithTable(count: String, table: DataTable) {
+            }
+            """,
+            expandedSource: """
+                func itemsWithTable(count: String, table: DataTable) {
+                }
+
+                static let __stepDef_itemsWithTable = StepDefinition<Self>(
+                    keywordType: .context,
+                    pattern: .cucumberExpression("I have {int} items with details"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { _ feature, args, stepArg in feature.itemsWithTable(count: args[0], table: stepArg?.dataTable ?? .empty) }
+                )
+                """,
+            macros: testMacros
+        )
+    }
+
+    @Test("@Given with {string} and String param does NOT trigger docString (captures match)")
+    func givenStringCaptureNotDocString() {
+        assertMacroExpansion(
+            """
+            @Given("the user enters {string}")
+            func enterValue(value: String) {
+            }
+            """,
+            expandedSource: """
+                func enterValue(value: String) {
+                }
+
+                static let __stepDef_enterValue = StepDefinition<Self>(
+                    keywordType: .context,
+                    pattern: .cucumberExpression("the user enters {string}"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { _ feature, args, stepArg in feature.enterValue(value: args[0]) }
+                )
+                """,
+            macros: testMacros
+        )
+    }
+
+    @Test("@Given with DataTable and underscore label omits label")
+    func givenDataTableUnderscoreLabel() {
+        assertMacroExpansion(
+            """
+            @Given("the data exists")
+            func dataExists(_ table: DataTable) {
+            }
+            """,
+            expandedSource: """
+                func dataExists(_ table: DataTable) {
+                }
+
+                static let __stepDef_dataExists = StepDefinition<Self>(
+                    keywordType: .context,
+                    pattern: .exact("the data exists"),
+                    sourceLocation: Location(line: 0, column: 0),
+                    handler: { _ feature, args, stepArg in feature.dataExists(stepArg?.dataTable ?? .empty) }
                 )
                 """,
             macros: testMacros

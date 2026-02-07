@@ -248,7 +248,7 @@ struct StepMacroExpressionKindTests {
                     keywordType: .context,
                     pattern: .cucumberExpression("I have a cucumber(s)"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args in feature.haveCucumber() }
+                    handler: { _ feature, args, stepArg in feature.haveCucumber() }
                 )
                 """,
             macros: testMacros
@@ -271,7 +271,7 @@ struct StepMacroExpressionKindTests {
                     keywordType: .action,
                     pattern: .cucumberExpression("I eat/drink water"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args in feature.consume() }
+                    handler: { _ feature, args, stepArg in feature.consume() }
                 )
                 """,
             macros: testMacros
@@ -294,7 +294,7 @@ struct StepMacroExpressionKindTests {
                     keywordType: .context,
                     pattern: .regex("the user enters\\s+data"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args in feature.enterData() }
+                    handler: { _ feature, args, stepArg in feature.enterData() }
                 )
                 """#,
             macros: testMacros

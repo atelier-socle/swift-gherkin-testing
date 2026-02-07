@@ -29,6 +29,14 @@ enum StepRegistryCodeGen {
         }
     }
 
+    /// The kind of step argument the last parameter receives.
+    enum StepArgKind: String {
+        /// The last parameter receives a `DataTable`.
+        case dataTable
+        /// The last parameter receives a `String` from a DocString.
+        case docString
+    }
+
     /// Groups all parameters needed to generate a step definition.
     struct StepSpec {
         let funcName: String
@@ -39,6 +47,29 @@ enum StepRegistryCodeGen {
         let isThrows: Bool
         let isMutating: Bool
         let paramNames: [String]
+        let stepArgKind: StepArgKind?
+
+        init(
+            funcName: String,
+            expression: String,
+            kind: StepKind,
+            paramCount: Int,
+            isAsync: Bool,
+            isThrows: Bool,
+            isMutating: Bool,
+            paramNames: [String],
+            stepArgKind: StepArgKind? = nil
+        ) {
+            self.funcName = funcName
+            self.expression = expression
+            self.kind = kind
+            self.paramCount = paramCount
+            self.isAsync = isAsync
+            self.isThrows = isThrows
+            self.isMutating = isMutating
+            self.paramNames = paramNames
+            self.stepArgKind = stepArgKind
+        }
     }
 
     /// Generates a `static let __stepDef_<name>` declaration for a step definition.
@@ -54,7 +85,7 @@ enum StepRegistryCodeGen {
                 keywordType: \(raw: spec.kind.keywordTypeLiteral),
                 pattern: \(raw: patternCode),
                 sourceLocation: Location(line: 0, column: 0),
-                handler: { feature, args in \(raw: handlerBody) }
+                handler: { feature, args, stepArg in \(raw: handlerBody) }
             )
             """
     }
@@ -93,13 +124,28 @@ enum StepRegistryCodeGen {
             return "\(prefix)feature.\(spec.funcName)()"
         }
 
-        let argList = (0..<spec.paramCount).map { i in
+        let captureParamCount = spec.stepArgKind != nil ? spec.paramCount - 1 : spec.paramCount
+
+        var argParts: [String] = []
+        for i in 0..<captureParamCount {
             let name = spec.paramNames[i]
             let label = name == "_" ? "" : "\(name): "
-            return "\(label)args[\(i)]"
-        }.joined(separator: ", ")
+            argParts.append("\(label)args[\(i)]")
+        }
 
-        return "\(prefix)feature.\(spec.funcName)(\(argList))"
+        // Append step argument extraction for last param
+        if let kind = spec.stepArgKind {
+            let lastName = spec.paramNames[spec.paramCount - 1]
+            let label = lastName == "_" ? "" : "\(lastName): "
+            switch kind {
+            case .dataTable:
+                argParts.append("\(label)stepArg?.dataTable ?? .empty")
+            case .docString:
+                argParts.append("\(label)stepArg?.docString ?? \"\"")
+            }
+        }
+
+        return "\(prefix)feature.\(spec.funcName)(\(argParts.joined(separator: ", ")))"
     }
 
     /// Generates the `__stepDefinitions` static computed property.

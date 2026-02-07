@@ -15,6 +15,7 @@ swift-gherkin-testing integrates Gherkin BDD specifications directly into Swift 
 
 - **Swift Macros** — `@Feature`, `@Given`, `@When`, `@Then`, `@And`, `@But` generate test code at compile time
 - **Cucumber Expressions** — `{int}`, `{float}`, `{string}`, `{word}`, alternation, optional text, custom types
+- **DataTable & DocString** — step arguments threaded directly to handler parameters
 - **Regex fallback** — use raw regex patterns when expressions aren't enough
 - **Step Libraries** — `@StepLibrary` for reusable, composable step definitions
 - **Hooks** — `@Before`/`@After` at feature, scenario, and step scope with ordering and tag filters
@@ -132,6 +133,29 @@ func buy(count: Int, price: Double) async throws { }
 @Then("the total should be \\$([0-9]+\\.[0-9]{2})")
 func checkTotal(amount: String) async throws { }
 ```
+
+### DataTable and DocString Arguments
+
+Steps with DataTable or DocString arguments pass them directly to your handler. Declare a trailing `DataTable` or `String` parameter:
+
+```swift
+@Given("the following users exist")
+func usersExist(table: DataTable) async throws {
+    let headers = table.headers       // ["username", "email"]
+    let dicts = table.asDictionaries  // [["username": "alice", "email": "..."], ...]
+}
+
+@When("the API receives the payload")
+func apiPayload(body: String) async throws {
+    // body = DocString content
+}
+
+// Mixed: captured args + trailing DataTable
+@Given("I have {int} items with details")
+func itemsWithTable(count: String, table: DataTable) async throws { }
+```
+
+`DataTable` provides convenience accessors: `.headers`, `.dataRows`, `.asDictionaries`, and `.empty`.
 
 ### Step Libraries
 

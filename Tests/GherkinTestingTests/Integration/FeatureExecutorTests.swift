@@ -165,7 +165,7 @@ struct FeatureExecutorTests {
                 keywordType: .context,
                 pattern: .exact("step one"),
                 sourceLocation: Location(line: 1),
-                handler: { _, _ in }
+                handler: { _, _, _ in }
             )
         ]
         let result = try await FeatureExecutor<StubFeature>.run(
@@ -191,13 +191,13 @@ struct FeatureExecutorTests {
                 keywordType: .context,
                 pattern: .exact("step a"),
                 sourceLocation: Location(line: 1),
-                handler: { _, _ in }
+                handler: { _, _, _ in }
             ),
             StepDefinition(
                 keywordType: .context,
                 pattern: .exact("step b"),
                 sourceLocation: Location(line: 2),
-                handler: { _, _ in }
+                handler: { _, _, _ in }
             )
         ]
         let result = try await FeatureExecutor<StubFeature>.run(
@@ -353,13 +353,13 @@ struct FeatureExecutorIssueTests {
                 keywordType: .context,
                 pattern: .regex("ambiguous.*"),
                 sourceLocation: Location(line: 1),
-                handler: { _, _ in }
+                handler: { _, _, _ in }
             ),
             StepDefinition(
                 keywordType: .context,
                 pattern: .regex("ambiguous step"),
                 sourceLocation: Location(line: 2),
-                handler: { _, _ in }
+                handler: { _, _, _ in }
             )
         ]
         await withKnownIssue {
@@ -383,7 +383,7 @@ struct FeatureExecutorIssueTests {
                 keywordType: .context,
                 pattern: .exact("this step will fail"),
                 sourceLocation: Location(line: 1),
-                handler: { _, _ in throw StubError() }
+                handler: { _, _, _ in throw StubError() }
             )
         ]
         await withKnownIssue {
@@ -420,7 +420,7 @@ struct FeatureExecutorReportTests {
             keywordType: .context,
             pattern: .exact("passing step"),
             sourceLocation: Location(line: 1),
-            handler: { _, _ in }
+            handler: { _, _, _ in }
         )
     ]
 

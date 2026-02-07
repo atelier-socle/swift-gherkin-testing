@@ -260,7 +260,7 @@ public struct TestRunner<F: GherkinFeature>: Sendable {
         do {
             let stepMatch = try executor.match(step)
             location = stepMatch.matchLocation
-            try await stepMatch.stepDefinition.handler(&feature, stepMatch.arguments)
+            try await stepMatch.stepDefinition.handler(&feature, stepMatch.arguments, stepMatch.stepArgument)
             status = .passed
         } catch is PendingStepError {
             status = .pending

@@ -54,7 +54,7 @@ private func noopDef(_ pattern: String) -> StepDefinition<AdvFeature> {
     StepDefinition(
         pattern: .exact(pattern),
         sourceLocation: Location(line: 1),
-        handler: { _, _ in }
+        handler: { _, _, _ in }
     )
 }
 
@@ -66,7 +66,7 @@ private func pendingDef(
     StepDefinition(
         pattern: .exact(pattern),
         sourceLocation: Location(line: 1),
-        handler: { _, _ in throw PendingStepError(message) }
+        handler: { _, _, _ in throw PendingStepError(message) }
     )
 }
 
@@ -78,7 +78,7 @@ private func failDef(_ pattern: String) -> StepDefinition<AdvFeature> {
     return StepDefinition(
         pattern: .exact(pattern),
         sourceLocation: Location(line: 1),
-        handler: { _, _ in throw AdvStepError(description: "forced failure") }
+        handler: { _, _, _ in throw AdvStepError(description: "forced failure") }
     )
 }
 
@@ -301,7 +301,7 @@ struct UndefinedSuggestionTests {
             StepDefinition(
                 pattern: .exact("step"),
                 sourceLocation: Location(line: 1),
-                handler: { _, _ in await log.append("executed") }
+                handler: { _, _, _ in await log.append("executed") }
             )
         ]
         let pickle = advPickle(name: "S", steps: [advStep("step")])
@@ -346,8 +346,8 @@ struct AmbiguousDetectionTests {
     @Test("ambiguous error includes source locations")
     func ambiguousWithLocations() throws {
         let defs: [StepDefinition<AdvFeature>] = [
-            StepDefinition(pattern: .exact("click"), sourceLocation: Location(line: 12), handler: { _, _ in }),
-            StepDefinition(pattern: .exact("click"), sourceLocation: Location(line: 34), handler: { _, _ in })
+            StepDefinition(pattern: .exact("click"), sourceLocation: Location(line: 12), handler: { _, _, _ in }),
+            StepDefinition(pattern: .exact("click"), sourceLocation: Location(line: 34), handler: { _, _, _ in })
         ]
         let matcher = RegexStepMatcher(definitions: defs)
         let step = PickleStep(id: "s1", text: "click", argument: nil, astNodeIds: [])
@@ -365,8 +365,8 @@ struct AmbiguousDetectionTests {
     @Test("ambiguous error message is well-formatted")
     func ambiguousMessageFormat() throws {
         let defs: [StepDefinition<AdvFeature>] = [
-            StepDefinition(pattern: .exact("hello"), sourceLocation: Location(line: 10), handler: { _, _ in }),
-            StepDefinition(pattern: .exact("hello"), sourceLocation: Location(line: 20), handler: { _, _ in })
+            StepDefinition(pattern: .exact("hello"), sourceLocation: Location(line: 10), handler: { _, _, _ in }),
+            StepDefinition(pattern: .exact("hello"), sourceLocation: Location(line: 20), handler: { _, _, _ in })
         ]
         let matcher = RegexStepMatcher(definitions: defs)
         let step = PickleStep(id: "s1", text: "hello", argument: nil, astNodeIds: [])

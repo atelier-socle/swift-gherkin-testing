@@ -35,4 +35,49 @@ public struct DataTable: Sendable, Equatable, Hashable {
         self.location = location
         self.rows = rows
     }
+
+    /// An empty data table with no rows.
+    ///
+    /// Used as a default when a step handler declares a `DataTable` parameter
+    /// but the pickle step has no attached argument.
+    public static let empty = DataTable(location: Location(line: 0, column: 0), rows: [])
+
+    /// The first row's cell values, typically used as column headers.
+    ///
+    /// Returns an empty array if the table has no rows.
+    public var headers: [String] {
+        rows.first?.cells.map(\.value) ?? []
+    }
+
+    /// All rows except the first (header) row.
+    ///
+    /// Returns an empty array if the table has zero or one row.
+    public var dataRows: [TableRow] {
+        rows.count > 1 ? Array(rows.dropFirst()) : []
+    }
+
+    /// Converts the table to an array of dictionaries keyed by header values.
+    ///
+    /// Each dictionary maps header names to the corresponding cell values
+    /// in that row. If a row has fewer cells than headers, missing keys
+    /// are omitted.
+    ///
+    /// ```swift
+    /// // Given a table:
+    /// //   | name  | age |
+    /// //   | alice | 30  |
+    /// //   | bob   | 25  |
+    /// // asDictionaries → [["name": "alice", "age": "30"], ["name": "bob", "age": "25"]]
+    /// ```
+    public var asDictionaries: [[String: String]] {
+        guard let headerRow = rows.first else { return [] }
+        let keys = headerRow.cells.map(\.value)
+        return dataRows.map { row in
+            var dict: [String: String] = [:]
+            for (i, cell) in row.cells.enumerated() where i < keys.count {
+                dict[keys[i]] = cell.value
+            }
+            return dict
+        }
+    }
 }

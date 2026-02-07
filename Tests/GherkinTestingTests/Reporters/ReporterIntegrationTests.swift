@@ -69,7 +69,7 @@ private func noopDefinition(_ pattern: String) -> StepDefinition<ReporterTestFea
     StepDefinition(
         pattern: .exact(pattern),
         sourceLocation: Location(line: 1),
-        handler: { _, _ in }
+        handler: { _, _, _ in }
     )
 }
 

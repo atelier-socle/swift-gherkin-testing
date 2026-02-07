@@ -377,7 +377,7 @@ struct DiagnosticCodeGenTests {
                     keywordType: .context,
                     pattern: .regex("^the user enters (.+) and (.+)$"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { feature, args in feature.enter(a: args[0], b: args[1]) }
+                    handler: { feature, args, stepArg in feature.enter(a: args[0], b: args[1]) }
                 )
                 """,
             macros: testMacros
@@ -400,7 +400,7 @@ struct DiagnosticCodeGenTests {
                     keywordType: .action,
                     pattern: .cucumberExpression("I enter {string} and {string}"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { feature, args in feature.enter(a: args[0], b: args[1]) }
+                    handler: { feature, args, stepArg in feature.enter(a: args[0], b: args[1]) }
                 )
                 """,
             macros: testMacros
@@ -423,7 +423,7 @@ struct DiagnosticCodeGenTests {
                     keywordType: .outcome,
                     pattern: .exact("the user is logged in"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { feature, args in feature.loggedIn() }
+                    handler: { feature, args, stepArg in feature.loggedIn() }
                 )
                 """,
             macros: testMacros
@@ -446,7 +446,7 @@ struct DiagnosticCodeGenTests {
                     keywordType: .context,
                     pattern: .exact("async step"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { feature, args in try await feature.doSetup() }
+                    handler: { feature, args, stepArg in try await feature.doSetup() }
                 )
                 """,
             macros: testMacros
@@ -469,7 +469,7 @@ struct DiagnosticCodeGenTests {
                     keywordType: .context,
                     pattern: .cucumberExpression("I have {int} items"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { feature, args in feature.haveItems(args[0]) }
+                    handler: { feature, args, stepArg in feature.haveItems(args[0]) }
                 )
                 """,
             macros: testMacros

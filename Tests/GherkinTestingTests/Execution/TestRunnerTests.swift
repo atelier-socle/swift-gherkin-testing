@@ -57,7 +57,7 @@ private func loggingDefinition(
     StepDefinition(
         pattern: .exact(pattern),
         sourceLocation: Location(line: 1),
-        handler: { _, _ in await log.append("exec:\(pattern)") }
+        handler: { _, _, _ in await log.append("exec:\(pattern)") }
     )
 }
 
@@ -66,7 +66,7 @@ private func noopDefinition(_ pattern: String) -> StepDefinition<RunnerTestFeatu
     StepDefinition(
         pattern: .exact(pattern),
         sourceLocation: Location(line: 1),
-        handler: { _, _ in }
+        handler: { _, _, _ in }
     )
 }
 
@@ -78,7 +78,7 @@ private func failingDefinition(_ pattern: String) -> StepDefinition<RunnerTestFe
     return StepDefinition(
         pattern: .exact(pattern),
         sourceLocation: Location(line: 1),
-        handler: { _, _ in throw StepError(description: "forced failure") }
+        handler: { _, _, _ in throw StepError(description: "forced failure") }
     )
 }
 
@@ -357,7 +357,7 @@ extension TestRunnerTests {
             StepDefinition(
                 pattern: .exact("do something"),
                 sourceLocation: Location(line: 1),
-                handler: { _, _ in await log.append("step-exec") }
+                handler: { _, _, _ in await log.append("step-exec") }
             )
         ]
         var hooks = HookRegistry()
@@ -478,7 +478,7 @@ extension TestRunnerTests {
             StepDefinition(
                 pattern: .exact("mutate"),
                 sourceLocation: Location(line: 1),
-                handler: { feature, _ in
+                handler: { feature, _, _ in
                     feature.log.append("mutated")
                 }
             )

@@ -65,13 +65,14 @@ enum StepMacroBase {
         let funcName = SyntaxHelpers.functionName(from: funcDecl)
         let paramCount = SyntaxHelpers.parameterCount(from: funcDecl)
         let paramNames = SyntaxHelpers.parameterNames(from: funcDecl)
-        let isAsync = SyntaxHelpers.isAsync(funcDecl)
-        let isThrows = SyntaxHelpers.isThrows(funcDecl)
-        let isMutating = SyntaxHelpers.isMutating(funcDecl)
+        let captureCount = SyntaxHelpers.captureGroupCount(in: expression)
+
+        let (stepArgKind, effectiveParamCount) = detectStepArgKind(
+            funcDecl: funcDecl, paramCount: paramCount, captureCount: captureCount
+        )
 
         // Validate parameter count matches capture groups
-        let captureCount = SyntaxHelpers.captureGroupCount(in: expression)
-        if captureCount != paramCount {
+        if captureCount != effectiveParamCount {
             context.diagnose(
                 Diagnostic(
                     node: funcDecl.signature.parameterClause,
@@ -85,14 +86,35 @@ enum StepMacroBase {
             expression: expression,
             kind: kind,
             paramCount: paramCount,
-            isAsync: isAsync,
-            isThrows: isThrows,
-            isMutating: isMutating,
-            paramNames: paramNames
+            isAsync: SyntaxHelpers.isAsync(funcDecl),
+            isThrows: SyntaxHelpers.isThrows(funcDecl),
+            isMutating: SyntaxHelpers.isMutating(funcDecl),
+            paramNames: paramNames,
+            stepArgKind: stepArgKind
         )
-        let decl = StepRegistryCodeGen.generateStepDefinition(spec: spec)
+        return [StepRegistryCodeGen.generateStepDefinition(spec: spec)]
+    }
 
-        return [decl]
+    /// Detects whether the last parameter is a DataTable or DocString receiver.
+    ///
+    /// - Parameters:
+    ///   - funcDecl: The function declaration to inspect.
+    ///   - paramCount: The total number of parameters.
+    ///   - captureCount: The number of capture groups in the expression.
+    /// - Returns: The detected step argument kind and the effective parameter count for validation.
+    private static func detectStepArgKind(
+        funcDecl: FunctionDeclSyntax,
+        paramCount: Int,
+        captureCount: Int
+    ) -> (StepRegistryCodeGen.StepArgKind?, Int) {
+        let lastParamType = SyntaxHelpers.lastParameterTypeName(from: funcDecl)
+
+        if lastParamType == "DataTable" {
+            return (.dataTable, paramCount - 1)
+        } else if lastParamType == "String" && paramCount == captureCount + 1 {
+            return (.docString, paramCount - 1)
+        }
+        return (nil, paramCount)
     }
 }
 

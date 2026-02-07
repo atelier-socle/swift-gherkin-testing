@@ -23,7 +23,7 @@ private func exactDefinition(
     _ pattern: String,
     keywordType: StepKeywordType? = nil,
     line: Int = 1,
-    handler: @escaping @Sendable (inout TestFeature, [String]) async throws -> Void = { _, _ in }
+    handler: @escaping @Sendable (inout TestFeature, [String], StepArgument?) async throws -> Void = { _, _, _ in }
 ) -> StepDefinition<TestFeature> {
     StepDefinition(
         keywordType: keywordType,
@@ -38,7 +38,7 @@ private func regexDefinition(
     _ pattern: String,
     keywordType: StepKeywordType? = nil,
     line: Int = 1,
-    handler: @escaping @Sendable (inout TestFeature, [String]) async throws -> Void = { _, _ in }
+    handler: @escaping @Sendable (inout TestFeature, [String], StepArgument?) async throws -> Void = { _, _, _ in }
 ) -> StepDefinition<TestFeature> {
     StepDefinition(
         keywordType: keywordType,
@@ -204,7 +204,7 @@ struct StepExecutorTests {
 
     @Test("execute calls handler with matched arguments")
     func executeCallsHandler() async throws {
-        let definition = regexDefinition("^the user enters (.+)$") { feature, args in
+        let definition = regexDefinition("^the user enters (.+)$") { feature, args, _ in
             feature.executedSteps.append("enter")
             feature.capturedArgs.append(args)
         }
@@ -221,7 +221,7 @@ struct StepExecutorTests {
     @Test("execute propagates handler errors")
     func executeHandlerError() async throws {
         struct StepError: Error {}
-        let definition = exactDefinition("fail step") { _, _ in
+        let definition = exactDefinition("fail step") { _, _, _ in
             throw StepError()
         }
         let executor = StepExecutor(definitions: [definition])
@@ -319,7 +319,7 @@ struct StepExecutorCoverageTests {
             keywordType: .context,
             pattern: .cucumberExpression("I have {int} items"),
             sourceLocation: Location(line: 1),
-            handler: { _, _ in }
+            handler: { _, _, _ in }
         )
         let executor = StepExecutor(definitions: [definition])
         let step = pickleStep("I have 42 items")
@@ -334,7 +334,7 @@ struct StepExecutorCoverageTests {
             keywordType: .context,
             pattern: .cucumberExpression("the user has {int} items"),
             sourceLocation: Location(line: 1),
-            handler: { _, _ in }
+            handler: { _, _, _ in }
         )
         let regexDef = regexDefinition("^the user has (\\d+) items$", line: 2)
         let executor = StepExecutor(definitions: [cucumberDef, regexDef])
@@ -351,7 +351,7 @@ struct StepExecutorCoverageTests {
             keywordType: .context,
             pattern: .cucumberExpression("the user has {int} items"),
             sourceLocation: Location(line: 2),
-            handler: { _, _ in }
+            handler: { _, _, _ in }
         )
         let executor = StepExecutor(definitions: [exactDef, cucumberDef])
         let step = pickleStep("the user has 5 items")
@@ -376,7 +376,7 @@ struct StepExecutorCoverageTests {
             keywordType: .context,
             pattern: .cucumberExpression("the {color} button"),
             sourceLocation: Location(line: 1),
-            handler: { _, _ in }
+            handler: { _, _, _ in }
         )
         let executor = StepExecutor(definitions: [definition], registry: registry)
         let step = pickleStep("the red button")
