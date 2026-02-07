@@ -24,7 +24,7 @@ Examples of unacceptable behavior:
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to **conduct@ateliersocle.com**. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to [Atelier Socle Contact](https://www.atelier-socle.com/en/contact). All complaints will be reviewed and investigated promptly and fairly.
 
 ## Attribution
 

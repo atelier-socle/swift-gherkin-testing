@@ -4,7 +4,7 @@
 
 **Do not open a public issue for security vulnerabilities.**
 
-Please report vulnerabilities by email to **security@ateliersocle.com**. Include:
+Please report vulnerabilities by email to [Atelier Socle Contact](https://www.atelier-socle.com/en/contact). Include:
 
 - A description of the vulnerability
 - Steps to reproduce
