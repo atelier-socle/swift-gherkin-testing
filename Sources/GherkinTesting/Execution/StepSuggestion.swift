@@ -61,24 +61,33 @@ public struct StepSuggestion: Sendable, Equatable {
     /// Detects numbers, floats, and quoted strings in the text and replaces
     /// them with appropriate Cucumber expression parameter types.
     ///
+    /// When custom type names are provided, a comment listing them is appended
+    /// to the signature as a hint for the developer.
+    ///
     /// - Parameters:
     ///   - stepText: The undefined step text to analyze.
     ///   - keywordType: The keyword type for the annotation. Defaults to `nil` (→ `@Given`).
+    ///   - customTypeNames: Names of registered custom parameter types. Defaults to empty.
     /// - Returns: A suggestion with expression and code skeleton.
     public static func suggest(
         stepText: String,
-        keywordType: StepKeywordType? = nil
+        keywordType: StepKeywordType? = nil,
+        customTypeNames: [String] = []
     ) -> StepSuggestion {
         let expression = analyzePattern(stepText)
         let funcName = generateFunctionName(from: expression)
         let keyword = macroKeyword(for: keywordType)
         let escapedExpression = expression.replacing("\\", with: "\\\\").replacing("\"", with: "\\\"")
-        let signature = """
+        var signature = """
             @\(keyword)("\(escapedExpression)")
             func \(funcName)() async throws {
                 throw PendingStepError()
             }
             """
+        if !customTypeNames.isEmpty {
+            let typeList = customTypeNames.map { "{\($0)}" }.joined(separator: ", ")
+            signature += "\n// Available custom types: \(typeList)"
+        }
         return StepSuggestion(
             stepText: stepText,
             suggestedExpression: expression,

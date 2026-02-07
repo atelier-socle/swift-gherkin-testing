@@ -139,8 +139,8 @@ struct ReporterIntegrationTests {
     func skippedScenarioEvents() async throws {
         let tracker = EventTracker()
         let config = GherkinConfiguration(
-            tagFilter: try TagFilter("@smoke"),
-            reporters: [tracker]
+            reporters: [tracker],
+            tagFilter: try TagFilter("@smoke")
         )
         let definitions = [noopDefinition("step")]
         let runner = TestRunner(definitions: definitions, configuration: config)

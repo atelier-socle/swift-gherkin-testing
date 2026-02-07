@@ -78,7 +78,7 @@ public struct TestRunner<F: GherkinFeature>: Sendable {
         featureTags: [String],
         feature: F
     ) async throws -> TestRunResult {
-        let executor = StepExecutor(definitions: definitions)
+        let executor = StepExecutor(definitions: definitions, registry: buildRegistry())
         let clock = ContinuousClock()
         let startTime = clock.now
 
@@ -267,7 +267,10 @@ public struct TestRunner<F: GherkinFeature>: Sendable {
         } catch let error as StepMatchError {
             status = stepMatchErrorToStatus(error)
             if case .undefined = error {
-                suggestion = StepSuggestion.suggest(stepText: step.text)
+                suggestion = StepSuggestion.suggest(
+                    stepText: step.text,
+                    customTypeNames: configuration.parameterTypes.map(\.name)
+                )
             }
         } catch {
             status = .failed(StepFailure(error: error))
@@ -301,7 +304,10 @@ public struct TestRunner<F: GherkinFeature>: Sendable {
         } catch let error as StepMatchError {
             var suggestion: StepSuggestion?
             if case .undefined = error {
-                suggestion = StepSuggestion.suggest(stepText: step.text)
+                suggestion = StepSuggestion.suggest(
+                    stepText: step.text,
+                    customTypeNames: configuration.parameterTypes.map(\.name)
+                )
             }
             return StepResult(
                 step: step,
@@ -330,5 +336,25 @@ public struct TestRunner<F: GherkinFeature>: Sendable {
         case .typeMismatch:
             return .failed(StepFailure(error: error))
         }
+    }
+
+    /// Builds a parameter type registry, adding any custom types from configuration.
+    ///
+    /// Built-in types are registered first by ``ParameterTypeRegistry/init()``.
+    /// Custom types that conflict with built-in names are silently skipped.
+    ///
+    /// - Returns: A registry containing built-in and custom parameter types.
+    private func buildRegistry() -> ParameterTypeRegistry {
+        var registry = ParameterTypeRegistry()
+        for descriptor in configuration.parameterTypes {
+            let paramType = AnyParameterType(
+                name: descriptor.name,
+                regexps: descriptor.patterns,
+                transformer: { $0 },
+                typedTransformer: { $0 as String }
+            )
+            try? registry.registerAny(paramType)
+        }
+        return registry
     }
 }

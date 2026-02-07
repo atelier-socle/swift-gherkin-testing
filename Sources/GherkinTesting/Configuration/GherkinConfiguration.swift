@@ -5,14 +5,18 @@
 
 /// Configuration options for a Gherkin test run.
 ///
-/// Controls tag filtering, dry-run mode, and reporters for output generation.
+/// Controls tag filtering, dry-run mode, reporters for output generation,
+/// and custom Cucumber Expression parameter types.
 ///
 /// ```swift
 /// let reporter = CucumberJSONReporter()
 /// let config = GherkinConfiguration(
+///     reporters: [reporter],
+///     parameterTypes: [
+///         .type("color", matching: "red|green|blue")
+///     ],
 ///     tagFilter: try TagFilter("@smoke and not @wip"),
-///     dryRun: false,
-///     reporters: [reporter]
+///     dryRun: false
 /// )
 /// let runner = TestRunner(
 ///     definitions: mySteps,
@@ -40,20 +44,42 @@ public struct GherkinConfiguration: Sendable {
     /// ``GherkinReporter/generateReport()`` on each reporter to produce output.
     public var reporters: [any GherkinReporter]
 
+    /// Custom Cucumber Expression parameter types.
+    ///
+    /// These types are registered in the ``ParameterTypeRegistry`` before
+    /// step matching begins. Use ``ParameterTypeDescriptor/type(_:matching:)``
+    /// to declare custom types:
+    ///
+    /// ```swift
+    /// let config = GherkinConfiguration(
+    ///     parameterTypes: [
+    ///         .type("color", matching: "red|green|blue")
+    ///     ]
+    /// )
+    /// ```
+    ///
+    /// Custom types are matched as strings. If a descriptor's name conflicts
+    /// with a built-in type (`int`, `float`, `string`, `word`), the built-in
+    /// type takes precedence and the descriptor is silently skipped.
+    public var parameterTypes: [ParameterTypeDescriptor]
+
     /// Creates a new configuration.
     ///
     /// - Parameters:
+    ///   - reporters: The reporters to use. Defaults to empty.
+    ///   - parameterTypes: Custom Cucumber Expression parameter types. Defaults to empty.
     ///   - tagFilter: An optional tag filter expression. Defaults to `nil` (run all).
     ///   - dryRun: Whether to run in dry-run mode. Defaults to `false`.
-    ///   - reporters: The reporters to use. Defaults to empty.
     public init(
+        reporters: [any GherkinReporter] = [],
+        parameterTypes: [ParameterTypeDescriptor] = [],
         tagFilter: TagFilter? = nil,
-        dryRun: Bool = false,
-        reporters: [any GherkinReporter] = []
+        dryRun: Bool = false
     ) {
+        self.reporters = reporters
+        self.parameterTypes = parameterTypes
         self.tagFilter = tagFilter
         self.dryRun = dryRun
-        self.reporters = reporters
     }
 
     /// A default configuration that runs all scenarios with no filtering.

@@ -134,6 +134,32 @@ func buy(count: Int, price: Double) async throws { }
 func checkTotal(amount: String) async throws { }
 ```
 
+### Custom Parameter Types
+
+Register custom Cucumber Expression types via `gherkinConfiguration`:
+
+```swift
+@Feature(source: .inline("..."))
+struct ShoppingFeature {
+    static var gherkinConfiguration: GherkinConfiguration {
+        GherkinConfiguration(
+            parameterTypes: [
+                .type("color", matching: "red|green|blue"),
+                .type("amount", matching: #"\d+\.\d{2}"#)
+            ]
+        )
+    }
+
+    @Then("the item color should be {color}")
+    func checkColor(color: String) async throws { }
+
+    @Then("the price should be {amount}")
+    func checkPrice(amount: String) async throws { }
+}
+```
+
+Custom types are matched as strings. Use `{color}` in step expressions — the matched text is passed as a `String` argument. If a custom type name conflicts with a built-in (`int`, `float`, `string`, `word`), the built-in takes precedence.
+
 ### DataTable and DocString Arguments
 
 Steps with DataTable or DocString arguments pass them directly to your handler. Declare a trailing `DataTable` or `String` parameter:
