@@ -30,7 +30,7 @@ public enum TokenType: Sendable, Equatable, Hashable {
     /// A step keyword line (`Given`, `When`, `Then`, `And`, `But`, or `*`).
     case step
 
-    /// A doc string delimiter line (`"""` or `` ``` ``).
+    /// A doc string delimiter line (triple quotes or triple backticks).
     case docString
 
     /// A line of content within a doc string block.

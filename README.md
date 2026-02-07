@@ -30,6 +30,11 @@ swift-gherkin-testing integrates Gherkin BDD specifications directly into Swift 
 
 ## Installation
 
+### Requirements
+
+- **Swift 6.2+** with strict concurrency
+- **Platforms**: iOS 17+ · macOS 14+ · tvOS 17+ · watchOS 10+ · visionOS 1+ · Mac Catalyst 17+
+
 Add the package to your `Package.swift`:
 
 ```swift

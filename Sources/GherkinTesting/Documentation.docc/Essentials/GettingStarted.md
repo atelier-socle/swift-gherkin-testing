@@ -8,9 +8,10 @@ This guide walks you through adding Gherkin Testing to your Swift package, creat
 
 ### Requirements
 
-- Swift 6.2+
+- Swift 6.2+ with strict concurrency
 - Xcode 26+ or a compatible Swift toolchain
 - Swift Package Manager
+- **Platforms**: iOS 17+ · macOS 14+ · tvOS 17+ · watchOS 10+ · visionOS 1+ · Mac Catalyst 17+
 
 ## Installation
 
@@ -27,7 +28,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/AtelierSocle/swift-gherkin-testing.git",
-            from: "1.0.0"
+            from: "0.1.0"
         )
     ],
     targets: [

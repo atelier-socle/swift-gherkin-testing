@@ -4,15 +4,76 @@ Include or exclude scenarios using boolean tag expressions.
 
 ## Overview
 
-Tags let you categorize scenarios and selectively run subsets of your test suite. Gherkin Testing supports full boolean tag expressions with `and`, `or`, `not`, and parentheses.
+``TagFilter`` evaluates boolean expressions over scenario tags, letting you run subsets of your test suite. Configure it in ``GherkinConfiguration`` via the `tagFilter:` property.
 
-<!-- TODO: Full article content covering:
-- Tag syntax in .feature files (@tag)
-- Tag inheritance: feature → rule → scenario → examples
-- TagFilter configuration in GherkinConfiguration
-- Boolean expressions: and, or, not, parentheses
-- Operator precedence: not > and > or
-- Tag-filtered scenarios produce ScenarioResult with .skipped status
-- Examples: "@smoke", "@smoke and not @slow", "(@api or @ui) and @regression"
-- Using tagFilter in gherkinConfiguration static property
--->
+### Tag Syntax in Feature Files
+
+```gherkin
+@smoke @regression
+Feature: Login
+  @auth
+  Scenario: Successful login
+    Given ...
+```
+
+Tags inherit from parent to child: feature → rule → scenario → examples.
+
+### Tag Expression Syntax
+
+| Expression | Meaning |
+|------------|---------|
+| `@smoke` | Matches scenarios tagged `@smoke` |
+| `not @wip` | Excludes `@wip` scenarios |
+| `@smoke and @auth` | Both tags required |
+| `@api or @ui` | Either tag matches |
+| `(@api or @ui) and not @slow` | Parenthesized grouping |
+
+Operator precedence: `not` > `and` > `or`.
+
+### Configuration
+
+Set `tagFilter` in your feature's `gherkinConfiguration`:
+
+```swift
+@Feature(source: .file("Fixtures/en/showcase.feature"))
+struct ShowcaseFeature {
+    static var gherkinConfiguration: GherkinConfiguration {
+        GherkinConfiguration(
+            tagFilter: try! TagFilter("@smoke and not @slow")
+        )
+    }
+}
+```
+
+### Behavior
+
+- Scenarios matching the filter execute normally
+- Filtered-out scenarios produce a ``ScenarioResult`` with all steps set to `.skipped`
+- Filtered scenarios still appear in reports (as skipped), rather than being silently dropped
+
+### Programmatic Usage
+
+```swift
+let filter = try TagFilter("@smoke or @regression")
+filter.matches(tags: ["@smoke"])           // true
+filter.matches(tags: ["@regression"])      // true
+filter.matches(tags: ["@wip"])             // false
+
+let complex = try TagFilter("@api and not @slow")
+complex.matches(tags: ["@api", "@fast"])   // true
+complex.matches(tags: ["@api", "@slow"])   // false
+```
+
+### Error Handling
+
+``TagFilter/init(_:)`` throws ``TagFilterError`` for invalid expressions:
+
+- `.emptyExpression` — empty string
+- `.unexpectedToken(_:position:)` — invalid syntax
+- `.unexpectedEndOfExpression` — truncated expression
+- `.missingClosingParenthesis` — unbalanced parentheses
+
+## See Also
+
+- <doc:Hooks>
+- <doc:WritingFeatureFiles>

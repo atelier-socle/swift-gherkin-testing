@@ -8,7 +8,7 @@ import Foundation
 /// An error thrown by a step handler to indicate that the step implementation is pending.
 ///
 /// When a step handler throws `PendingStepError`, the step is marked as
-/// ``StepStatus/pending`` rather than ``StepStatus/failed``. Subsequent steps
+/// ``StepStatus/pending`` rather than ``StepStatus/failed(_:)``. Subsequent steps
 /// in the same scenario are marked as ``StepStatus/skipped``.
 ///
 /// ```swift
