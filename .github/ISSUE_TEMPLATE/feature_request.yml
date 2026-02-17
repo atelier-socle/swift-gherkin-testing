@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Atelier Socle SAS
 name: Feature Request
 description: Suggest a new feature or improvement
 labels: [enhancement]

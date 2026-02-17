@@ -349,6 +349,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute.
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+This project is licensed under the [Apache License 2.0](LICENSE).
 
-Copyright (c) 2026 Atelier Socle SAS
+Copyright 2026 [Atelier Socle SAS](https://www.atelier-socle.com). See [NOTICE](NOTICE) for details.
