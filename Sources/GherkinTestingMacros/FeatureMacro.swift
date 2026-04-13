@@ -116,18 +116,20 @@ extension FeatureMacro: PeerMacro {
         let bundleExpr = extractBundleArgument(from: node)
         let reportsExpr = extractReportsArgument(from: node)
         let reportsArg = reportsExpr.map { "\n                        reports: \($0)," } ?? ""
+        let isIsolated = hasGlobalActorIsolation(on: structDecl)
 
         switch memberName {
         case "inline":
             return generateInlineSuite(
                 typeName: typeName, suiteName: suiteName, stringValue: stringValue,
-                hooksArg: hooksArg, configArg: configArg, reportsArg: reportsArg
+                hooksArg: hooksArg, configArg: configArg, reportsArg: reportsArg,
+                isIsolated: isIsolated
             )
         case "file":
             return generateFileSuite(
                 typeName: typeName, suiteName: suiteName, stringValue: stringValue,
                 hooksArg: hooksArg, configArg: configArg, reportsArg: reportsArg,
-                bundleExpr: bundleExpr
+                bundleExpr: bundleExpr, isIsolated: isIsolated
             )
         default:
             context.diagnose(
@@ -291,6 +293,22 @@ extension FeatureMacro {
         return reportsArg.expression.trimmedDescription
     }
 
+    /// Returns `true` if the struct has a global actor attribute (`@MainActor`).
+    ///
+    /// When detected, the macro generates an `await`-ed feature factory closure
+    /// so that the actor-isolated initializer can be called correctly.
+    ///
+    /// - Parameter structDecl: The struct declaration to inspect.
+    /// - Returns: `true` if the struct is annotated with `@MainActor`.
+    static func hasGlobalActorIsolation(on structDecl: StructDeclSyntax) -> Bool {
+        structDecl.attributes.contains { element in
+            guard case .attribute(let attr) = element,
+                let identifier = attr.attributeName.as(IdentifierTypeSyntax.self)
+            else { return false }
+            return identifier.name.text == "MainActor"
+        }
+    }
+
     /// Extracts step library type names from the @Feature attribute.
     ///
     /// Parses `stepLibraries: [AuthSteps.self, NavSteps.self]` → `["AuthSteps", "NavSteps"]`.
@@ -350,10 +368,12 @@ extension FeatureMacro {
         stringValue: String,
         hooksArg: String,
         configArg: String,
-        reportsArg: String = ""
+        reportsArg: String = "",
+        isIsolated: Bool = false
     ) -> [DeclSyntax] {
         let scenarioNames = SyntaxHelpers.extractScenarioNames(from: stringValue)
         let escapedSource = escapeMultilineString(stringValue)
+        let factoryExpr = isIsolated ? "{ await \(typeName)() }" : "{ \(typeName)() }"
 
         if scenarioNames.isEmpty {
             let suiteDecl: DeclSyntax = """
@@ -364,7 +384,7 @@ extension FeatureMacro {
                         try await FeatureExecutor<\(raw: typeName)>.run(
                             source: .inline(\(raw: escapedSource)),
                             definitions: \(raw: typeName).__stepDefinitions,\(raw: hooksArg)\(raw: configArg)\(raw: reportsArg)
-                            featureFactory: { \(raw: typeName)() }
+                            featureFactory: \(raw: factoryExpr)
                         )
                     }
                 }
@@ -384,7 +404,7 @@ extension FeatureMacro {
                             source: .inline(\(escapedSource)),
                             definitions: \(typeName).__stepDefinitions,\(hooksArg)\(configArg)
                             scenarioFilter: "\(escapedName)",\(reportsArg)
-                            featureFactory: { \(typeName)() }
+                            featureFactory: \(factoryExpr)
                         )
                     }
                 """)
@@ -407,10 +427,12 @@ extension FeatureMacro {
         hooksArg: String,
         configArg: String,
         reportsArg: String = "",
-        bundleExpr: String? = nil
+        bundleExpr: String? = nil,
+        isIsolated: Bool = false
     ) -> [DeclSyntax] {
         let escapedPath = SyntaxHelpers.escapeForStringLiteral(stringValue)
         let bundleValue = bundleExpr ?? "Bundle.module"
+        let factoryExpr = isIsolated ? "{ await \(typeName)() }" : "{ \(typeName)() }"
         let suiteDecl: DeclSyntax = """
             @Suite("\(raw: typeName)")
             struct \(raw: suiteName) {
@@ -420,7 +442,7 @@ extension FeatureMacro {
                         source: .file("\(raw: escapedPath)"),
                         definitions: \(raw: typeName).__stepDefinitions,\(raw: hooksArg)
                         bundle: \(raw: bundleValue),\(raw: configArg)\(raw: reportsArg)
-                        featureFactory: { \(raw: typeName)() }
+                        featureFactory: \(raw: factoryExpr)
                     )
                 }
             }
