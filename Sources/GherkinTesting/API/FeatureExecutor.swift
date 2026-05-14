@@ -152,6 +152,8 @@ public struct FeatureExecutor<F: GherkinFeature>: Sendable {
     ///     produces a file at either a default path (`/tmp/swift-gherkin-testing/reports/`)
     ///     or a custom path. Defaults to empty (no reports written).
     ///   - featureFactory: A closure that creates a fresh feature instance.
+    ///     Accepts both sync and async closures. Use an async closure when the
+    ///     feature type is isolated to a global actor (e.g., `@MainActor`).
     /// - Returns: The ``TestRunResult`` containing all execution results.
     /// - Throws: ``ParserError`` if the source is malformed,
     ///   or any error from step execution.
@@ -168,7 +170,7 @@ public struct FeatureExecutor<F: GherkinFeature>: Sendable {
         line: Int = #line,
         column: Int = #column,
         reports: [ReportFormat] = [],
-        featureFactory: @Sendable () -> F
+        featureFactory: @Sendable () async -> F
     ) async throws -> TestRunResult {
         let gherkinSource: String
 
@@ -207,7 +209,7 @@ public struct FeatureExecutor<F: GherkinFeature>: Sendable {
             configuration: effectiveConfig
         )
 
-        let feature = featureFactory()
+        let feature = await featureFactory()
         let result = try await runner.run(
             pickles: pickles,
             featureName: featureName,
