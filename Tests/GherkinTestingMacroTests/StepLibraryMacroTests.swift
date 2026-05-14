@@ -15,7 +15,7 @@
 // limitations under the License.
 
 import SwiftSyntaxMacros
-import SwiftSyntaxMacrosTestSupport
+import SwiftSyntaxMacrosGenericTestSupport
 import Testing
 
 @testable import GherkinTestingMacros
@@ -46,14 +46,30 @@ struct StepLibraryMacroTests {
                 }
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 struct SharedSteps {
-                    @Given("logged in")
                     func loggedIn() {
                     }
-                    @When("click logout")
+
+                    static let __stepDef_loggedIn = StepDefinition<Self>(
+                        keywordType: .context,
+                        pattern: .exact("logged in"),
+                        sourceLocation: Location(line: 0, column: 0),
+                        handler: { feature, args, stepArg in
+                            feature.loggedIn()
+                        }
+                    )
                     func clickLogout() {
                     }
+
+                    static let __stepDef_clickLogout = StepDefinition<Self>(
+                        keywordType: .action,
+                        pattern: .exact("click logout"),
+                        sourceLocation: Location(line: 0, column: 0),
+                        handler: { feature, args, stepArg in
+                            feature.clickLogout()
+                        }
+                    )
 
                     static var __stepDefinitions: [StepDefinition<Self>] {
                         [__stepDef_loggedIn, __stepDef_clickLogout]
@@ -62,7 +78,7 @@ struct StepLibraryMacroTests {
 
                 extension SharedSteps: StepLibrary {
                 }
-                """,
+                """#,
             macros: testMacros
         )
     }

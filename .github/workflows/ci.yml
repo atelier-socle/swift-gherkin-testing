@@ -28,20 +28,31 @@ jobs:
         run: swift-format lint -r Sources/ Tests/
 
   build-and-test:
-    name: "macOS (Swift 6.2)"
+    name: "macOS — Xcode ${{ matrix.xcode }} (Swift ${{ matrix.swift }})"
     runs-on: macos-26
     needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - xcode: "26.2"
+            swift: "6.2"
+          - xcode: "26.4"
+            swift: "6.3"
     steps:
       - uses: actions/checkout@v4
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_26.2.app
+        run: sudo xcode-select -s /Applications/Xcode_${{ matrix.xcode }}.app
       - name: Swift Version
         run: swift --version
       - name: Build
         run: swift build
       - name: Test with Coverage
         run: swift test --enable-code-coverage
+      # Coverage is computed and uploaded once, from the Swift 6.2 job, to avoid
+      # duplicate Codecov reports. Both matrix jobs still build and run all tests.
       - name: Coverage Report
+        if: matrix.swift == '6.2'
         run: |
           PROF_DATA=$(find .build -name "default.profdata" -type f | head -1)
           TEST_BIN=$(find .build -name "swift-gherkin-testingPackageTests" -type f ! -name "*.o" | head -1)
@@ -51,6 +62,7 @@ jobs:
               -ignore-filename-regex='\.build|Tests'
           fi
       - name: Generate lcov Coverage
+        if: matrix.swift == '6.2'
         run: |
           PROF_DATA=$(find .build -name "default.profdata" -type f | head -1)
           TEST_BIN=$(find .build -name "swift-gherkin-testingPackageTests" -type f ! -name "*.o" | head -1)
@@ -62,6 +74,7 @@ jobs:
               > coverage.lcov
           fi
       - name: Upload to Codecov
+        if: matrix.swift == '6.2'
         uses: codecov/codecov-action@v5
         with:
           files: coverage.lcov

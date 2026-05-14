@@ -24,7 +24,15 @@ import SwiftSyntaxMacros
 /// 1. `ExtensionMacro` — generates `extension TypeName: GherkinFeature {}`
 /// 2. `MemberMacro` — generates `static var __stepDefinitions` and optionally
 ///    `static var __hooks` inside the struct
-/// 3. `PeerMacro` — generates `struct TypeName__GherkinTests` with `@Suite`/`@Test`
+/// 3. `PeerMacro` — generates `struct TypeName__GherkinTests` containing the
+///    `@Test` methods
+///
+/// The generated `TypeName__GherkinTests` struct is a plain `struct` (no
+/// `@Suite` attribute). A type that contains `@Test` methods is discovered by
+/// Swift Testing as an implicit suite, so the explicit `@Suite` attribute is
+/// not required — and emitting it here would nest the `@Suite` macro inside a
+/// peer-macro expansion, which the Swift 6.3 compiler cannot resolve across
+/// macro-expansion buffers.
 ///
 /// For `.inline(...)` sources, scenario names are extracted at compile time
 /// to generate per-scenario `@Test` methods. For `.file(...)` sources, a single
@@ -86,7 +94,7 @@ extension FeatureMacro: MemberMacro {
     }
 }
 
-// MARK: - PeerMacro — __GherkinTests @Suite
+// MARK: - PeerMacro — __GherkinTests test suite
 
 extension FeatureMacro: PeerMacro {
     public static func expansion(
@@ -343,7 +351,10 @@ extension FeatureMacro {
         return "\"\(escaped)\""
     }
 
-    /// Generates the `@Suite` struct for an `.inline(...)` source.
+    /// Generates the test-suite struct for an `.inline(...)` source.
+    ///
+    /// The struct carries no `@Suite` attribute: Swift Testing treats any type
+    /// that contains `@Test` methods as an implicit suite.
     static func generateInlineSuite(
         typeName: String,
         suiteName: String,
@@ -357,7 +368,6 @@ extension FeatureMacro {
 
         if scenarioNames.isEmpty {
             let suiteDecl: DeclSyntax = """
-                @Suite("\(raw: typeName)")
                 struct \(raw: suiteName) {
                     @Test("Feature: \(raw: typeName)")
                     func feature_test() async throws {
@@ -391,7 +401,6 @@ extension FeatureMacro {
         }
         let methodsCode = methods.joined(separator: "\n\n")
         let suiteDecl: DeclSyntax = """
-            @Suite("\(raw: typeName)")
             struct \(raw: suiteName) {
             \(raw: methodsCode)
             }
@@ -399,7 +408,10 @@ extension FeatureMacro {
         return [suiteDecl]
     }
 
-    /// Generates the `@Suite` struct for a `.file(...)` source.
+    /// Generates the test-suite struct for a `.file(...)` source.
+    ///
+    /// The struct carries no `@Suite` attribute: Swift Testing treats any type
+    /// that contains `@Test` methods as an implicit suite.
     static func generateFileSuite(
         typeName: String,
         suiteName: String,
@@ -412,7 +424,6 @@ extension FeatureMacro {
         let escapedPath = SyntaxHelpers.escapeForStringLiteral(stringValue)
         let bundleValue = bundleExpr ?? "Bundle.module"
         let suiteDecl: DeclSyntax = """
-            @Suite("\(raw: typeName)")
             struct \(raw: suiteName) {
                 @Test("Feature: \(raw: typeName)")
                 func feature_test() async throws {

@@ -8,7 +8,7 @@ A production-grade BDD testing framework for Swift that parses and executes Gher
 
 ## Overview
 
-**Gherkin Testing** brings the power of Cucumber-style BDD to Swift. Write your specifications in standard Gherkin syntax, then implement step definitions using Swift macros that generate native Swift Testing `@Suite` and `@Test` methods at compile time.
+**Gherkin Testing** brings the power of Cucumber-style BDD to Swift. Write your specifications in standard Gherkin syntax, then implement step definitions using Swift macros that generate native Swift Testing suites with `@Test` methods at compile time.
 
 ```swift
 import GherkinTesting
@@ -55,7 +55,7 @@ struct LoginFeature {
 3. **Define** step handlers with `@Given`, `@When`, `@Then`, `@And`, `@But`
 4. **Run** your tests — the macros generate native Swift Testing tests at compile time
 
-The framework coexists cleanly with Apple's Swift Testing. Your `@Feature` types generate `@Suite`/`@Test` code under the hood, and you use `#expect`/`#require` for assertions.
+The framework coexists cleanly with Apple's Swift Testing. Your `@Feature` types generate a Swift Testing suite with `@Test` methods under the hood, and you use `#expect`/`#require` for assertions.
 
 ## Topics
 

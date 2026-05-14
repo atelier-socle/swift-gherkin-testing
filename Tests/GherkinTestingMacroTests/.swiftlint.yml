@@ -1,0 +1,17 @@
+# SwiftLint Configuration — macro-expansion tests
+#
+# Macro-expansion tests assert a macro's output against a full generated-source
+# fixture embedded as a string literal. Those fixtures are intentionally large,
+# so the project-wide `file_length` / `function_body_length` limits do not
+# meaningfully apply here. This nested config relaxes only those two rules; all
+# other rules from the root configuration still apply.
+
+parent_config: ../../.swiftlint.yml
+
+file_length:
+  warning: 2000
+  error: 4000
+
+function_body_length:
+  warning: 300
+  error: 600

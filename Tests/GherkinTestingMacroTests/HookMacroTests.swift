@@ -15,7 +15,7 @@
 // limitations under the License.
 
 import SwiftSyntaxMacros
-import SwiftSyntaxMacrosTestSupport
+import SwiftSyntaxMacrosGenericTestSupport
 import Testing
 
 @testable import GherkinTestingMacros
@@ -38,16 +38,19 @@ struct HookMacroTests {
             static func setUp() async throws {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 static func setUp() async throws {
                 }
 
                 static let __hook_setUp = Hook(
                     scope: .scenario,
+                    order: 0,
                     tagFilter: nil,
-                    handler: { try await setUp() }
+                    handler: {
+                        try await setUp()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -60,16 +63,19 @@ struct HookMacroTests {
             static func tearDown() {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 static func tearDown() {
                 }
 
                 static let __hook_tearDown = Hook(
                     scope: .feature,
+                    order: 0,
                     tagFilter: nil,
-                    handler: { tearDown() }
+                    handler: {
+                        tearDown()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -82,16 +88,19 @@ struct HookMacroTests {
             static func smokeSetup() {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 static func smokeSetup() {
                 }
 
                 static let __hook_smokeSetup = Hook(
                     scope: .scenario,
+                    order: 0,
                     tagFilter: try? TagFilter("@smoke"),
-                    handler: { smokeSetup() }
+                    handler: {
+                        smokeSetup()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -111,7 +120,7 @@ struct HookMacroTests {
             diagnostics: [
                 DiagnosticSpec(
                     message: "@Before/@After hooks must be applied to static functions",
-                    line: 2,
+                    line: 1,
                     column: 1
                 )
             ],
@@ -132,7 +141,7 @@ struct HookMacroTests {
             diagnostics: [
                 DiagnosticSpec(
                     message: "@Before/@After can only be applied to functions",
-                    line: 2,
+                    line: 1,
                     column: 1
                 )
             ],
@@ -153,16 +162,19 @@ struct HookMacroCoverageTests {
             static func beforeStep() {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 static func beforeStep() {
                 }
 
                 static let __hook_beforeStep = Hook(
                     scope: .step,
+                    order: 0,
                     tagFilter: nil,
-                    handler: { beforeStep() }
+                    handler: {
+                        beforeStep()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -175,16 +187,19 @@ struct HookMacroCoverageTests {
             static func cleanup() async {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 static func cleanup() async {
                 }
 
                 static let __hook_cleanup = Hook(
                     scope: .scenario,
+                    order: 0,
                     tagFilter: nil,
-                    handler: { await cleanup() }
+                    handler: {
+                        await cleanup()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -197,7 +212,7 @@ struct HookMacroCoverageTests {
             static func ordered() {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 static func ordered() {
                 }
 
@@ -205,9 +220,11 @@ struct HookMacroCoverageTests {
                     scope: .scenario,
                     order: 5,
                     tagFilter: nil,
-                    handler: { ordered() }
+                    handler: {
+                        ordered()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -220,7 +237,7 @@ struct HookMacroCoverageTests {
             static func earlyHook() {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 static func earlyHook() {
                 }
 
@@ -228,9 +245,11 @@ struct HookMacroCoverageTests {
                     scope: .scenario,
                     order: -3,
                     tagFilter: nil,
-                    handler: { earlyHook() }
+                    handler: {
+                        earlyHook()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -243,16 +262,19 @@ struct HookMacroCoverageTests {
             static func setUp() {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 static func setUp() {
                 }
 
                 static let __hook_setUp = Hook(
                     scope: .scenario,
+                    order: 0,
                     tagFilter: nil,
-                    handler: { setUp() }
+                    handler: {
+                        setUp()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -265,16 +287,19 @@ struct HookMacroCoverageTests {
             static func throwingSetup() throws {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 static func throwingSetup() throws {
                 }
 
                 static let __hook_throwingSetup = Hook(
                     scope: .feature,
+                    order: 0,
                     tagFilter: nil,
-                    handler: { try throwingSetup() }
+                    handler: {
+                        try throwingSetup()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -289,16 +314,19 @@ struct HookMacroCoverageTests {
             static func labeled() {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 static func labeled() {
                 }
 
                 static let __hook_labeled = Hook(
                     scope: .feature,
+                    order: 0,
                     tagFilter: nil,
-                    handler: { labeled() }
+                    handler: {
+                        labeled()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -311,7 +339,7 @@ struct HookMacroCoverageTests {
             static func fullHook() async throws {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 static func fullHook() async throws {
                 }
 
@@ -319,9 +347,11 @@ struct HookMacroCoverageTests {
                     scope: .scenario,
                     order: 10,
                     tagFilter: try? TagFilter("@critical"),
-                    handler: { try await fullHook() }
+                    handler: {
+                        try await fullHook()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -357,16 +387,19 @@ struct HookMacroCoverageTests {
             static func weirdHook() {
             }
             """#,
-            expandedSource: """
+            expandedSource: #"""
                 static func weirdHook() {
                 }
 
                 static let __hook_weirdHook = Hook(
                     scope: .scenario,
+                    order: 0,
                     tagFilter: nil,
-                    handler: { weirdHook() }
+                    handler: {
+                        weirdHook()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }

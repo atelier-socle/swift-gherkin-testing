@@ -20,9 +20,10 @@ import Foundation
 
 /// Declares a Gherkin feature from a `.feature` source.
 ///
-/// `@Feature` generates a Swift Testing `@Suite` with `@Test` methods for each
-/// scenario in the feature. The type must be a `struct` with step definitions
-/// implemented as methods annotated with `@Given`, `@When`, `@Then`, etc.
+/// `@Feature` generates a Swift Testing suite — a `TypeName__GherkinTests`
+/// struct with a `@Test` method for each scenario in the feature. The type
+/// must be a `struct` with step definitions implemented as methods annotated
+/// with `@Given`, `@When`, `@Then`, etc.
 ///
 /// For `.inline(...)` sources, scenario names are extracted at compile time and
 /// each scenario gets its own `@Test` method. For `.file(...)` sources, a single

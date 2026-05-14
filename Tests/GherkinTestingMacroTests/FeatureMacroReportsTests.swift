@@ -15,7 +15,7 @@
 // limitations under the License.
 
 import SwiftSyntaxMacros
-import SwiftSyntaxMacrosTestSupport
+import SwiftSyntaxMacrosGenericTestSupport
 import Testing
 
 @testable import GherkinTestingMacros
@@ -45,33 +45,40 @@ struct FeatureMacroReportsTests {
             """#,
             expandedSource: #"""
                 struct ReportedFeature {
-                    @Given("x")
                     func stepX() {
                     }
-                }
 
-                extension ReportedFeature: GherkinFeature {
-                }
+                    static let __stepDef_stepX = StepDefinition<Self>(
+                        keywordType: .context,
+                        pattern: .exact("x"),
+                        sourceLocation: Location(line: 0, column: 0),
+                        handler: { feature, args, stepArg in
+                            feature.stepX()
+                        }
+                    )
 
-                extension ReportedFeature {
                     static var __stepDefinitions: [StepDefinition<Self>] {
                         [__stepDef_stepX]
                     }
                 }
 
-                @Suite("\(ReportedFeature.self)")
                 struct ReportedFeature__GherkinTests {
                     @Test("Scenario: A")
                     func scenario_A() async throws {
                         try await FeatureExecutor<ReportedFeature>.run(
-                            source: .inline("Feature: F\n  Scenario: A\n    Given x"),
+                            source: .inline("Feature: F\\n  Scenario: A\\n    Given x"),
                             definitions: ReportedFeature.__stepDefinitions,
-                            configuration: ReportedFeature.gherkinConfiguration,
+                                        configuration: ReportedFeature.gherkinConfiguration,
                             scenarioFilter: "A",
-                            reports: [.html, .junitXML],
-                            featureFactory: { ReportedFeature() }
+                                        reports: [.html, .junitXML],
+                            featureFactory: {
+                                ReportedFeature()
+                            }
                         )
                     }
+                }
+
+                extension ReportedFeature: GherkinFeature {
                 }
                 """#,
             macros: testMacros
@@ -91,33 +98,40 @@ struct FeatureMacroReportsTests {
             """#,
             expandedSource: #"""
                 struct CustomReportFeature {
-                    @Given("x")
                     func stepX() {
                     }
-                }
 
-                extension CustomReportFeature: GherkinFeature {
-                }
+                    static let __stepDef_stepX = StepDefinition<Self>(
+                        keywordType: .context,
+                        pattern: .exact("x"),
+                        sourceLocation: Location(line: 0, column: 0),
+                        handler: { feature, args, stepArg in
+                            feature.stepX()
+                        }
+                    )
 
-                extension CustomReportFeature {
                     static var __stepDefinitions: [StepDefinition<Self>] {
                         [__stepDef_stepX]
                     }
                 }
 
-                @Suite("\(CustomReportFeature.self)")
                 struct CustomReportFeature__GherkinTests {
                     @Test("Scenario: A")
                     func scenario_A() async throws {
                         try await FeatureExecutor<CustomReportFeature>.run(
-                            source: .inline("Feature: F\n  Scenario: A\n    Given x"),
+                            source: .inline("Feature: F\\n  Scenario: A\\n    Given x"),
                             definitions: CustomReportFeature.__stepDefinitions,
-                            configuration: CustomReportFeature.gherkinConfiguration,
+                                        configuration: CustomReportFeature.gherkinConfiguration,
                             scenarioFilter: "A",
-                            reports: [.html("out/r.html"), .junitXML],
-                            featureFactory: { CustomReportFeature() }
+                                        reports: [.html("out/r.html"), .junitXML],
+                            featureFactory: {
+                                CustomReportFeature()
+                            }
                         )
                     }
+                }
+
+                extension CustomReportFeature: GherkinFeature {
                 }
                 """#,
             macros: testMacros
@@ -132,20 +146,14 @@ struct FeatureMacroReportsTests {
             struct LoginFeature {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 struct LoginFeature {
-                }
 
-                extension LoginFeature: GherkinFeature {
-                }
-
-                extension LoginFeature {
                     static var __stepDefinitions: [StepDefinition<Self>] {
                         []
                     }
                 }
 
-                @Suite("\\(LoginFeature.self)")
                 struct LoginFeature__GherkinTests {
                     @Test("Feature: LoginFeature")
                     func feature_test() async throws {
@@ -153,13 +161,18 @@ struct FeatureMacroReportsTests {
                             source: .file("login.feature"),
                             definitions: LoginFeature.__stepDefinitions,
                             bundle: Bundle.module,
-                            configuration: LoginFeature.gherkinConfiguration,
-                            reports: [.json],
-                            featureFactory: { LoginFeature() }
+                                        configuration: LoginFeature.gherkinConfiguration,
+                                        reports: [.json],
+                            featureFactory: {
+                                LoginFeature()
+                            }
                         )
                     }
                 }
-                """,
+
+                extension LoginFeature: GherkinFeature {
+                }
+                """#,
             macros: testMacros
         )
     }

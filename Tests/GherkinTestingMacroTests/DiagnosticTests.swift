@@ -16,7 +16,7 @@
 
 import SwiftDiagnostics
 import SwiftSyntaxMacros
-import SwiftSyntaxMacrosTestSupport
+import SwiftSyntaxMacrosGenericTestSupport
 import Testing
 
 @testable import GherkinTestingMacros
@@ -52,7 +52,7 @@ struct DiagnosticErrorTests {
                 DiagnosticSpec(
                     message:
                         "Step macros (@Given, @When, @Then, @And, @But) can only be applied to functions",
-                    line: 2,
+                    line: 1,
                     column: 1
                 )
             ],
@@ -100,7 +100,7 @@ struct DiagnosticErrorTests {
                     message:
                         "Number of function parameters must match the number of capture groups in the expression",
                     line: 2,
-                    column: 13
+                    column: 11
                 )
             ],
             macros: testMacros
@@ -145,7 +145,7 @@ struct DiagnosticErrorTests {
             diagnostics: [
                 DiagnosticSpec(
                     message: "@Before/@After hooks must be applied to static functions",
-                    line: 2,
+                    line: 1,
                     column: 1
                 )
             ],
@@ -168,7 +168,7 @@ struct DiagnosticErrorTests {
             diagnostics: [
                 DiagnosticSpec(
                     message: "@Before/@After hooks must be applied to static functions",
-                    line: 2,
+                    line: 1,
                     column: 1
                 )
             ],
@@ -238,7 +238,7 @@ struct DiagnosticErrorTests {
                 DiagnosticSpec(
                     message:
                         "Step macros (@Given, @When, @Then, @And, @But) can only be applied to functions",
-                    line: 2,
+                    line: 1,
                     column: 1
                 )
             ],
@@ -260,7 +260,7 @@ struct DiagnosticErrorTests {
                 DiagnosticSpec(
                     message:
                         "Step macros (@Given, @When, @Then, @And, @But) can only be applied to functions",
-                    line: 2,
+                    line: 1,
                     column: 1
                 )
             ],
@@ -282,7 +282,7 @@ struct DiagnosticErrorTests {
                 DiagnosticSpec(
                     message:
                         "Step macros (@Given, @When, @Then, @And, @But) can only be applied to functions",
-                    line: 2,
+                    line: 1,
                     column: 1
                 )
             ],
@@ -380,7 +380,7 @@ struct DiagnosticCodeGenTests {
             func enter(a: String, b: String) {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func enter(a: String, b: String) {
                 }
 
@@ -388,9 +388,11 @@ struct DiagnosticCodeGenTests {
                     keywordType: .context,
                     pattern: .regex("^the user enters (.+) and (.+)$"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { feature, args, stepArg in feature.enter(a: args[0], b: args[1]) }
+                    handler: { feature, args, stepArg in
+                        feature.enter(a: args[0], b: args[1])
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -403,7 +405,7 @@ struct DiagnosticCodeGenTests {
             func enter(a: String, b: String) {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func enter(a: String, b: String) {
                 }
 
@@ -411,9 +413,11 @@ struct DiagnosticCodeGenTests {
                     keywordType: .action,
                     pattern: .cucumberExpression("I enter {string} and {string}"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { feature, args, stepArg in feature.enter(a: args[0], b: args[1]) }
+                    handler: { feature, args, stepArg in
+                        feature.enter(a: args[0], b: args[1])
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -426,7 +430,7 @@ struct DiagnosticCodeGenTests {
             func loggedIn() {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func loggedIn() {
                 }
 
@@ -434,9 +438,11 @@ struct DiagnosticCodeGenTests {
                     keywordType: .outcome,
                     pattern: .exact("the user is logged in"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { feature, args, stepArg in feature.loggedIn() }
+                    handler: { feature, args, stepArg in
+                        feature.loggedIn()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -449,7 +455,7 @@ struct DiagnosticCodeGenTests {
             func doSetup() async throws {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func doSetup() async throws {
                 }
 
@@ -457,9 +463,11 @@ struct DiagnosticCodeGenTests {
                     keywordType: .context,
                     pattern: .exact("async step"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { feature, args, stepArg in try await feature.doSetup() }
+                    handler: { feature, args, stepArg in
+                        try await feature.doSetup()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -472,7 +480,7 @@ struct DiagnosticCodeGenTests {
             func haveItems(_ count: String) {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func haveItems(_ count: String) {
                 }
 
@@ -480,9 +488,11 @@ struct DiagnosticCodeGenTests {
                     keywordType: .context,
                     pattern: .cucumberExpression("I have {int} items"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { feature, args, stepArg in feature.haveItems(args[0]) }
+                    handler: { feature, args, stepArg in
+                        feature.haveItems(args[0])
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
