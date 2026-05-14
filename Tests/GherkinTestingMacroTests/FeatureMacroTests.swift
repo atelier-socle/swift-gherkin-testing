@@ -15,7 +15,7 @@
 // limitations under the License.
 
 import SwiftSyntaxMacros
-import SwiftSyntaxMacrosTestSupport
+import SwiftSyntaxMacrosGenericTestSupport
 import Testing
 
 @testable import GherkinTestingMacros
@@ -42,20 +42,14 @@ struct FeatureMacroTests {
             struct LoginFeature {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 struct LoginFeature {
-                }
 
-                extension LoginFeature: GherkinFeature {
-                }
-
-                extension LoginFeature {
                     static var __stepDefinitions: [StepDefinition<Self>] {
                         []
                     }
                 }
 
-                @Suite("\\(LoginFeature.self)")
                 struct LoginFeature__GherkinTests {
                     @Test("Feature: LoginFeature")
                     func feature_test() async throws {
@@ -63,12 +57,17 @@ struct FeatureMacroTests {
                             source: .file("login.feature"),
                             definitions: LoginFeature.__stepDefinitions,
                             bundle: Bundle.module,
-                            configuration: LoginFeature.gherkinConfiguration,
-                            featureFactory: { LoginFeature() }
+                                        configuration: LoginFeature.gherkinConfiguration,
+                            featureFactory: {
+                                LoginFeature()
+                            }
                         )
                     }
                 }
-                """,
+
+                extension LoginFeature: GherkinFeature {
+                }
+                """#,
             macros: testMacros
         )
     }
@@ -89,46 +88,63 @@ struct FeatureMacroTests {
             """#,
             expandedSource: #"""
                 struct LoginFeature {
-                    @Given("x")
                     func stepX() {
                     }
-                    @Given("y")
+
+                    static let __stepDef_stepX = StepDefinition<Self>(
+                        keywordType: .context,
+                        pattern: .exact("x"),
+                        sourceLocation: Location(line: 0, column: 0),
+                        handler: { feature, args, stepArg in
+                            feature.stepX()
+                        }
+                    )
                     func stepY() {
                     }
-                }
 
-                extension LoginFeature: GherkinFeature {
-                }
+                    static let __stepDef_stepY = StepDefinition<Self>(
+                        keywordType: .context,
+                        pattern: .exact("y"),
+                        sourceLocation: Location(line: 0, column: 0),
+                        handler: { feature, args, stepArg in
+                            feature.stepY()
+                        }
+                    )
 
-                extension LoginFeature {
                     static var __stepDefinitions: [StepDefinition<Self>] {
                         [__stepDef_stepX, __stepDef_stepY]
                     }
                 }
 
-                @Suite("\(LoginFeature.self)")
                 struct LoginFeature__GherkinTests {
                     @Test("Scenario: A")
                     func scenario_A() async throws {
                         try await FeatureExecutor<LoginFeature>.run(
-                            source: .inline("Feature: F\n  Scenario: A\n    Given x\n  Scenario: B\n    Given y"),
+                            source: .inline("Feature: F\\n  Scenario: A\\n    Given x\\n  Scenario: B\\n    Given y"),
                             definitions: LoginFeature.__stepDefinitions,
-                            configuration: LoginFeature.gherkinConfiguration,
+                                        configuration: LoginFeature.gherkinConfiguration,
                             scenarioFilter: "A",
-                            featureFactory: { LoginFeature() }
+                            featureFactory: {
+                                LoginFeature()
+                            }
                         )
                     }
 
                     @Test("Scenario: B")
                     func scenario_B() async throws {
                         try await FeatureExecutor<LoginFeature>.run(
-                            source: .inline("Feature: F\n  Scenario: A\n    Given x\n  Scenario: B\n    Given y"),
+                            source: .inline("Feature: F\\n  Scenario: A\\n    Given x\\n  Scenario: B\\n    Given y"),
                             definitions: LoginFeature.__stepDefinitions,
-                            configuration: LoginFeature.gherkinConfiguration,
+                                        configuration: LoginFeature.gherkinConfiguration,
                             scenarioFilter: "B",
-                            featureFactory: { LoginFeature() }
+                            featureFactory: {
+                                LoginFeature()
+                            }
                         )
                     }
+                }
+
+                extension LoginFeature: GherkinFeature {
                 }
                 """#,
             macros: testMacros
@@ -154,45 +170,69 @@ struct FeatureMacroTests {
             """#,
             expandedSource: #"""
                 struct HookedFeature {
-                    @Before(.scenario)
                     static func setUp() {
                     }
-                    @After(.scenario)
+
+                    static let __hook_setUp = Hook(
+                        scope: .scenario,
+                        order: 0,
+                        tagFilter: nil,
+                        handler: {
+                            setUp()
+                        }
+                    )
                     static func tearDown() {
                     }
-                    @Given("step")
+
+                    static let __hook_tearDown = Hook(
+                        scope: .scenario,
+                        order: 0,
+                        tagFilter: nil,
+                        handler: {
+                            tearDown()
+                        }
+                    )
                     func step() {
                     }
-                }
 
-                extension HookedFeature: GherkinFeature {
-                }
+                    static let __stepDef_step = StepDefinition<Self>(
+                        keywordType: .context,
+                        pattern: .exact("step"),
+                        sourceLocation: Location(line: 0, column: 0),
+                        handler: { feature, args, stepArg in
+                            feature.step()
+                        }
+                    )
 
-                extension HookedFeature {
                     static var __stepDefinitions: [StepDefinition<Self>] {
                         [__stepDef_step]
                     }
+
                     static var __hooks: HookRegistry {
                         var registry = HookRegistry()
-                        registry.addBefore(__hook_setUp)
-                        registry.addAfter(__hook_tearDown)
-                        return registry
+                                registry.addBefore(__hook_setUp)
+                                registry.addAfter(__hook_tearDown)
+                                return registry
                     }
                 }
 
-                @Suite("\(HookedFeature.self)")
                 struct HookedFeature__GherkinTests {
                     @Test("Scenario: One")
                     func scenario_One() async throws {
                         try await FeatureExecutor<HookedFeature>.run(
-                            source: .inline("Feature: Test\n  Scenario: One\n    Given step"),
+                            source: .inline("Feature: Test\\n  Scenario: One\\n    Given step"),
                             definitions: HookedFeature.__stepDefinitions,
-                            hooks: HookedFeature.__hooks,
-                            configuration: HookedFeature.gherkinConfiguration,
+                                        hooks: HookedFeature.__hooks,
+                                        configuration: HookedFeature.gherkinConfiguration,
                             scenarioFilter: "One",
-                            featureFactory: { HookedFeature() }
+                            featureFactory: {
+                                HookedFeature()
+                            }
                         )
                     }
+                }
+
+                extension HookedFeature: GherkinFeature {
                 }
                 """#,
             macros: testMacros
@@ -226,10 +266,17 @@ struct FeatureMacroTests {
             struct BadFeature {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 struct BadFeature {
+
+                    static var __stepDefinitions: [StepDefinition<Self>] {
+                        []
+                    }
                 }
-                """,
+
+                extension BadFeature: GherkinFeature {
+                }
+                """#,
             diagnostics: [
                 DiagnosticSpec(
                     message: "@Feature requires a 'source:' argument, e.g. @Feature(source: .inline(\"...\"))",
@@ -258,28 +305,27 @@ struct FeatureMacroCoverageTests {
             """#,
             expandedSource: #"""
                 struct EmptyFeature {
-                }
 
-                extension EmptyFeature: GherkinFeature {
-                }
-
-                extension EmptyFeature {
                     static var __stepDefinitions: [StepDefinition<Self>] {
                         []
                     }
                 }
 
-                @Suite("\(EmptyFeature.self)")
                 struct EmptyFeature__GherkinTests {
                     @Test("Feature: EmptyFeature")
                     func feature_test() async throws {
                         try await FeatureExecutor<EmptyFeature>.run(
                             source: .inline("Feature: Empty"),
                             definitions: EmptyFeature.__stepDefinitions,
-                            configuration: EmptyFeature.gherkinConfiguration,
-                            featureFactory: { EmptyFeature() }
+                                        configuration: EmptyFeature.gherkinConfiguration,
+                            featureFactory: {
+                                EmptyFeature()
+                            }
                         )
                     }
+                }
+
+                extension EmptyFeature: GherkinFeature {
                 }
                 """#,
             macros: testMacros
@@ -299,34 +345,45 @@ struct FeatureMacroCoverageTests {
             """#,
             expandedSource: #"""
                 struct LibFeature {
-                    @Given("x")
                     func stepX() {
                     }
-                }
 
-                extension LibFeature: GherkinFeature {
-                }
+                    static let __stepDef_stepX = StepDefinition<Self>(
+                        keywordType: .context,
+                        pattern: .exact("x"),
+                        sourceLocation: Location(line: 0, column: 0),
+                        handler: { feature, args, stepArg in
+                            feature.stepX()
+                        }
+                    )
 
-                extension LibFeature {
                     static var __stepDefinitions: [StepDefinition<Self>] {
                         var defs: [StepDefinition<Self>] = [__stepDef_stepX]
-                        defs += AuthSteps.__stepDefinitions.map { $0.retyped(for: Self.self, using: { AuthSteps() }) }
-                        return defs
+                                defs += AuthSteps.__stepDefinitions.map {
+                            $0.retyped(for: Self.self, using: {
+                                    AuthSteps()
+                                })
+                        }
+                                return defs
                     }
                 }
 
-                @Suite("\(LibFeature.self)")
                 struct LibFeature__GherkinTests {
                     @Test("Scenario: S")
                     func scenario_S() async throws {
                         try await FeatureExecutor<LibFeature>.run(
-                            source: .inline("Feature: F\n  Scenario: S\n    Given x"),
+                            source: .inline("Feature: F\\n  Scenario: S\\n    Given x"),
                             definitions: LibFeature.__stepDefinitions,
-                            configuration: LibFeature.gherkinConfiguration,
+                                        configuration: LibFeature.gherkinConfiguration,
                             scenarioFilter: "S",
-                            featureFactory: { LibFeature() }
+                            featureFactory: {
+                                LibFeature()
+                            }
                         )
                     }
+                }
+
+                extension LibFeature: GherkinFeature {
                 }
                 """#,
             macros: testMacros
@@ -341,33 +398,32 @@ struct FeatureMacroCoverageTests {
             struct LoginFeature {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 struct LoginFeature {
-                }
 
-                extension LoginFeature: GherkinFeature {
-                }
-
-                extension LoginFeature {
                     static var __stepDefinitions: [StepDefinition<Self>] {
                         []
                     }
                 }
 
-                @Suite("\\(LoginFeature.self)")
                 struct LoginFeature__GherkinTests {
                     @Test("Feature: LoginFeature")
                     func feature_test() async throws {
                         try await FeatureExecutor<LoginFeature>.run(
                             source: .file("login.feature"),
                             definitions: LoginFeature.__stepDefinitions,
-                            bundle: Bundle.main,
-                            configuration: LoginFeature.gherkinConfiguration,
-                            featureFactory: { LoginFeature() }
+                            bundle: .main,
+                                        configuration: LoginFeature.gherkinConfiguration,
+                            featureFactory: {
+                                LoginFeature()
+                            }
                         )
                     }
                 }
-                """,
+
+                extension LoginFeature: GherkinFeature {
+                }
+                """#,
             macros: testMacros
         )
     }
@@ -380,20 +436,14 @@ struct FeatureMacroCoverageTests {
             struct LoginFeature {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 struct LoginFeature {
-                }
 
-                extension LoginFeature: GherkinFeature {
-                }
-
-                extension LoginFeature {
                     static var __stepDefinitions: [StepDefinition<Self>] {
                         []
                     }
                 }
 
-                @Suite("\\(LoginFeature.self)")
                 struct LoginFeature__GherkinTests {
                     @Test("Feature: LoginFeature")
                     func feature_test() async throws {
@@ -401,12 +451,17 @@ struct FeatureMacroCoverageTests {
                             source: .file("login.feature"),
                             definitions: LoginFeature.__stepDefinitions,
                             bundle: Bundle.module,
-                            configuration: LoginFeature.gherkinConfiguration,
-                            featureFactory: { LoginFeature() }
+                                        configuration: LoginFeature.gherkinConfiguration,
+                            featureFactory: {
+                                LoginFeature()
+                            }
                         )
                     }
                 }
-                """,
+
+                extension LoginFeature: GherkinFeature {
+                }
+                """#,
             macros: testMacros
         )
     }
@@ -419,20 +474,14 @@ struct FeatureMacroCoverageTests {
             struct XFeature {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 struct XFeature {
-                }
 
-                extension XFeature: GherkinFeature {
-                }
-
-                extension XFeature {
                     static var __stepDefinitions: [StepDefinition<Self>] {
                         []
                     }
                 }
 
-                @Suite("\\(XFeature.self)")
                 struct XFeature__GherkinTests {
                     @Test("Feature: XFeature")
                     func feature_test() async throws {
@@ -440,12 +489,17 @@ struct FeatureMacroCoverageTests {
                             source: .file("x.feature"),
                             definitions: XFeature.__stepDefinitions,
                             bundle: .module,
-                            configuration: XFeature.gherkinConfiguration,
-                            featureFactory: { XFeature() }
+                                        configuration: XFeature.gherkinConfiguration,
+                            featureFactory: {
+                                XFeature()
+                            }
                         )
                     }
                 }
-                """,
+
+                extension XFeature: GherkinFeature {
+                }
+                """#,
             macros: testMacros
         )
     }
@@ -458,15 +512,22 @@ struct FeatureMacroCoverageTests {
             struct BadFeature {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 struct BadFeature {
+
+                    static var __stepDefinitions: [StepDefinition<Self>] {
+                        []
+                    }
                 }
-                """,
+
+                extension BadFeature: GherkinFeature {
+                }
+                """#,
             diagnostics: [
                 DiagnosticSpec(
                     message: "@Feature 'source:' must be .inline(\"...\") or .file(\"...\")",
                     line: 1,
-                    column: 17
+                    column: 1
                 )
             ],
             macros: testMacros
@@ -481,15 +542,22 @@ struct FeatureMacroCoverageTests {
             struct BadFeature {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 struct BadFeature {
+
+                    static var __stepDefinitions: [StepDefinition<Self>] {
+                        []
+                    }
                 }
-                """,
+
+                extension BadFeature: GherkinFeature {
+                }
+                """#,
             diagnostics: [
                 DiagnosticSpec(
                     message: "@Feature 'source:' must be .inline(\"...\") or .file(\"...\")",
                     line: 1,
-                    column: 17
+                    column: 18
                 )
             ],
             macros: testMacros
@@ -504,15 +572,22 @@ struct FeatureMacroCoverageTests {
             struct BadFeature {
             }
             """#,
-            expandedSource: """
+            expandedSource: #"""
                 struct BadFeature {
+
+                    static var __stepDefinitions: [StepDefinition<Self>] {
+                        []
+                    }
                 }
-                """,
+
+                extension BadFeature: GherkinFeature {
+                }
+                """#,
             diagnostics: [
                 DiagnosticSpec(
                     message: "@Feature 'source:' must be .inline(\"...\") or .file(\"...\")",
                     line: 1,
-                    column: 17
+                    column: 18
                 )
             ],
             macros: testMacros

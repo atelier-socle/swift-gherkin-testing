@@ -86,7 +86,7 @@ let auth = MockAuthService()  // actor
 
 - **Compile-time safety**: macro expansion catches step expression errors at build time
 - **Swift Concurrency**: native `async`/`await` with compiler-enforced `Sendable`
-- **Swift Testing integration**: `@Suite`/`@Test` generated under the hood, full Xcode test navigator support
+- **Swift Testing integration**: a native test suite with `@Test` methods generated under the hood, full Xcode test navigator support
 - **Zero runtime dependencies**: no framework code shipped with your app
 - **Cucumber Expressions**: readable `{string}`, `{int}` placeholders instead of raw regex
 - **Step libraries**: composable `@StepLibrary` modules for reuse across features

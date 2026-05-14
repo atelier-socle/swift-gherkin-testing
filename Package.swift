@@ -61,7 +61,10 @@ let package = Package(
             name: "GherkinTestingMacroTests",
             dependencies: [
                 "GherkinTestingMacros",
-                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax")
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacroExpansion", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacrosGenericTestSupport", package: "swift-syntax")
             ],
             path: "Tests/GherkinTestingMacroTests"
         ),

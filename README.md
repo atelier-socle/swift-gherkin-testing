@@ -11,7 +11,7 @@ A native BDD testing framework for Swift. Parse and execute Gherkin `.feature` f
 
 ## Overview
 
-swift-gherkin-testing integrates Gherkin BDD specifications directly into Swift Testing. Write `.feature` files or inline Gherkin, define step handlers with `@Given`/`@When`/`@Then` macros, and the framework generates native `@Suite`/`@Test` methods at compile time. Zero external runtime dependencies — only SwiftSyntax in the compiler plugin.
+swift-gherkin-testing integrates Gherkin BDD specifications directly into Swift Testing. Write `.feature` files or inline Gherkin, define step handlers with `@Given`/`@When`/`@Then` macros, and the framework generates native Swift Testing suites with `@Test` methods at compile time. Zero external runtime dependencies — only SwiftSyntax in the compiler plugin.
 
 ## Features
 
@@ -123,7 +123,7 @@ struct LoginFeature {
 }
 ```
 
-The `@Feature` macro generates a `@Suite` with one `@Test` per scenario. Run with `swift test` — each scenario appears as a separate test in Xcode and the command line.
+The `@Feature` macro generates a Swift Testing suite with one `@Test` per scenario. Run with `swift test` — each scenario appears as a separate test in Xcode and the command line.
 
 ## Key Concepts
 

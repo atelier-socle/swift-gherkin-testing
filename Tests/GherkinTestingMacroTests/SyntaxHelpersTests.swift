@@ -16,7 +16,7 @@
 
 import SwiftSyntax
 import SwiftSyntaxMacros
-import SwiftSyntaxMacrosTestSupport
+import SwiftSyntaxMacrosGenericTestSupport
 import Testing
 
 @testable import GherkinTestingMacros
@@ -251,7 +251,7 @@ struct StepMacroExpressionKindTests {
             func haveCucumber() {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func haveCucumber() {
                 }
 
@@ -259,9 +259,11 @@ struct StepMacroExpressionKindTests {
                     keywordType: .context,
                     pattern: .cucumberExpression("I have a cucumber(s)"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in feature.haveCucumber() }
+                    handler: { feature, args, stepArg in
+                        feature.haveCucumber()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -274,7 +276,7 @@ struct StepMacroExpressionKindTests {
             func consume() {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func consume() {
                 }
 
@@ -282,9 +284,11 @@ struct StepMacroExpressionKindTests {
                     keywordType: .action,
                     pattern: .cucumberExpression("I eat/drink water"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in feature.consume() }
+                    handler: { feature, args, stepArg in
+                        feature.consume()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -303,9 +307,11 @@ struct StepMacroExpressionKindTests {
 
                 static let __stepDef_enterData = StepDefinition<Self>(
                     keywordType: .context,
-                    pattern: .regex("the user enters\\s+data"),
+                    pattern: .regex("the user enters\\\\s+data"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in feature.enterData() }
+                    handler: { feature, args, stepArg in
+                        feature.enterData()
+                    }
                 )
                 """#,
             macros: testMacros

@@ -15,7 +15,7 @@
 // limitations under the License.
 
 import SwiftSyntaxMacros
-import SwiftSyntaxMacrosTestSupport
+import SwiftSyntaxMacrosGenericTestSupport
 import Testing
 
 @testable import GherkinTestingMacros
@@ -43,7 +43,7 @@ struct StepMacroTests {
             func onLoginPage() {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func onLoginPage() {
                 }
 
@@ -51,9 +51,11 @@ struct StepMacroTests {
                     keywordType: .context,
                     pattern: .exact("the user is logged in"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in feature.onLoginPage() }
+                    handler: { feature, args, stepArg in
+                        feature.onLoginPage()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -66,7 +68,7 @@ struct StepMacroTests {
             func enterValue(value: String) {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func enterValue(value: String) {
                 }
 
@@ -74,9 +76,11 @@ struct StepMacroTests {
                     keywordType: .context,
                     pattern: .cucumberExpression("the user enters {string}"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in feature.enterValue(value: args[0]) }
+                    handler: { feature, args, stepArg in
+                        feature.enterValue(value: args[0])
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -89,7 +93,7 @@ struct StepMacroTests {
             func items(count: String) {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func items(count: String) {
                 }
 
@@ -97,9 +101,11 @@ struct StepMacroTests {
                     keywordType: .context,
                     pattern: .cucumberExpression("there are {int} items"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in feature.items(count: args[0]) }
+                    handler: { feature, args, stepArg in
+                        feature.items(count: args[0])
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -112,7 +118,7 @@ struct StepMacroTests {
             func setupDB() async throws {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func setupDB() async throws {
                 }
 
@@ -120,9 +126,11 @@ struct StepMacroTests {
                     keywordType: .context,
                     pattern: .exact("the database is ready"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in try await feature.setupDB() }
+                    handler: { feature, args, stepArg in
+                        try await feature.setupDB()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -135,7 +143,7 @@ struct StepMacroTests {
             mutating func resetCount() {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 mutating func resetCount() {
                 }
 
@@ -143,9 +151,11 @@ struct StepMacroTests {
                     keywordType: .context,
                     pattern: .exact("the count is zero"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { feature, args, stepArg in feature.resetCount() }
+                    handler: { feature, args, stepArg in
+                        feature.resetCount()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -160,7 +170,7 @@ struct StepMacroTests {
             func clickLogin() {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func clickLogin() {
                 }
 
@@ -168,9 +178,11 @@ struct StepMacroTests {
                     keywordType: .action,
                     pattern: .exact("the user clicks login"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in feature.clickLogin() }
+                    handler: { feature, args, stepArg in
+                        feature.clickLogin()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -183,7 +195,7 @@ struct StepMacroTests {
             func checkDashboard() {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func checkDashboard() {
                 }
 
@@ -191,9 +203,11 @@ struct StepMacroTests {
                     keywordType: .outcome,
                     pattern: .exact("the dashboard is visible"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in feature.checkDashboard() }
+                    handler: { feature, args, stepArg in
+                        feature.checkDashboard()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -206,7 +220,7 @@ struct StepMacroTests {
             func emptyCart() {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func emptyCart() {
                 }
 
@@ -214,9 +228,11 @@ struct StepMacroTests {
                     keywordType: .conjunction,
                     pattern: .exact("the cart is empty"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in feature.emptyCart() }
+                    handler: { feature, args, stepArg in
+                        feature.emptyCart()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -229,7 +245,7 @@ struct StepMacroTests {
             func notAdmin() {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func notAdmin() {
                 }
 
@@ -237,9 +253,11 @@ struct StepMacroTests {
                     keywordType: .conjunction,
                     pattern: .exact("the user is not admin"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in feature.notAdmin() }
+                    handler: { feature, args, stepArg in
+                        feature.notAdmin()
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -254,7 +272,7 @@ struct StepMacroTests {
             func enterCredentials(username: String, password: String) {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func enterCredentials(username: String, password: String) {
                 }
 
@@ -262,9 +280,11 @@ struct StepMacroTests {
                     keywordType: .action,
                     pattern: .cucumberExpression("they enter {string} and {string}"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in feature.enterCredentials(username: args[0], password: args[1]) }
+                    handler: { feature, args, stepArg in
+                        feature.enterCredentials(username: args[0], password: args[1])
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -277,7 +297,7 @@ struct StepMacroTests {
             func setItems(_ count: String) {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func setItems(_ count: String) {
                 }
 
@@ -285,9 +305,11 @@ struct StepMacroTests {
                     keywordType: .context,
                     pattern: .cucumberExpression("there are {int} items"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in feature.setItems(args[0]) }
+                    handler: { feature, args, stepArg in
+                        feature.setItems(args[0])
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -307,7 +329,7 @@ struct StepMacroStepArgTests {
             func usersExist(table: DataTable) {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func usersExist(table: DataTable) {
                 }
 
@@ -315,9 +337,11 @@ struct StepMacroStepArgTests {
                     keywordType: .context,
                     pattern: .exact("the following users exist"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in feature.usersExist(table: stepArg?.dataTable ?? .empty) }
+                    handler: { feature, args, stepArg in
+                        feature.usersExist(table: stepArg?.dataTable ?? .empty)
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -330,7 +354,7 @@ struct StepMacroStepArgTests {
             func apiPayload(body: String) {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func apiPayload(body: String) {
                 }
 
@@ -338,9 +362,11 @@ struct StepMacroStepArgTests {
                     keywordType: .action,
                     pattern: .exact("the API receives the payload"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in feature.apiPayload(body: stepArg?.docString ?? "") }
+                    handler: { feature, args, stepArg in
+                        feature.apiPayload(body: stepArg?.docString ?? "")
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -353,7 +379,7 @@ struct StepMacroStepArgTests {
             func itemsWithTable(count: String, table: DataTable) {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func itemsWithTable(count: String, table: DataTable) {
                 }
 
@@ -361,9 +387,11 @@ struct StepMacroStepArgTests {
                     keywordType: .context,
                     pattern: .cucumberExpression("I have {int} items with details"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in feature.itemsWithTable(count: args[0], table: stepArg?.dataTable ?? .empty) }
+                    handler: { feature, args, stepArg in
+                        feature.itemsWithTable(count: args[0], table: stepArg?.dataTable ?? .empty)
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -376,7 +404,7 @@ struct StepMacroStepArgTests {
             func enterValue(value: String) {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func enterValue(value: String) {
                 }
 
@@ -384,9 +412,11 @@ struct StepMacroStepArgTests {
                     keywordType: .context,
                     pattern: .cucumberExpression("the user enters {string}"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in feature.enterValue(value: args[0]) }
+                    handler: { feature, args, stepArg in
+                        feature.enterValue(value: args[0])
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
@@ -399,7 +429,7 @@ struct StepMacroStepArgTests {
             func dataExists(_ table: DataTable) {
             }
             """,
-            expandedSource: """
+            expandedSource: #"""
                 func dataExists(_ table: DataTable) {
                 }
 
@@ -407,9 +437,11 @@ struct StepMacroStepArgTests {
                     keywordType: .context,
                     pattern: .exact("the data exists"),
                     sourceLocation: Location(line: 0, column: 0),
-                    handler: { _ feature, args, stepArg in feature.dataExists(stepArg?.dataTable ?? .empty) }
+                    handler: { feature, args, stepArg in
+                        feature.dataExists(stepArg?.dataTable ?? .empty)
+                    }
                 )
-                """,
+                """#,
             macros: testMacros
         )
     }
